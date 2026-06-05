@@ -1,0 +1,34 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish-hex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6.0.2
+
+      - name: Setup Gleam
+        uses: tylerbutler/actions/setup-gleam@ee7def5950abcf0a519add705a95719ab345c05e # ratchet:tylerbutler/actions/setup-gleam@v1
+        with:
+          erlang-version: "27.2"
+          gleam-version: "1.16.0"
+          run-deps: "false"
+
+      - name: Download dependencies
+        run: gleam deps download
+
+      - name: Publish package to Hex
+        uses: tylerbutler/actions/gleam-publish@ee7def5950abcf0a519add705a95719ab345c05e # ratchet:tylerbutler/actions/gleam-publish@v1
+        with:
+          packages: "."
+          working-directory: "."
+          hex-api-key: ${{ secrets.HEX_API_KEY }}
+          skip-already-published: "true"

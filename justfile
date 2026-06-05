@@ -1,0 +1,88 @@
+# spruce — a terminal-UI kit for Gleam
+
+# === ALIASES ===
+alias b := build
+alias t := test
+alias f := format
+alias l := lint
+alias c := clean
+alias cl := change
+
+# Default recipe
+default:
+    @just --list
+
+# === DEPENDENCIES ===
+
+# Download project dependencies
+deps:
+    gleam deps download
+
+# === BUILD ===
+
+# Compile the project
+build:
+    gleam build
+
+# Build with warnings as errors (both targets)
+build-strict:
+    gleam build --target erlang --warnings-as-errors
+    gleam build --target javascript --warnings-as-errors
+
+# === TESTING ===
+
+# Run tests on both targets
+test:
+    gleam test --target erlang
+    gleam test --target javascript
+
+# === CODE QUALITY ===
+
+# Format code
+format:
+    gleam format src test
+
+# Check formatting without changes
+format-check:
+    gleam format --check src test
+
+# Type check without building
+check:
+    gleam check
+
+# Run linter (format check + glinter)
+lint: format-check
+    gleam run -m glinter
+
+# === DOCUMENTATION ===
+
+# Build API documentation
+docs:
+    gleam docs build
+
+# === CHANGELOG ===
+
+# Create a new changelog entry
+change:
+    changie new
+
+# Preview unreleased changelog
+changelog-preview:
+    changie batch auto --dry-run
+
+# Generate CHANGELOG.md
+changelog:
+    changie merge
+
+# === MAINTENANCE ===
+
+# Remove build artifacts
+clean:
+    rm -rf build
+
+# === CI ===
+
+# Full validation workflow (no file mutation)
+ci: lint check build-strict test docs
+
+alias pr := ci

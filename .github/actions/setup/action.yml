@@ -1,0 +1,61 @@
+name: "Setup Gleam Environment"
+description: "Common setup steps for Gleam CI jobs"
+
+inputs:
+  otp-version:
+    description: "Erlang/OTP version. When empty, .tool-versions is used."
+    required: false
+    default: ""
+  gleam-version:
+    description: "Gleam version. When empty, .tool-versions is used."
+    required: false
+    default: ""
+  node:
+    description: "Whether to setup Node.js for the JavaScript target"
+    required: false
+    default: "false"
+  node-version:
+    description: "Node.js version to setup when node is enabled"
+    required: false
+    default: "22"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup just
+      uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6 # ratchet:extractions/setup-just@v2
+
+    - name: Setup BEAM (explicit versions)
+      if: inputs.otp-version != '' && inputs.gleam-version != ''
+      uses: erlef/setup-beam@fc68ffb90438ef2936bbb3251622353b3dcb2f93 # ratchet:erlef/setup-beam@v1
+      with:
+        otp-version: ${{ inputs.otp-version }}
+        gleam-version: ${{ inputs.gleam-version }}
+        rebar3-version: "3"
+
+    - name: Setup BEAM (from .tool-versions)
+      if: inputs.otp-version == '' || inputs.gleam-version == ''
+      uses: erlef/setup-beam@fc68ffb90438ef2936bbb3251622353b3dcb2f93 # ratchet:erlef/setup-beam@v1
+      with:
+        version-file: .tool-versions
+        version-type: strict
+
+    - name: Setup Node.js
+      if: inputs.node == 'true'
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # ratchet:actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Cache Gleam dependencies
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # ratchet:actions/cache@v4
+      with:
+        path: |
+          build/packages
+          ~/.cache/gleam
+        key: gleam-${{ runner.os }}-${{ hashFiles('gleam.toml', 'manifest.toml') }}
+        restore-keys: |
+          gleam-${{ runner.os }}-
+
+    - name: Download dependencies
+      shell: bash
+      run: just deps

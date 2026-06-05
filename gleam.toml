@@ -1,0 +1,35 @@
+name = "spruce"
+version = "0.1.0"
+description = "A terminal-UI kit for Gleam: styled text, boxes, semantic messages, icons, and aligned/grouped output (Erlang + JavaScript)"
+licences = ["MIT", "Apache-2.0"]
+repository = { type = "github", user = "tylerbutler", repo = "spruce" }
+gleam = ">= 1.11.0"
+
+[javascript]
+typescript_declarations = true
+
+[dependencies]
+gleam_stdlib = ">= 0.44.0 and < 2.0.0"
+gleam_community_ansi = ">= 1.4.0 and < 2.0.0"
+tty = ">= 1.0.0 and < 2.0.0"
+
+[dev-dependencies]
+startest = ">= 0.6.0 and < 1.0.0"
+glinter = ">= 2.19.0 and < 3.0.0"
+
+[tools.licence_audit]
+allow = ["Apache-2.0", "MIT"]
+deny = []
+
+[tools.glinter]
+include = ["src/", "test/"]
+
+# Test files are exercised by startest, which discovers `*_test` functions by
+# reflection — so they're never imported (unused_exports) and conventionally
+# omit the `-> Nil` return annotation.
+[tools.glinter.ignore]
+"test/**/*.gleam" = [
+  "unused_exports",
+  "missing_type_annotation",
+  "redundant_case",
+]

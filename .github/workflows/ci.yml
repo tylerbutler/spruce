@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+jobs:
+  # Target-independent checks: run once, not per version.
+  checks:
+    runs-on: ubuntu-latest
+    name: Checks
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Lint (formatting + glinter)
+        run: just lint
+
+      - name: Type check
+        run: just check
+
+      - name: Build documentation
+        run: just docs
+
+  # Erlang target: sweep OTP across the supported range (claim: OTP >= 26).
+  # Node is irrelevant to this target, so it is not installed here.
+  test-erlang:
+    runs-on: ubuntu-latest
+    name: Test Erlang (OTP ${{ matrix.otp }})
+    strategy:
+      fail-fast: false
+      matrix:
+        otp: ["26", "27", "28"]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          otp-version: ${{ matrix.otp }}
+          gleam-version: "1.16.0"
+
+      - name: Build (warnings as errors)
+        run: gleam build --target erlang --warnings-as-errors
+
+      - name: Run tests
+        run: gleam test --target erlang
+
+  # JavaScript target: sweep Node across the supported range (claim: Node >= 20).
+  # A fixed OTP only hosts the Gleam compiler; it does not affect JS output.
+  test-javascript:
+    runs-on: ubuntu-latest
+    name: Test JavaScript (Node ${{ matrix.node }})
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["20", "22", "24"]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          otp-version: "27"
+          gleam-version: "1.16.0"
+          node: "true"
+          node-version: ${{ matrix.node }}
+
+      - name: Build (warnings as errors)
+        run: gleam build --target javascript --warnings-as-errors
+
+      - name: Run tests
+        run: gleam test --target javascript
