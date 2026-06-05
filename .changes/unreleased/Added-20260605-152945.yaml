@@ -1,0 +1,3 @@
+kind: Added
+body: table width constraints, per-column widths, configurable border style, optional row separators, and multi-line cell wrapping; list.nested for arbitrary-depth nested lists.
+time: 2026-06-05T15:29:45.396874-07:00

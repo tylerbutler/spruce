@@ -1,0 +1,3 @@
+kind: Added
+body: Adaptive light/dark colors via style.adaptive, resolved against the terminal background; the spruce context now carries the detected background (spruce.background, spruce.with_background) using tty 1.1's detect_background.
+time: 2026-06-05T15:29:40.886316-07:00

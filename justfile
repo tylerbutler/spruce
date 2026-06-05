@@ -60,6 +60,12 @@ lint: format-check
 docs:
     gleam docs build
 
+# === DEMO ===
+
+# Run the feature showcase demo (TARGET defaults to erlang)
+demo target="erlang":
+    gleam run -m demo --target {{target}}
+
 # === CHANGELOG ===
 
 # Create a new changelog entry

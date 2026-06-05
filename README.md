@@ -40,11 +40,73 @@ Every render function takes an explicit `Spruce` value, which carries:
 This keeps rendering pure and testable: `spruce.no_color()` produces
 escape-free, deterministic strings.
 
-## Status
+## Modules
 
-Early development. The `Spruce` context is in place; the styling, box, message,
-symbol, palette, alignment, and grouping modules are being implemented. See
-the design spec for the full plan.
+- `spruce` — the `Spruce` context (color level + terminal background + indent depth)
+- `spruce/style` — composable text styling (named, RGB/hex/256, complete, and adaptive light/dark colors)
+- `spruce/block` — styled blocks: padding, margin, sizing, alignment, per-side borders
+- `spruce/symbol` — named glyphs (with ASCII fallbacks)
+- `spruce/palette` — deterministic hash colors
+- `spruce/align` — ANSI-aware length and padding
+- `spruce/layout` — compose multi-line text blocks
+- `spruce/box` — boxed output (per-side borders and colors)
+- `spruce/table` — tables with widths, borders, separators, and cell wrapping
+- `spruce/list` — bulleted/ordered lists with arbitrary nesting
+- `spruce/tree` — tree-structured output
+- `spruce/group` — depth-in-context grouping
+- `spruce/message` — semantic one-liners (success/fail/start/ready/info/warn/error), with configurable label/badge/simple prefixes
+- `spruce/severity` — generic severity/status labels and badges
+- `spruce/details` — key-value detail rendering
+- `spruce/line` — compact terminal line composition
+- `spruce/markdown` — Markdown-to-ANSI rendering (Glamour-style), built on `mork`
+
+## Example
+
+```gleam
+import spruce
+import spruce/box
+import spruce/group
+import spruce/message
+
+pub fn main() {
+  let sp = spruce.detect()
+  box.print(sp, "spruce")
+  group.group(sp, "Building", fn(sp) {
+    message.print_start(sp, "compiling")
+    message.print_success(sp, "done")
+  })
+}
+```
+
+```gleam
+import spruce
+import spruce/details
+import spruce/line
+import spruce/message
+import spruce/severity
+
+pub fn compact_line_example() {
+  let sp = spruce.detect()
+  let meta =
+    details.new()
+    |> details.add("duration", "42ms")
+    |> details.add("target", "javascript")
+
+  line.new("Build complete")
+  |> line.severity(severity.Info)
+  |> line.scope("build")
+  |> line.details(meta)
+  |> line.render(sp, _)
+  |> echo
+
+  message.success_with(
+    sp,
+    "Build complete",
+    message.default_options() |> message.with_formatter(message.badge()),
+  )
+  |> echo
+}
+```
 
 ## Development
 

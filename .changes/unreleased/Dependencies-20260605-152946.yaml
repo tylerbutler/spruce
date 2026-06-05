@@ -1,0 +1,3 @@
+kind: Dependencies
+body: Added mork (Markdown parsing, MIT); require tty >= 1.1 for terminal background detection.
+time: 2026-06-05T15:29:46.525042-07:00

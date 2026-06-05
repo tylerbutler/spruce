@@ -4,6 +4,7 @@ description = "A terminal-UI kit for Gleam: styled text, boxes, semantic message
 licences = ["MIT", "Apache-2.0"]
 repository = { type = "github", user = "tylerbutler", repo = "spruce" }
 gleam = ">= 1.11.0"
+internal_modules = ["spruce/internal", "spruce/internal/*"]
 
 [javascript]
 typescript_declarations = true
@@ -11,7 +12,9 @@ typescript_declarations = true
 [dependencies]
 gleam_stdlib = ">= 0.44.0 and < 2.0.0"
 gleam_community_ansi = ">= 1.4.0 and < 2.0.0"
-tty = ">= 1.0.0 and < 2.0.0"
+tty = ">= 1.1.0 and < 2.0.0"
+mork = ">= 1.12.0 and < 2.0.0"
+smalto = ">= 3.0.0 and < 4.0.0"
 
 [dev-dependencies]
 startest = ">= 0.6.0 and < 1.0.0"

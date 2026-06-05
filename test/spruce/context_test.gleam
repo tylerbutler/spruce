@@ -56,6 +56,38 @@ pub fn detect_stream_stderr_returns_a_known_level_test() {
   }
 }
 
+// indented preserves the context's background.
+pub fn indented_preserves_background_test() {
+  spruce.no_color()
+  |> spruce.with_background(tty.Light)
+  |> spruce.indented
+  |> spruce.background
+  |> expect.to_equal(tty.Light)
+}
+
+// with_background overrides the context background.
+pub fn with_background_sets_background_test() {
+  spruce.with_color_level(tty.TrueColor)
+  |> spruce.with_background(tty.Dark)
+  |> spruce.background
+  |> expect.to_equal(tty.Dark)
+}
+
+// A context built without detection defaults to an Unknown background.
+pub fn default_background_is_unknown_test() {
+  spruce.no_color()
+  |> spruce.background
+  |> expect.to_equal(tty.Unknown)
+}
+
+// detect() returns one of the known backgrounds without crashing on either
+// target.
+pub fn detect_returns_a_known_background_test() {
+  case spruce.background(spruce.detect()) {
+    tty.Light | tty.Dark | tty.Unknown -> expect.to_be_true(True)
+  }
+}
+
 // Sanity anchor on the dependency ordering helper (keeps `order` import live).
 pub fn truecolor_outranks_no_color_test() {
   tty.color_level_compare(tty.TrueColor, tty.NoColor)

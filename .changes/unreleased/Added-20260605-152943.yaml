@@ -1,0 +1,3 @@
+kind: Added
+body: 'New spruce/markdown module: a Glamour-style Markdown-to-ANSI renderer (headings, lists, task lists, code blocks, blockquotes, GFM tables, thematic breaks, and inline styling) built on mork, with a background-adaptive default theme.'
+time: 2026-06-05T15:29:43.138372-07:00
