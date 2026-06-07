@@ -381,11 +381,17 @@ fn render_bg_ansi256(
 }
 
 fn render_fg_ansi256_sequence(text: String, index: Int) -> String {
+  let index = clamp_ansi256_index(index)
   "\u{001b}[38;5;" <> int.to_string(index) <> "m" <> text <> "\u{001b}[39m"
 }
 
 fn render_bg_ansi256_sequence(text: String, index: Int) -> String {
+  let index = clamp_ansi256_index(index)
   "\u{001b}[48;5;" <> int.to_string(index) <> "m" <> text <> "\u{001b}[49m"
+}
+
+fn clamp_ansi256_index(index: Int) -> Int {
+  int.clamp(index, max: 255, min: 0)
 }
 
 fn choose_complete_color(

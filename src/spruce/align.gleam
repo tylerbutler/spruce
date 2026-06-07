@@ -16,25 +16,35 @@ type PieceKind {
   SpacePiece
 }
 
+type EscapeState {
+  NormalText
+  EscapeStart
+  CsiEscape
+  OscEscape
+  OscEscapeAfterEsc
+}
+
 /// The visual length of a string, excluding ANSI escape codes.
 pub fn visual_length(text: String) -> Int {
   case string.contains(text, "\u{001b}") || !is_ascii(text) {
-    True -> count_visible(string.to_graphemes(text), False, 0)
+    True -> count_visible(string.to_graphemes(text), NormalText, 0)
     False -> string.length(text)
   }
 }
 
-fn count_visible(chars: List(String), in_escape: Bool, count: Int) -> Int {
+fn count_visible(chars: List(String), state: EscapeState, count: Int) -> Int {
   case chars {
     [] -> count
-    ["\u{001b}", ..rest] -> count_visible(rest, True, count)
-    ["[", ..rest] if in_escape -> count_visible(rest, True, count)
-    [char, ..rest] if in_escape ->
-      case is_escape_final(char) {
-        True -> count_visible(rest, False, count)
-        False -> count_visible(rest, True, count)
+    [char, ..rest] ->
+      case state {
+        NormalText ->
+          case char {
+            "\u{001b}" ->
+              count_visible(rest, step_escape_state(NormalText, char), count)
+            _ -> count_visible(rest, NormalText, count + display_width(char))
+          }
+        _ -> count_visible(rest, step_escape_state(state, char), count)
       }
-    [char, ..rest] -> count_visible(rest, False, count + display_width(char))
   }
 }
 
@@ -57,15 +67,10 @@ fn display_width(grapheme: String) -> Int {
 }
 
 fn is_ascii(text: String) -> Bool {
-  is_ascii_codepoints(string.to_utf_codepoints(text))
-}
-
-fn is_ascii_codepoints(codepoints: List(UtfCodepoint)) -> Bool {
-  case codepoints {
-    [] -> True
-    [codepoint, ..rest] ->
-      string.utf_codepoint_to_int(codepoint) < 0x80 && is_ascii_codepoints(rest)
-  }
+  string.to_utf_codepoints(text)
+  |> list.fold(True, fn(all_ascii, codepoint) {
+    all_ascii && string.utf_codepoint_to_int(codepoint) < 0x80
+  })
 }
 
 fn is_escape_final(grapheme: String) -> Bool {
@@ -73,6 +78,45 @@ fn is_escape_final(grapheme: String) -> Bool {
     [] -> False
     [codepoint, ..] ->
       in_range(string.utf_codepoint_to_int(codepoint), 0x40, 0x7e)
+  }
+}
+
+fn step_escape_state(state: EscapeState, char: String) -> EscapeState {
+  case state {
+    NormalText ->
+      case char {
+        "\u{001b}" -> EscapeStart
+        _ -> NormalText
+      }
+
+    EscapeStart ->
+      case char {
+        "[" -> CsiEscape
+        "]" -> OscEscape
+        "\u{001b}" -> EscapeStart
+        _ -> NormalText
+      }
+
+    CsiEscape ->
+      case is_escape_final(char) {
+        True -> NormalText
+        False -> CsiEscape
+      }
+
+    OscEscape ->
+      case char {
+        "\u{0007}" -> NormalText
+        "\u{001b}" -> OscEscapeAfterEsc
+        _ -> OscEscape
+      }
+
+    OscEscapeAfterEsc ->
+      case char {
+        "\\" -> NormalText
+        "\u{0007}" -> NormalText
+        "\u{001b}" -> OscEscapeAfterEsc
+        _ -> OscEscape
+      }
   }
 }
 
@@ -315,12 +359,12 @@ fn drop_spaces(chars: List(String)) -> List(String) {
 }
 
 fn split_pieces(text: String) -> List(Piece) {
-  split_pieces_loop(string.to_graphemes(text), False, "", NoPiece, [])
+  split_pieces_loop(string.to_graphemes(text), NormalText, "", NoPiece, [])
 }
 
 fn split_pieces_loop(
   chars: List(String),
-  in_escape: Bool,
+  state: EscapeState,
   current: String,
   kind: PieceKind,
   pieces: List(Piece),
@@ -328,35 +372,49 @@ fn split_pieces_loop(
   case chars {
     [] -> list.reverse(push_piece(kind, current, pieces))
 
-    ["\u{001b}", ..rest] -> {
-      let kind = case kind {
-        NoPiece -> WordPiece
-        _ -> kind
-      }
-      split_pieces_loop(rest, True, current <> "\u{001b}", kind, pieces)
-    }
-
-    ["[", ..rest] if in_escape ->
-      split_pieces_loop(rest, True, current <> "[", kind, pieces)
-
-    [char, ..rest] if in_escape ->
-      case is_escape_final(char) {
-        True -> split_pieces_loop(rest, False, current <> char, kind, pieces)
-        False -> split_pieces_loop(rest, True, current <> char, kind, pieces)
-      }
-
-    [" ", ..rest] -> {
-      let #(current, kind, pieces) =
-        add_piece_grapheme(" ", SpacePiece, current, kind, pieces)
-
-      split_pieces_loop(rest, False, current, kind, pieces)
-    }
-
     [char, ..rest] -> {
-      let #(current, kind, pieces) =
-        add_piece_grapheme(char, WordPiece, current, kind, pieces)
+      case state {
+        NormalText ->
+          case char {
+            "\u{001b}" -> {
+              let kind = case kind {
+                NoPiece -> WordPiece
+                _ -> kind
+              }
 
-      split_pieces_loop(rest, False, current, kind, pieces)
+              split_pieces_loop(
+                rest,
+                step_escape_state(NormalText, char),
+                current <> char,
+                kind,
+                pieces,
+              )
+            }
+
+            " " -> {
+              let #(current, kind, pieces) =
+                add_piece_grapheme(" ", SpacePiece, current, kind, pieces)
+
+              split_pieces_loop(rest, NormalText, current, kind, pieces)
+            }
+
+            _ -> {
+              let #(current, kind, pieces) =
+                add_piece_grapheme(char, WordPiece, current, kind, pieces)
+
+              split_pieces_loop(rest, NormalText, current, kind, pieces)
+            }
+          }
+
+        _ ->
+          split_pieces_loop(
+            rest,
+            step_escape_state(state, char),
+            current <> char,
+            kind,
+            pieces,
+          )
+      }
     }
   }
 }
@@ -409,34 +467,63 @@ fn close_open_sgr(text: String) -> String {
 }
 
 fn has_open_sgr(text: String) -> Bool {
-  has_open_sgr_loop(string.to_graphemes(text), False, "", False)
+  has_open_sgr_loop(string.to_graphemes(text), NormalText, "", False)
 }
 
 fn has_open_sgr_loop(
   chars: List(String),
-  in_escape: Bool,
+  state: EscapeState,
   escape: String,
   active: Bool,
 ) -> Bool {
   case chars {
     [] -> active
 
-    ["\u{001b}", ..rest] -> has_open_sgr_loop(rest, True, "\u{001b}", active)
+    [char, ..rest] ->
+      case state {
+        NormalText ->
+          case char {
+            "\u{001b}" ->
+              has_open_sgr_loop(
+                rest,
+                step_escape_state(NormalText, char),
+                char,
+                active,
+              )
+            _ -> has_open_sgr_loop(rest, NormalText, "", active)
+          }
 
-    ["[", ..rest] if in_escape ->
-      has_open_sgr_loop(rest, True, escape <> "[", active)
+        EscapeStart ->
+          case char {
+            "[" -> has_open_sgr_loop(rest, CsiEscape, escape <> char, active)
+            "]" -> has_open_sgr_loop(rest, OscEscape, "", active)
+            _ ->
+              has_open_sgr_loop(
+                rest,
+                step_escape_state(EscapeStart, char),
+                "",
+                active,
+              )
+          }
 
-    [char, ..rest] if in_escape -> {
-      let escape = escape <> char
-      let active = case is_escape_final(char) {
-        True -> update_sgr_active(escape, char, active)
-        False -> active
+        CsiEscape -> {
+          let escape = escape <> char
+          let active = case is_escape_final(char) {
+            True -> update_sgr_active(escape, char, active)
+            False -> active
+          }
+
+          has_open_sgr_loop(
+            rest,
+            step_escape_state(CsiEscape, char),
+            escape,
+            active,
+          )
+        }
+
+        OscEscape | OscEscapeAfterEsc ->
+          has_open_sgr_loop(rest, step_escape_state(state, char), "", active)
       }
-
-      has_open_sgr_loop(rest, !is_escape_final(char), escape, active)
-    }
-
-    [_, ..rest] -> has_open_sgr_loop(rest, False, "", active)
   }
 }
 
@@ -487,25 +574,32 @@ fn wrap_long_word(word: String, width: Int) -> List(String) {
 }
 
 fn first_positive_width(text: String) -> Int {
-  first_positive_width_loop(string.to_graphemes(text), False)
+  first_positive_width_loop(string.to_graphemes(text), NormalText)
 }
 
-fn first_positive_width_loop(chars: List(String), in_escape: Bool) -> Int {
+fn first_positive_width_loop(chars: List(String), state: EscapeState) -> Int {
   case chars {
     [] -> 0
-    ["\u{001b}", ..rest] -> first_positive_width_loop(rest, True)
-    ["[", ..rest] if in_escape -> first_positive_width_loop(rest, True)
-    [char, ..rest] if in_escape ->
-      case is_escape_final(char) {
-        True -> first_positive_width_loop(rest, False)
-        False -> first_positive_width_loop(rest, True)
-      }
     [char, ..rest] -> {
-      let width = display_width(char)
+      case state {
+        NormalText ->
+          case char {
+            "\u{001b}" ->
+              first_positive_width_loop(
+                rest,
+                step_escape_state(NormalText, char),
+              )
+            _ -> {
+              let width = display_width(char)
 
-      case width {
-        0 -> first_positive_width_loop(rest, False)
-        _ -> width
+              case width {
+                0 -> first_positive_width_loop(rest, NormalText)
+                _ -> width
+              }
+            }
+          }
+
+        _ -> first_positive_width_loop(rest, step_escape_state(state, char))
       }
     }
   }
@@ -513,74 +607,98 @@ fn first_positive_width_loop(chars: List(String), in_escape: Bool) -> Int {
 
 fn take_visible(text: String, width: Int) -> String {
   case width <= 0 {
-    True -> take_visible_loop(string.to_graphemes(text), 0, False, [])
-    False -> take_visible_loop(string.to_graphemes(text), width, False, [])
+    True -> take_visible_loop(string.to_graphemes(text), 0, NormalText, [])
+    False -> take_visible_loop(string.to_graphemes(text), width, NormalText, [])
   }
 }
 
 fn take_visible_loop(
   chars: List(String),
   remaining: Int,
-  in_escape: Bool,
+  state: EscapeState,
   acc: List(String),
 ) -> String {
   case chars {
     [] -> chars_to_string(list.reverse(acc))
 
-    ["\u{001b}", ..rest] ->
-      take_visible_loop(rest, remaining, True, ["\u{001b}", ..acc])
-
-    ["[", ..rest] if in_escape ->
-      take_visible_loop(rest, remaining, True, ["[", ..acc])
-
-    [char, ..rest] if in_escape ->
-      case is_escape_final(char) {
-        True -> take_visible_loop(rest, remaining, False, [char, ..acc])
-        False -> take_visible_loop(rest, remaining, True, [char, ..acc])
-      }
-
     [char, ..rest] -> {
-      let char_width = display_width(char)
+      case state {
+        NormalText ->
+          case char {
+            "\u{001b}" ->
+              take_visible_loop(
+                rest,
+                remaining,
+                step_escape_state(NormalText, char),
+                [char, ..acc],
+              )
+            _ -> {
+              let char_width = display_width(char)
 
-      case char_width == 0 || char_width <= remaining {
-        True ->
-          take_visible_loop(rest, remaining - char_width, False, [char, ..acc])
-        False -> take_visible_loop(rest, 0, False, acc)
+              case char_width == 0 || char_width <= remaining {
+                True ->
+                  take_visible_loop(rest, remaining - char_width, NormalText, [
+                    char,
+                    ..acc
+                  ])
+                False -> take_visible_loop(rest, 0, NormalText, acc)
+              }
+            }
+          }
+
+        _ ->
+          take_visible_loop(rest, remaining, step_escape_state(state, char), [
+            char,
+            ..acc
+          ])
       }
     }
   }
 }
 
 fn drop_visible(text: String, width: Int) -> String {
-  drop_visible_loop(string.to_graphemes(text), width, False)
+  drop_visible_loop(string.to_graphemes(text), width, NormalText)
 }
 
 fn drop_visible_loop(
   chars: List(String),
   remaining: Int,
-  in_escape: Bool,
+  state: EscapeState,
 ) -> String {
   case chars {
     [] -> ""
 
-    ["\u{001b}", ..rest] -> drop_visible_loop(rest, remaining, True)
-
-    ["[", ..rest] if in_escape -> drop_visible_loop(rest, remaining, True)
-
-    [char, ..rest] if in_escape ->
-      case is_escape_final(char) {
-        True -> drop_visible_loop(rest, remaining, False)
-        False -> drop_visible_loop(rest, remaining, True)
-      }
-
-    _ if remaining <= 0 -> chars_to_string(chars)
-
     [char, ..rest] -> {
-      let char_width = display_width(char)
+      case state {
+        NormalText ->
+          case remaining <= 0 {
+            True -> chars_to_string(chars)
+            False ->
+              case char {
+                "\u{001b}" ->
+                  drop_visible_loop(
+                    rest,
+                    remaining,
+                    step_escape_state(NormalText, char),
+                  )
 
-      case char_width > remaining {
-        True -> chars_to_string(chars)
-        False -> drop_visible_loop(rest, remaining - char_width, False)
+                _ -> {
+                  let char_width = display_width(char)
+
+                  case char_width > remaining {
+                    True -> chars_to_string(chars)
+                    False ->
+                      drop_visible_loop(
+                        rest,
+                        remaining - char_width,
+                        NormalText,
+                      )
+                  }
+                }
+              }
+          }
+
+        _ -> drop_visible_loop(rest, remaining, step_escape_state(state, char))
       }
     }
   }

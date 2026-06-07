@@ -31,6 +31,25 @@ pub fn visual_length_terminates_non_sgr_csi_escape_test() {
   |> expect.to_equal(3)
 }
 
+pub fn visual_length_large_ascii_string_does_not_overflow_test() {
+  let text = string.repeat("a", 200_000)
+  align.visual_length(text)
+  |> expect.to_equal(200_000)
+}
+
+pub fn visual_length_ignores_osc_bel_sequence_test() {
+  align.visual_length("\u{001b}]0;window title\u{0007}abc")
+  |> expect.to_equal(3)
+}
+
+pub fn visual_length_ignores_osc_st_sequence_test() {
+  let open = "\u{001b}]8;;https://example.com\u{001b}\\"
+  let close = "\u{001b}]8;;\u{001b}\\"
+
+  align.visual_length(open <> "link" <> close)
+  |> expect.to_equal(4)
+}
+
 pub fn pad_right_extends_to_width_test() {
   align.pad_right("ab", 5)
   |> expect.to_equal("ab   ")
@@ -125,6 +144,20 @@ pub fn truncate_closes_unclosed_sgr_before_ellipsis_test() {
   |> expect.to_equal(opening <> "abc\u{001b}[0m…")
 }
 
+pub fn truncate_osc_hyperlink_counts_only_visible_text_test() {
+  let open = "\u{001b}]8;;https://example.com\u{001b}\\"
+  let close = "\u{001b}]8;;\u{001b}\\"
+  let result =
+    align.truncate(open <> "abcdef" <> close, width: 4, ellipsis: "…")
+
+  expect.to_be_true(string.contains(result, open))
+  expect.to_be_true(string.contains(result, close))
+  align.visual_length(result)
+  |> expect.to_equal(4)
+  strip_terminal_escapes(result)
+  |> expect.to_equal("abc…")
+}
+
 pub fn wrap_words_test() {
   align.wrap("hello world from spruce", 11)
   |> expect.to_equal("hello world\nfrom spruce")
@@ -159,6 +192,20 @@ pub fn wrap_preserves_ansi_escape_sequences_test() {
   |> expect.to_equal(red <> "\nblue")
 }
 
+pub fn wrap_osc_hyperlink_counts_only_visible_text_test() {
+  let open = "\u{001b}]8;;https://example.com\u{001b}\\"
+  let close = "\u{001b}]8;;\u{001b}\\"
+  let wrapped = align.wrap(open <> "abcdef" <> close, 3)
+
+  expect.to_be_true(string.contains(wrapped, open))
+  expect.to_be_true(string.contains(wrapped, close))
+  strip_terminal_escapes(wrapped)
+  |> expect.to_equal("abc\ndef")
+
+  string.split(wrapped, "\n")
+  |> list.each(fn(line) { expect.to_be_true(align.visual_length(line) <= 3) })
+}
+
 pub fn wrap_width_zero_returns_input_test() {
   align.wrap("hello world", 0)
   |> expect.to_equal("hello world")
@@ -182,7 +229,7 @@ pub fn wrap_hard_wrap_styled_word_keeps_escapes_intact_test() {
 
   // No information is lost: stripping ANSI and removing the inserted newlines
   // reconstructs exactly the original visible text.
-  strip_ansi(wrapped)
+  strip_terminal_escapes(wrapped)
   |> string.replace("\n", "")
   |> expect.to_equal("abcdefghijklmnopqrstuvwxyz")
 
@@ -207,20 +254,73 @@ fn escapes_well_formed(chars: List(String), in_escape: Bool) -> Bool {
   }
 }
 
-fn strip_ansi(text: String) -> String {
-  strip_ansi_loop(string.to_graphemes(text), False, "")
+type EscapeState {
+  NormalText
+  EscapeStart
+  CsiEscape
+  OscEscape
+  OscEscapeAfterEsc
 }
 
-fn strip_ansi_loop(
+fn strip_terminal_escapes(text: String) -> String {
+  strip_terminal_escapes_loop(string.to_graphemes(text), NormalText, "")
+}
+
+fn strip_terminal_escapes_loop(
   chars: List(String),
-  in_escape: Bool,
+  state: EscapeState,
   acc: String,
 ) -> String {
-  case chars, in_escape {
-    [], _ -> acc
-    ["\u{001b}", ..rest], _ -> strip_ansi_loop(rest, True, acc)
-    ["m", ..rest], True -> strip_ansi_loop(rest, False, acc)
-    [_, ..rest], True -> strip_ansi_loop(rest, True, acc)
-    [char, ..rest], False -> strip_ansi_loop(rest, False, acc <> char)
+  case chars {
+    [] -> acc
+    [char, ..rest] ->
+      case state {
+        NormalText ->
+          case char {
+            "\u{001b}" -> strip_terminal_escapes_loop(rest, EscapeStart, acc)
+            _ -> strip_terminal_escapes_loop(rest, NormalText, acc <> char)
+          }
+
+        EscapeStart ->
+          case char {
+            "[" -> strip_terminal_escapes_loop(rest, CsiEscape, acc)
+            "]" -> strip_terminal_escapes_loop(rest, OscEscape, acc)
+            "\u{001b}" -> strip_terminal_escapes_loop(rest, EscapeStart, acc)
+            _ -> strip_terminal_escapes_loop(rest, NormalText, acc)
+          }
+
+        CsiEscape ->
+          case is_csi_final(char) {
+            True -> strip_terminal_escapes_loop(rest, NormalText, acc)
+            False -> strip_terminal_escapes_loop(rest, CsiEscape, acc)
+          }
+
+        OscEscape ->
+          case char {
+            "\u{0007}" -> strip_terminal_escapes_loop(rest, NormalText, acc)
+            "\u{001b}" ->
+              strip_terminal_escapes_loop(rest, OscEscapeAfterEsc, acc)
+            _ -> strip_terminal_escapes_loop(rest, OscEscape, acc)
+          }
+
+        OscEscapeAfterEsc ->
+          case char {
+            "\\" -> strip_terminal_escapes_loop(rest, NormalText, acc)
+            "\u{0007}" -> strip_terminal_escapes_loop(rest, NormalText, acc)
+            "\u{001b}" ->
+              strip_terminal_escapes_loop(rest, OscEscapeAfterEsc, acc)
+            _ -> strip_terminal_escapes_loop(rest, OscEscape, acc)
+          }
+      }
+  }
+}
+
+fn is_csi_final(grapheme: String) -> Bool {
+  case string.to_utf_codepoints(grapheme) {
+    [] -> False
+    [codepoint, ..] -> {
+      let codepoint = string.utf_codepoint_to_int(codepoint)
+      codepoint >= 0x40 && codepoint <= 0x7e
+    }
   }
 }

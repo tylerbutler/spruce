@@ -27,24 +27,24 @@ const runtimeAlt: Record<string, string> = {
 
 const modules: Array<[string, string]> = [
   ["spruce", "The render context: color level, background, indent depth."],
-  ["spruce/style", "Composable text styling: named, RGB, hex, 256, adaptive."],
-  ["spruce/block", "Padding, margin, sizing, alignment, per-side borders."],
-  ["spruce/symbol", "Named glyphs with automatic ASCII fallbacks."],
-  ["spruce/palette", "Deterministic hash colors from any string."],
   ["spruce/align", "ANSI-aware visual length and padding."],
-  ["spruce/layout", "Compose multi-line text blocks together."],
+  ["spruce/block", "Padding, margin, sizing, alignment, per-side borders."],
   ["spruce/box", "Boxed output with per-side borders and colors."],
-  ["spruce/table", "Widths, borders, separators, and cell wrapping."],
-  ["spruce/list", "Bulleted and ordered lists with arbitrary nesting."],
-  ["spruce/tree", "Tree-structured output with Unicode or ASCII."],
-  ["spruce/group", "Depth-in-context grouping and indentation."],
-  ["spruce/output", "Pipeable, buffered output composition."],
-  ["spruce/message", "Semantic one-liners with label, badge, or simple style."],
-  ["spruce/severity", "Generic severity and status labels and badges."],
   ["spruce/details", "Key and value detail rendering."],
-  ["spruce/line", "Compact, single-line terminal log composition."],
-  ["spruce/markdown", "Markdown to ANSI, in the style of Glamour."],
+  ["spruce/group", "Depth-in-context grouping and indentation."],
   ["spruce/highlight", "Syntax highlighting for fenced code blocks."],
+  ["spruce/layout", "Compose multi-line text blocks together."],
+  ["spruce/line", "Compact, single-line terminal log composition."],
+  ["spruce/list", "Bulleted and ordered lists with arbitrary nesting."],
+  ["spruce/markdown", "Markdown to ANSI, in the style of Glamour."],
+  ["spruce/message", "Semantic one-liners with label, badge, or simple style."],
+  ["spruce/output", "Pipeable, buffered output composition."],
+  ["spruce/palette", "Deterministic hash colors from any string."],
+  ["spruce/severity", "Generic severity and status labels and badges."],
+  ["spruce/style", "Composable text styling: named, RGB, hex, 256, adaptive."],
+  ["spruce/symbol", "Named glyphs with automatic ASCII fallbacks."],
+  ["spruce/table", "Widths, borders, separators, and cell wrapping."],
+  ["spruce/tree", "Tree-structured output with Unicode or ASCII."],
 ];
 
 function Nav() {
@@ -108,7 +108,7 @@ function Runtimes() {
   return (
     <section className="runtimes">
       <div className="wrap runtimes-inner">
-        <p>Compiles to Erlang and JavaScript. No native extensions, no FFI.</p>
+        <p>Compiles to Erlang and JavaScript. No native extensions required.</p>
         <div className="logos">
           {runtimes.map((slug) => (
             <span key={slug}>
@@ -310,7 +310,7 @@ function Modules() {
     <section className="section" id="modules" style={{ paddingTop: 0 }}>
       <div className="wrap">
         <Reveal className="section-head">
-          <h2>Eighteen focused modules.</h2>
+          <h2>Focused modules for every terminal job.</h2>
           <p className="lead">
             Import only what you print. Each module owns one job and nothing
             more.
