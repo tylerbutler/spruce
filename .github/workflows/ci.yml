@@ -6,6 +6,12 @@ on:
   pull_request:
   workflow_call:
 
+# Latest supported Gleam version. The OTP/Node sweep lanes pin to this so the
+# "latest" value lives in one place; the test-gleam-versions lane sweeps the
+# full supported range (1.11 -> this) instead.
+env:
+  GLEAM_LATEST: "1.16.0"
+
 jobs:
   # Target-independent checks: run once, not per version.
   checks:
@@ -42,7 +48,7 @@ jobs:
         uses: ./.github/actions/setup
         with:
           otp-version: ${{ matrix.otp }}
-          gleam-version: "1.16.0"
+          gleam-version: ${{ env.GLEAM_LATEST }}
 
       - name: Build (warnings as errors)
         run: gleam build --target erlang --warnings-as-errors
@@ -66,7 +72,7 @@ jobs:
         uses: ./.github/actions/setup
         with:
           otp-version: "27"
-          gleam-version: "1.16.0"
+          gleam-version: ${{ env.GLEAM_LATEST }}
           node: "true"
           node-version: ${{ matrix.node }}
 
@@ -74,4 +80,39 @@ jobs:
         run: gleam build --target javascript --warnings-as-errors
 
       - name: Run tests
+        run: gleam test --target javascript
+
+  # Supported Gleam versions: sweep every minor from the documented floor
+  # (gleam.toml: ">= 1.11.0") through the latest supported release, validating
+  # both targets on each. Distinct from the OTP/Node sweep lanes above, which
+  # fix Gleam to ${{ env.GLEAM_LATEST }} and vary the runtime instead.
+  test-gleam-versions:
+    runs-on: ubuntu-latest
+    name: Test Gleam ${{ matrix.gleam }} (both targets)
+    strategy:
+      fail-fast: false
+      matrix:
+        # Latest patch of each supported minor, 1.11 (floor) -> latest.
+        gleam: ["1.11.1", "1.12.0", "1.13.0", "1.14.0", "1.15.4", "1.16.0"]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          otp-version: "27"
+          gleam-version: ${{ matrix.gleam }}
+          node: "true"
+          node-version: "22.22.3"
+
+      - name: Build Erlang (warnings as errors)
+        run: gleam build --target erlang --warnings-as-errors
+
+      - name: Test Erlang
+        run: gleam test --target erlang
+
+      - name: Build JavaScript (warnings as errors)
+        run: gleam build --target javascript --warnings-as-errors
+
+      - name: Test JavaScript
         run: gleam test --target javascript
