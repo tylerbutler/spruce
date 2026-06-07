@@ -18,7 +18,7 @@ kinds:
       auto: patch
     - label: Changed
       auto: patch
-    - label: MajorRelease
+    - label: Major Release
       auto: major
     - label: Reverted
       auto: patch

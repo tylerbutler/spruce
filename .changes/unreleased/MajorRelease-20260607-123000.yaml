@@ -1,0 +1,3 @@
+kind: Major Release
+body: 'First stable release of spruce — a logging-agnostic terminal-UI kit for Gleam. It renders styled terminal output (colors, boxes, tables, lists, trees, semantic message lines, icons, deterministic hash-colors, ANSI-aware alignment, and grouped/indented output) that automatically respects the terminal''s color support. Render functions are pure, IO-free string builders that take an explicit Spruce context and behave identically on Erlang and JavaScript. ColorLevel (NoColor, Basic, Ansi256, TrueColor) is a stable 1.x API contract.'
+time: 2026-06-07T12:30:00.000000-07:00

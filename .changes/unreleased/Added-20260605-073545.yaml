@@ -1,3 +1,3 @@
 kind: Added
-body: 'Initial render modules: style, symbol, palette, align, box, group, and message — a terminal-UI kit built on gleam_community_ansi and tty.'
+body: 'Initial render modules: style, symbol, palette, align, box (with per-side borders and border colors via box.border_sides/box.border_colors), group, and message — a terminal-UI kit built on gleam_community_ansi and tty.'
 time: 2026-06-05T07:35:45.253527717-07:00
