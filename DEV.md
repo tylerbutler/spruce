@@ -11,7 +11,7 @@
 - `just build` — compile the package
 - `just test` — run the Erlang and JavaScript test suites
 - `just format` — format the source and test files
-- `just lint` — check formatting
+- `just lint` — check formatting and run glinter
 - `just docs` — build the Hex documentation
 - `just ci` — run the full validation workflow
 
@@ -30,7 +30,7 @@
 
 ## Public API expectations
 
-- Keep the documented public API in `src/spruce.gleam` stable across minor releases.
+- Keep the README-documented public modules (`spruce` and `spruce/*`) stable across minor releases.
 - `ColorLevel` is a closed 1.x API contract (`NoColor`, `Basic`, `Ansi256`, `TrueColor`).
 - Prefer additive changes over breaking changes for 1.x.
 - If a behavior change is necessary, document it in the changelog and update the README examples when needed.

@@ -108,7 +108,7 @@ function Runtimes() {
   return (
     <section className="runtimes">
       <div className="wrap runtimes-inner">
-        <p>Compiles to Erlang and JavaScript. No native extensions, no FFI.</p>
+        <p>Compiles to Erlang and JavaScript. No native extensions required.</p>
         <div className="logos">
           {runtimes.map((slug) => (
             <span key={slug}>
@@ -310,7 +310,7 @@ function Modules() {
     <section className="section" id="modules" style={{ paddingTop: 0 }}>
       <div className="wrap">
         <Reveal className="section-head">
-          <h2>Eighteen focused modules.</h2>
+          <h2>Focused modules for every terminal job.</h2>
           <p className="lead">
             Import only what you print. Each module owns one job and nothing
             more.

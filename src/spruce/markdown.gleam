@@ -568,7 +568,24 @@ fn parse_fence_open(line: String) -> Option(Fence) {
 
 fn closes_fence(line: String, fence: Fence) -> Bool {
   let Fence(marker:, length:) = fence
-  count_prefix(string.trim(line), marker, 0) >= length
+  case trim_fence_close_candidate(line, 0) {
+    Some(candidate) -> count_prefix(candidate, marker, 0) >= length
+    None -> False
+  }
+}
+
+fn trim_fence_close_candidate(line: String, spaces: Int) -> Option(String) {
+  case string.pop_grapheme(line) {
+    Ok(#(" ", rest)) ->
+      case spaces < 3 {
+        True -> trim_fence_close_candidate(rest, spaces + 1)
+        False -> None
+      }
+    Ok(#("\t", _)) -> None
+    Ok(_) -> Some(string.trim(line))
+    // nolint: thrown_away_error -- empty input cannot close a fence
+    Error(_) -> None
+  }
 }
 
 fn count_prefix(input: String, marker: String, count: Int) -> Int {

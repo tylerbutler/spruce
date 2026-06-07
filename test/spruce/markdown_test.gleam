@@ -179,6 +179,18 @@ pub fn astro_directive_inside_fenced_code_stays_literal_test() {
   expect.to_be_false(string.contains(out, "[!NOTE]"))
 }
 
+pub fn astro_directive_inside_fenced_code_with_indented_fence_marker_stays_literal_test() {
+  let out =
+    markdown.render(
+      spruce.no_color(),
+      "```md\n    ```\n:::note\nLiteral directive body.\n:::\n```",
+    )
+
+  expect.to_be_true(string.contains(out, ":::note"))
+  expect.to_be_true(string.contains(out, "Literal directive body."))
+  expect.to_be_false(string.contains(out, "[!NOTE]"))
+}
+
 pub fn astro_directive_inside_indented_code_stays_literal_test() {
   let out =
     markdown.render(
