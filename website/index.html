@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/webp" href="./spruce.webp" />
+    <meta name="color-scheme" content="dark light" />
+    <title>spruce: a terminal UI kit for Gleam</title>
+    <meta
+      name="description"
+      content="spruce renders styled text, boxes, tables, trees, and semantic messages for the terminal, and adapts to the color support of any terminal. Pure, testable, and runs on Erlang and JavaScript."
+    />
+    <meta property="og:title" content="spruce: a terminal UI kit for Gleam" />
+    <meta
+      property="og:description"
+      content="Styled terminal output that adapts to whatever color the terminal supports. Runs on Erlang and JavaScript."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./spruce.png" />
+    <script>
+      // Set theme before paint to avoid a flash.
+      (function () {
+        try {
+          var t = localStorage.getItem("spruce-theme");
+          var d = document.documentElement;
+          d.classList.remove("dark");
+          if (t === "light") d.classList.add("light");
+          else if (t === "dark") d.classList.add("dark");
+          else if (window.matchMedia("(prefers-color-scheme: light)").matches)
+            d.classList.add("light");
+          else d.classList.add("dark");
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./src/main.tsx"></script>
+  </body>
+</html>
