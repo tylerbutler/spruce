@@ -285,7 +285,8 @@ fn render_fg_rgb(
 ) -> String {
   case color_level {
     tty.TrueColor -> ansi.hex(text, rgb_to_hex(rgb))
-    tty.Ansi256 | tty.Basic | tty.NoColor ->
+    tty.Ansi256 -> render_fg_ansi256_sequence(text, rgb_to_ansi256_index(rgb))
+    tty.Basic | tty.NoColor ->
       render_fg_color(text, nearest_basic_color(rgb), color_level)
   }
 }
@@ -297,7 +298,8 @@ fn render_bg_rgb(
 ) -> String {
   case color_level {
     tty.TrueColor -> ansi.bg_hex(text, rgb_to_hex(rgb))
-    tty.Ansi256 | tty.Basic | tty.NoColor ->
+    tty.Ansi256 -> render_bg_ansi256_sequence(text, rgb_to_ansi256_index(rgb))
+    tty.Basic | tty.NoColor ->
       render_bg_color(text, nearest_basic_color(rgb), color_level)
   }
 }
@@ -310,7 +312,8 @@ fn render_fg_ansi256(
   let rgb = ansi256_to_rgb(index)
   case color_level {
     tty.TrueColor -> ansi.hex(text, rgb_to_hex(rgb))
-    tty.Ansi256 | tty.Basic | tty.NoColor ->
+    tty.Ansi256 -> render_fg_ansi256_sequence(text, index)
+    tty.Basic | tty.NoColor ->
       render_fg_color(text, nearest_basic_color(rgb), color_level)
   }
 }
@@ -323,9 +326,18 @@ fn render_bg_ansi256(
   let rgb = ansi256_to_rgb(index)
   case color_level {
     tty.TrueColor -> ansi.bg_hex(text, rgb_to_hex(rgb))
-    tty.Ansi256 | tty.Basic | tty.NoColor ->
+    tty.Ansi256 -> render_bg_ansi256_sequence(text, index)
+    tty.Basic | tty.NoColor ->
       render_bg_color(text, nearest_basic_color(rgb), color_level)
   }
+}
+
+fn render_fg_ansi256_sequence(text: String, index: Int) -> String {
+  "\u{001b}[38;5;" <> int.to_string(index) <> "m" <> text <> "\u{001b}[39m"
+}
+
+fn render_bg_ansi256_sequence(text: String, index: Int) -> String {
+  "\u{001b}[48;5;" <> int.to_string(index) <> "m" <> text <> "\u{001b}[49m"
 }
 
 fn choose_complete_color(
@@ -498,6 +510,39 @@ fn basic_color_rgb(color: Color) -> RgbValue {
     Complete(ansi, _, _) -> basic_color_rgb(ansi)
     Adaptive(_, dark) -> basic_color_rgb(dark)
   }
+}
+
+fn rgb_to_ansi256_index(rgb: RgbValue) -> Int {
+  let rgb = clamp_rgb(rgb)
+  let cube_index = rgb_to_ansi256_cube_index(rgb)
+  let grayscale_index = rgb_to_ansi256_grayscale_index(rgb)
+  let cube_rgb = ansi256_to_rgb(cube_index)
+  let grayscale_rgb = ansi256_to_rgb(grayscale_index)
+
+  case distance_squared(grayscale_rgb, rgb) < distance_squared(cube_rgb, rgb) {
+    True -> grayscale_index
+    False -> cube_index
+  }
+}
+
+fn rgb_to_ansi256_cube_index(rgb: RgbValue) -> Int {
+  let RgbValue(r, g, b) = clamp_rgb(rgb)
+  16
+  + 36
+  * quantize_ansi256_cube_channel(r)
+  + 6
+  * quantize_ansi256_cube_channel(g)
+  + quantize_ansi256_cube_channel(b)
+}
+
+fn rgb_to_ansi256_grayscale_index(rgb: RgbValue) -> Int {
+  let RgbValue(r, g, b) = clamp_rgb(rgb)
+  let average = { r + g + b } / 3
+  232 + int.clamp({ average - 8 + 5 } / 10, max: 23, min: 0)
+}
+
+fn quantize_ansi256_cube_channel(value: Int) -> Int {
+  { clamp_component(value) * 5 + 127 } / 255
 }
 
 fn render_bold(text: String, enabled: Bool) -> String {

@@ -167,6 +167,30 @@ pub fn astro_directive_multi_paragraph_test() {
   expect.to_be_true(string.contains(out, "Second paragraph."))
 }
 
+pub fn astro_directive_inside_fenced_code_stays_literal_test() {
+  let out =
+    markdown.render(
+      spruce.no_color(),
+      "```md\n:::note\nLiteral directive body.\n:::\n```",
+    )
+
+  expect.to_be_true(string.contains(out, ":::note"))
+  expect.to_be_true(string.contains(out, "Literal directive body."))
+  expect.to_be_false(string.contains(out, "[!NOTE]"))
+}
+
+pub fn astro_directive_inside_indented_code_stays_literal_test() {
+  let out =
+    markdown.render(
+      spruce.no_color(),
+      "    :::note\n    Literal directive body.\n    :::",
+    )
+
+  expect.to_be_true(string.contains(out, ":::note"))
+  expect.to_be_true(string.contains(out, "Literal directive body."))
+  expect.to_be_false(string.contains(out, "[!NOTE]"))
+}
+
 pub fn non_directive_colon_fence_untouched_test() {
   let out = markdown.render(spruce.no_color(), ":::unknownthing\nbody\n:::")
 

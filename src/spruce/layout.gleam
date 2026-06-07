@@ -116,10 +116,22 @@ fn pad(text: String, width: Int, pos: Pos) -> String {
 }
 
 fn flatten_lines(blocks: List(String)) -> List(String) {
+  flatten_lines_loop(blocks, [])
+  |> list.reverse
+}
+
+fn flatten_lines_loop(blocks: List(String), acc: List(String)) -> List(String) {
   case blocks {
-    [] -> []
+    [] -> acc
     [block, ..rest] ->
-      list.append(string.split(block, "\n"), flatten_lines(rest))
+      flatten_lines_loop(rest, prepend_reversed(string.split(block, "\n"), acc))
+  }
+}
+
+fn prepend_reversed(lines: List(String), acc: List(String)) -> List(String) {
+  case lines {
+    [] -> acc
+    [line, ..rest] -> prepend_reversed(rest, [line, ..acc])
   }
 }
 
@@ -130,17 +142,30 @@ fn max_visual_width(lines: List(String)) -> Int {
 }
 
 fn max_block_height(blocks: List(Block)) -> Int {
+  max_block_height_loop(blocks, 0)
+}
+
+fn max_block_height_loop(blocks: List(Block), acc: Int) -> Int {
   case blocks {
-    [] -> 0
+    [] -> acc
     [Block(height: height, ..), ..rest] ->
-      int.max(height, max_block_height(rest))
+      max_block_height_loop(rest, int.max(acc, height))
   }
 }
 
 fn repeat_line(line: String, times: Int) -> List(String) {
+  repeat_line_loop(line, times, [])
+  |> list.reverse
+}
+
+fn repeat_line_loop(
+  line: String,
+  times: Int,
+  acc: List(String),
+) -> List(String) {
   case times <= 0 {
-    True -> []
-    False -> [line, ..repeat_line(line, times - 1)]
+    True -> acc
+    False -> repeat_line_loop(line, times - 1, [line, ..acc])
   }
 }
 

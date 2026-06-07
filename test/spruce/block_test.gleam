@@ -78,6 +78,16 @@ pub fn block_content_style_is_color_gated_test() {
   |> expect.to_be_true
 }
 
+pub fn block_background_fills_padding_ring_test() {
+  let options =
+    block.new() |> block.background(style.Blue) |> block.padding(1, 1, 1, 1)
+
+  block.render(spruce.with_color_level(tty.TrueColor), "hi", options)
+  |> expect.to_equal(
+    "\u{001b}[44m    \u{001b}[49m\n\u{001b}[44m hi \u{001b}[49m\n\u{001b}[44m    \u{001b}[49m",
+  )
+}
+
 pub fn block_per_side_border_colors_are_applied_test() {
   let sp = spruce.with_color_level(tty.TrueColor)
   let options =

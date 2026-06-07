@@ -219,8 +219,9 @@ pub fn render(sp: Spruce, content: String, options: BoxOptions) -> String {
     content
     |> wrap_content(config.width)
     |> string.split("\n")
-  let title_width = align.visual_length(config.title)
-  let title_min_width = case config.title {
+  let title = sanitize_title(config.title)
+  let title_width = align.visual_length(title)
+  let title_min_width = case title {
     "" -> 0
     _ -> title_width + 3
   }
@@ -277,14 +278,7 @@ pub fn render(sp: Spruce, content: String, options: BoxOptions) -> String {
   let boxed =
     case sides.top {
       True -> [
-        render_top(
-          config.title,
-          title_width,
-          inner_width,
-          sides,
-          chars,
-          paint_top,
-        ),
+        render_top(title, title_width, inner_width, sides, chars, paint_top),
         ..body
       ]
       False -> body
@@ -492,6 +486,13 @@ fn wrap_content(content: String, width: Option(Int)) -> String {
     Some(width) if width > 0 -> align.wrap(content, width)
     _ -> content
   }
+}
+
+fn sanitize_title(title: String) -> String {
+  title
+  |> string.replace(each: "\r\n", with: " ")
+  |> string.replace(each: "\n", with: " ")
+  |> string.replace(each: "\r", with: " ")
 }
 
 fn border_painter(sp: Spruce, color: style.Color) -> fn(String) -> String {

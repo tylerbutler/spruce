@@ -329,9 +329,9 @@ fn render_cell_lines(
     [width, ..rest] -> {
       let lines =
         cell_at(row, col_index)
-        |> apply_style(sp, maybe_style, row_index, col_index)
         |> wrap_cell(width)
         |> string.split("\n")
+        |> list.map(apply_style(_, sp, maybe_style, row_index, col_index))
 
       [
         lines,

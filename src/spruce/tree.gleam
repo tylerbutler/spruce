@@ -151,7 +151,7 @@ fn follow_token(
   depth: Int,
   last: Bool,
 ) -> String {
-  spaces_like(branch_token(sp, branches, depth, last))
+  ancestor_token(sp, branches, depth, last)
 }
 
 fn ancestor_token(

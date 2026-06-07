@@ -1,3 +1,5 @@
+import gleam/list
+import gleam/string
 import spruce
 import spruce/internal/layout as internal_layout
 import spruce/layout
@@ -51,4 +53,23 @@ pub fn place_centers_content_horizontally_and_places_at_bottom_test() {
 pub fn place_preserves_content_larger_than_region_test() {
   layout.place(2, 1, layout.End, layout.End, "abcd\nef")
   |> expect.to_equal("abcd\n  ef")
+}
+
+pub fn layout_handles_large_flattened_and_repeated_lines_test() {
+  let count = 20_000
+  let blocks = list.repeat("x", times: count)
+
+  layout.join_vertical(layout.Start, blocks)
+  |> string.split("\n")
+  |> list.length
+  |> expect.to_equal(count)
+
+  let tall_block =
+    list.repeat("y", times: count)
+    |> string.join("\n")
+
+  layout.join_horizontal(layout.End, ["x", tall_block])
+  |> string.split("\n")
+  |> list.length
+  |> expect.to_equal(count)
 }

@@ -31,7 +31,7 @@ for now.
   state every render function consults (color level and indent depth). Color
   level and stream detection are delegated to the `tty` package; styling escape
   codes come from `gleam_community_ansi`. spruce itself has **no FFI**.
-- Planned modules (see the design spec):
+- Implemented public modules include:
   - `spruce/style` — composable `Style` builder, gated by color level
   - `spruce/symbol` — icon/glyph set with ASCII fallbacks
   - `spruce/palette` — deterministic hash color from a string

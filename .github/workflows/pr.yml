@@ -5,6 +5,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
+  contents: read
   pull-requests: write
 
 jobs:
@@ -18,7 +19,7 @@ jobs:
 
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # ratchet:actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "22.22.3"
 
       - name: Install commitlint
         run: npm install --save-dev @commitlint/cli @commitlint/config-conventional

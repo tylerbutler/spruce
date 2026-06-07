@@ -29,6 +29,13 @@ pub fn details_quote_spaces_equals_quotes_and_control_chars_test() {
   )
 }
 
+pub fn details_quote_and_escape_tabs_test() {
+  details.new()
+  |> details.add("field", "a\tb")
+  |> details.render(spruce.no_color(), _)
+  |> expect.to_equal("field=\"a\\tb\"")
+}
+
 pub fn details_can_filter_internal_keys_test() {
   details.new()
   |> details.add("_scope_depth", "2")

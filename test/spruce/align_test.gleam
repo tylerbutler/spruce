@@ -16,9 +16,29 @@ pub fn visual_length_ignores_ansi_test() {
   |> expect.to_equal(5)
 }
 
+pub fn visual_length_counts_cjk_as_two_columns_test() {
+  align.visual_length("日本")
+  |> expect.to_equal(4)
+}
+
+pub fn visual_length_counts_zero_width_graphemes_as_zero_test() {
+  align.visual_length("e\u{0301}\u{200b}\u{0301}")
+  |> expect.to_equal(1)
+}
+
+pub fn visual_length_terminates_non_sgr_csi_escape_test() {
+  align.visual_length("\u{001b}[2Jabc")
+  |> expect.to_equal(3)
+}
+
 pub fn pad_right_extends_to_width_test() {
   align.pad_right("ab", 5)
   |> expect.to_equal("ab   ")
+}
+
+pub fn pad_right_uses_wide_character_width_test() {
+  align.pad_right("日", 4)
+  |> expect.to_equal("日  ")
 }
 
 pub fn pad_right_uses_visual_length_test() {
@@ -98,6 +118,13 @@ pub fn truncate_ansi_text_counts_visible_columns_test() {
   |> expect.to_equal(5)
 }
 
+pub fn truncate_closes_unclosed_sgr_before_ellipsis_test() {
+  let opening = "\u{001b}[31m"
+
+  align.truncate(opening <> "abcdef", 4, "…")
+  |> expect.to_equal(opening <> "abc\u{001b}[0m…")
+}
+
 pub fn wrap_words_test() {
   align.wrap("hello world from spruce", 11)
   |> expect.to_equal("hello world\nfrom spruce")
@@ -111,6 +138,18 @@ pub fn wrap_preserves_spaces_when_no_wrap_is_needed_test() {
 pub fn wrap_hard_wraps_long_words_test() {
   align.wrap("abcdefgh", 3)
   |> expect.to_equal("abc\ndef\ngh")
+}
+
+pub fn wrap_keeps_wide_character_when_width_is_narrower_than_character_test() {
+  align.wrap("日本", 1)
+  |> expect.to_equal("日\n本")
+}
+
+pub fn wrap_closes_unclosed_sgr_before_inserted_newline_test() {
+  let opening = "\u{001b}[31m"
+
+  align.wrap(opening <> "abcdef", 3)
+  |> expect.to_equal(opening <> "abc\u{001b}[0m\ndef")
 }
 
 pub fn wrap_preserves_ansi_escape_sequences_test() {

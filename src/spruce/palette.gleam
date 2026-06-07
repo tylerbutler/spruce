@@ -22,6 +22,7 @@
 //// }
 //// ```
 
+import gleam/int
 import gleam/list
 import gleam/string
 import spruce.{type Spruce}
@@ -39,19 +40,30 @@ pub fn hash(sp: Spruce, text: String) -> Style {
   case spruce.supports_color(sp) {
     False -> style.new()
     True -> {
-      let sum =
-        text
-        |> string.to_utf_codepoints
-        |> list.fold(0, fn(acc, cp) { acc + string.utf_codepoint_to_int(cp) })
-
       let colors = palette_for(spruce.color_level(sp))
-      let index = sum % list.length(colors)
+      let index = hash_text(text) % list.length(colors)
       let color = case list.drop(colors, index) {
         [c, ..] -> c
         [] -> style.Cyan
       }
       style.new() |> style.fg(color)
     }
+  }
+}
+
+fn hash_text(text: String) -> Int {
+  text
+  |> string.to_utf_codepoints
+  |> list.fold(5381, fn(hash, cp) {
+    let next = hash * 33 + string.utf_codepoint_to_int(cp)
+    bounded_modulo(next, 2_147_483_647)
+  })
+}
+
+fn bounded_modulo(value: Int, modulus: Int) -> Int {
+  case int.modulo(value, by: modulus) {
+    Ok(value) -> value
+    Error(Nil) -> 0
   }
 }
 

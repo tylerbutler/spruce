@@ -58,6 +58,7 @@ escape-free, deterministic strings.
 - `spruce/severity` — generic severity/status labels and badges
 - `spruce/details` — key-value detail rendering
 - `spruce/line` — compact terminal line composition
+- `spruce/highlight` — smalto-backed syntax highlighting with adaptive light/dark themes
 - `spruce/markdown` — Markdown-to-ANSI rendering (Glamour-style), built on `mork`
 
 ## Example

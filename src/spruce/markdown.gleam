@@ -470,26 +470,97 @@ fn alert_properties(kind: AlertKind) -> #(style.Color, String, String) {
 fn expand_directives(markdown: String) -> String {
   markdown
   |> string.split("\n")
-  |> expand_lines(False)
+  |> expand_lines(False, None)
   |> string.join("\n")
 }
 
-fn expand_lines(lines: List(String), in_directive: Bool) -> List(String) {
+type Fence {
+  Fence(marker: String, length: Int)
+}
+
+fn expand_lines(
+  lines: List(String),
+  in_directive: Bool,
+  fence: Option(Fence),
+) -> List(String) {
   case lines {
     [] -> []
     [line, ..rest] ->
       case in_directive {
         True ->
           case is_directive_close(line) {
-            True -> expand_lines(rest, False)
-            False -> [quote_line(line), ..expand_lines(rest, True)]
+            True -> expand_lines(rest, False, fence)
+            False -> [quote_line(line), ..expand_lines(rest, True, fence)]
           }
+        False -> expand_line_outside_directive(line, rest, fence)
+      }
+  }
+}
+
+fn expand_line_outside_directive(
+  line: String,
+  rest: List(String),
+  fence: Option(Fence),
+) -> List(String) {
+  case fence {
+    Some(fence) -> {
+      let next_fence = case closes_fence(line, fence) {
+        True -> None
+        False -> Some(fence)
+      }
+      [line, ..expand_lines(rest, False, next_fence)]
+    }
+    None ->
+      case is_indented_code_line(line) {
+        True -> [line, ..expand_lines(rest, False, None)]
         False ->
-          case parse_directive_open(line) {
-            Ok(opener) -> [opener, ..expand_lines(rest, True)]
-            Error(_) -> [line, ..expand_lines(rest, False)]
+          case parse_fence_open(line) {
+            Some(fence) -> [line, ..expand_lines(rest, False, Some(fence))]
+            None ->
+              case parse_directive_open(line) {
+                Ok(opener) -> [opener, ..expand_lines(rest, True, None)]
+                Error(_) -> [line, ..expand_lines(rest, False, None)]
+              }
           }
       }
+  }
+}
+
+fn is_indented_code_line(line: String) -> Bool {
+  string.starts_with(line, "    ") || string.starts_with(line, "\t")
+}
+
+fn parse_fence_open(line: String) -> Option(Fence) {
+  let trimmed = string.trim(line)
+  case string.pop_grapheme(trimmed) {
+    Ok(#(marker, _)) ->
+      case marker {
+        "`" | "~" -> {
+          let length = count_prefix(trimmed, marker, 0)
+          case length >= 3 {
+            True -> Some(Fence(marker:, length:))
+            False -> None
+          }
+        }
+        _ -> None
+      }
+    Error(_) -> None
+  }
+}
+
+fn closes_fence(line: String, fence: Fence) -> Bool {
+  let Fence(marker:, length:) = fence
+  count_prefix(string.trim(line), marker, 0) >= length
+}
+
+fn count_prefix(input: String, marker: String, count: Int) -> Int {
+  case string.pop_grapheme(input) {
+    Ok(#(char, rest)) ->
+      case char == marker {
+        True -> count_prefix(rest, marker, count + 1)
+        False -> count
+      }
+    Error(_) -> count
   }
 }
 

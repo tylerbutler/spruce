@@ -48,8 +48,7 @@ fn escape_value(value: String) -> String {
     string.contains(value, " ")
     || string.contains(value, "=")
     || string.contains(value, "\"")
-    || string.contains(value, "\n")
-    || string.contains(value, "\r")
+    || contains_ascii_control(value)
 
   case needs_quoting {
     False -> value
@@ -58,10 +57,17 @@ fn escape_value(value: String) -> String {
         value
         |> string.replace(each: "\\", with: "\\\\")
         |> string.replace(each: "\"", with: "\\\"")
+        |> string.replace(each: "\t", with: "\\t")
         |> string.replace(each: "\n", with: "\\n")
         |> string.replace(each: "\r", with: "\\r")
 
       "\"" <> escaped <> "\""
     }
   }
+}
+
+fn contains_ascii_control(value: String) -> Bool {
+  value
+  |> string.to_utf_codepoints
+  |> list.any(fn(cp) { string.utf_codepoint_to_int(cp) < 32 })
 }

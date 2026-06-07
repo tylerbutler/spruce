@@ -50,7 +50,7 @@ jobs:
       - name: Run tests
         run: gleam test --target erlang
 
-  # JavaScript target: sweep Node across the supported range (claim: Node >= 20).
+  # JavaScript target: sweep Node across the supported range (claim: Node >= 20.19).
   # A fixed OTP only hosts the Gleam compiler; it does not affect JS output.
   test-javascript:
     runs-on: ubuntu-latest
@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ["20", "22", "24"]
+        node: ["20.19.6", "22.22.3", "24.16.0"]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
 

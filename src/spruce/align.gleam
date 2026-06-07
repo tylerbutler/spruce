@@ -17,7 +17,7 @@ type PieceKind {
 
 /// The visual length of a string, excluding ANSI escape codes.
 pub fn visual_length(text: String) -> Int {
-  case string.contains(text, "\u{001b}") {
+  case string.contains(text, "\u{001b}") || !is_ascii(text) {
     True -> count_visible(string.to_graphemes(text), False, 0)
     False -> string.length(text)
   }
@@ -27,10 +27,82 @@ fn count_visible(chars: List(String), in_escape: Bool, count: Int) -> Int {
   case chars {
     [] -> count
     ["\u{001b}", ..rest] -> count_visible(rest, True, count)
-    ["m", ..rest] if in_escape -> count_visible(rest, False, count)
-    [_, ..rest] if in_escape -> count_visible(rest, True, count)
-    [_, ..rest] -> count_visible(rest, False, count + 1)
+    ["[", ..rest] if in_escape -> count_visible(rest, True, count)
+    [char, ..rest] if in_escape ->
+      case is_escape_final(char) {
+        True -> count_visible(rest, False, count)
+        False -> count_visible(rest, True, count)
+      }
+    [char, ..rest] -> count_visible(rest, False, count + display_width(char))
   }
+}
+
+fn display_width(grapheme: String) -> Int {
+  case string.to_utf_codepoints(grapheme) {
+    [] -> 0
+    [codepoint, ..] -> {
+      let codepoint = string.utf_codepoint_to_int(codepoint)
+
+      case is_zero_width(codepoint) {
+        True -> 0
+        False ->
+          case is_wide(codepoint) {
+            True -> 2
+            False -> 1
+          }
+      }
+    }
+  }
+}
+
+fn is_ascii(text: String) -> Bool {
+  is_ascii_codepoints(string.to_utf_codepoints(text))
+}
+
+fn is_ascii_codepoints(codepoints) -> Bool {
+  case codepoints {
+    [] -> True
+    [codepoint, ..rest] ->
+      string.utf_codepoint_to_int(codepoint) < 0x80 && is_ascii_codepoints(rest)
+  }
+}
+
+fn is_escape_final(grapheme: String) -> Bool {
+  case string.to_utf_codepoints(grapheme) {
+    [] -> False
+    [codepoint, ..] ->
+      in_range(string.utf_codepoint_to_int(codepoint), 0x40, 0x7e)
+  }
+}
+
+fn is_zero_width(codepoint: Int) -> Bool {
+  in_range(codepoint, 0x0300, 0x036f)
+  || codepoint == 0x0489
+  || in_range(codepoint, 0x200b, 0x200f)
+  || codepoint == 0x200d
+  || in_range(codepoint, 0xfe00, 0xfe0f)
+  || codepoint == 0xfeff
+}
+
+fn is_wide(codepoint: Int) -> Bool {
+  in_range(codepoint, 0x1100, 0x115f)
+  || in_range(codepoint, 0x2e80, 0x303e)
+  || in_range(codepoint, 0x3041, 0x33ff)
+  || in_range(codepoint, 0x3400, 0x4dbf)
+  || in_range(codepoint, 0x4e00, 0x9fff)
+  || in_range(codepoint, 0xa000, 0xa4cf)
+  || in_range(codepoint, 0xac00, 0xd7a3)
+  || in_range(codepoint, 0xf900, 0xfaff)
+  || in_range(codepoint, 0xfe10, 0xfe19)
+  || in_range(codepoint, 0xfe30, 0xfe6f)
+  || in_range(codepoint, 0xff00, 0xff60)
+  || in_range(codepoint, 0xffe0, 0xffe6)
+  || in_range(codepoint, 0x1f300, 0x1faff)
+  || in_range(codepoint, 0x20000, 0x3fffd)
+}
+
+fn in_range(value: Int, first: Int, last: Int) -> Bool {
+  value >= first && value <= last
 }
 
 /// Pad `text` on the right with spaces until it reaches `width` visual columns.
@@ -103,7 +175,9 @@ pub fn truncate(text: String, width: Int, ellipsis: String) -> String {
 
           case ellipsis_width >= width {
             True -> take_visible(ellipsis, width)
-            False -> take_visible(text, width - ellipsis_width) <> ellipsis
+            False ->
+              close_open_sgr(take_visible(text, width - ellipsis_width))
+              <> ellipsis
           }
         }
       }
@@ -226,7 +300,7 @@ fn wrap_pieces(
 fn push_wrapped_line(line: String, lines: List(String)) -> List(String) {
   case trim_trailing_spaces(line) {
     "" -> lines
-    trimmed -> [trimmed, ..lines]
+    trimmed -> [close_open_sgr(trimmed), ..lines]
   }
 }
 
@@ -268,11 +342,14 @@ fn split_pieces_loop(
       split_pieces_loop(rest, True, current <> "\u{001b}", kind, pieces)
     }
 
-    ["m", ..rest] if in_escape ->
-      split_pieces_loop(rest, False, current <> "m", kind, pieces)
+    ["[", ..rest] if in_escape ->
+      split_pieces_loop(rest, True, current <> "[", kind, pieces)
 
     [char, ..rest] if in_escape ->
-      split_pieces_loop(rest, True, current <> char, kind, pieces)
+      case is_escape_final(char) {
+        True -> split_pieces_loop(rest, False, current <> char, kind, pieces)
+        False -> split_pieces_loop(rest, True, current <> char, kind, pieces)
+      }
 
     [" ", ..rest] -> {
       let #(current, kind, pieces) =
@@ -327,17 +404,118 @@ fn add_wrapped_chunks(
   case chunks {
     [] -> #("", 0, lines)
     [chunk] -> #(chunk, visual_length(chunk), lines)
-    [chunk, ..rest] -> add_wrapped_chunks(rest, [chunk, ..lines])
+    [chunk, ..rest] ->
+      add_wrapped_chunks(rest, [close_open_sgr(chunk), ..lines])
   }
+}
+
+fn close_open_sgr(text: String) -> String {
+  case has_open_sgr(text) {
+    True -> text <> "\u{001b}[0m"
+    False -> text
+  }
+}
+
+fn has_open_sgr(text: String) -> Bool {
+  has_open_sgr_loop(string.to_graphemes(text), False, "", False)
+}
+
+fn has_open_sgr_loop(
+  chars: List(String),
+  in_escape: Bool,
+  escape: String,
+  active: Bool,
+) -> Bool {
+  case chars {
+    [] -> active
+
+    ["\u{001b}", ..rest] -> has_open_sgr_loop(rest, True, "\u{001b}", active)
+
+    ["[", ..rest] if in_escape ->
+      has_open_sgr_loop(rest, True, escape <> "[", active)
+
+    [char, ..rest] if in_escape -> {
+      let escape = escape <> char
+      let active = case is_escape_final(char) {
+        True -> update_sgr_active(escape, char, active)
+        False -> active
+      }
+
+      has_open_sgr_loop(rest, !is_escape_final(char), escape, active)
+    }
+
+    [_, ..rest] -> has_open_sgr_loop(rest, False, "", active)
+  }
+}
+
+fn update_sgr_active(escape: String, final: String, active: Bool) -> Bool {
+  case final {
+    "m" -> !is_sgr_reset(escape)
+    _ -> active
+  }
+}
+
+fn is_sgr_reset(escape: String) -> Bool {
+  string.contains(escape, "[m")
+  || sgr_has_param(escape, "0")
+  || sgr_has_param(escape, "39")
+  || sgr_has_param(escape, "49")
+}
+
+fn sgr_has_param(escape: String, param: String) -> Bool {
+  string.contains(escape, "[" <> param <> "m")
+  || string.contains(escape, "[" <> param <> ";")
+  || string.contains(escape, ";" <> param <> "m")
+  || string.contains(escape, ";" <> param <> ";")
 }
 
 fn wrap_long_word(word: String, width: Int) -> List(String) {
   case visual_length(word) <= width {
     True -> [word]
-    False -> [
-      take_visible(word, width),
-      ..wrap_long_word(drop_visible(word, width), width)
-    ]
+    False -> {
+      let chunk = take_visible(word, width)
+
+      case visual_length(chunk) == 0 {
+        True -> {
+          let first_width = first_positive_width(word)
+
+          case first_width {
+            0 -> [word]
+            _ -> [
+              take_visible(word, first_width),
+              ..wrap_long_word(drop_visible(word, first_width), width)
+            ]
+          }
+        }
+
+        False -> [chunk, ..wrap_long_word(drop_visible(word, width), width)]
+      }
+    }
+  }
+}
+
+fn first_positive_width(text: String) -> Int {
+  first_positive_width_loop(string.to_graphemes(text), False)
+}
+
+fn first_positive_width_loop(chars: List(String), in_escape: Bool) -> Int {
+  case chars {
+    [] -> 0
+    ["\u{001b}", ..rest] -> first_positive_width_loop(rest, True)
+    ["[", ..rest] if in_escape -> first_positive_width_loop(rest, True)
+    [char, ..rest] if in_escape ->
+      case is_escape_final(char) {
+        True -> first_positive_width_loop(rest, False)
+        False -> first_positive_width_loop(rest, True)
+      }
+    [char, ..rest] -> {
+      let width = display_width(char)
+
+      case width {
+        0 -> first_positive_width_loop(rest, False)
+        _ -> width
+      }
+    }
   }
 }
 
@@ -360,17 +538,24 @@ fn take_visible_loop(
     ["\u{001b}", ..rest] ->
       take_visible_loop(rest, remaining, True, ["\u{001b}", ..acc])
 
-    ["m", ..rest] if in_escape ->
-      take_visible_loop(rest, remaining, False, ["m", ..acc])
+    ["[", ..rest] if in_escape ->
+      take_visible_loop(rest, remaining, True, ["[", ..acc])
 
     [char, ..rest] if in_escape ->
-      take_visible_loop(rest, remaining, True, [char, ..acc])
+      case is_escape_final(char) {
+        True -> take_visible_loop(rest, remaining, False, [char, ..acc])
+        False -> take_visible_loop(rest, remaining, True, [char, ..acc])
+      }
 
-    [_, ..rest] if remaining <= 0 ->
-      take_visible_loop(rest, remaining, False, acc)
+    [char, ..rest] -> {
+      let char_width = display_width(char)
 
-    [char, ..rest] ->
-      take_visible_loop(rest, remaining - 1, False, [char, ..acc])
+      case char_width == 0 || char_width <= remaining {
+        True ->
+          take_visible_loop(rest, remaining - char_width, False, [char, ..acc])
+        False -> take_visible_loop(rest, 0, False, acc)
+      }
+    }
   }
 }
 
@@ -388,13 +573,24 @@ fn drop_visible_loop(
 
     ["\u{001b}", ..rest] -> drop_visible_loop(rest, remaining, True)
 
-    ["m", ..rest] if in_escape -> drop_visible_loop(rest, remaining, False)
+    ["[", ..rest] if in_escape -> drop_visible_loop(rest, remaining, True)
 
-    [_, ..rest] if in_escape -> drop_visible_loop(rest, remaining, True)
+    [char, ..rest] if in_escape ->
+      case is_escape_final(char) {
+        True -> drop_visible_loop(rest, remaining, False)
+        False -> drop_visible_loop(rest, remaining, True)
+      }
 
     _ if remaining <= 0 -> chars_to_string(chars)
 
-    [_, ..rest] -> drop_visible_loop(rest, remaining - 1, False)
+    [char, ..rest] -> {
+      let char_width = display_width(char)
+
+      case char_width > remaining {
+        True -> chars_to_string(chars)
+        False -> drop_visible_loop(rest, remaining - char_width, False)
+      }
+    }
   }
 }
 

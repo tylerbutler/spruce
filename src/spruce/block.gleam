@@ -177,7 +177,7 @@ pub fn border_sides(
 /// Render `content` as one block using the given options.
 pub fn render(sp: Spruce, content: String, block: Block) -> String {
   let content_lines = content_region(sp, content, block)
-  let padded = apply_padding(content_lines, block)
+  let padded = apply_padding(sp, content_lines, block)
   let bordered = apply_border(sp, padded, block)
 
   bordered
@@ -205,19 +205,20 @@ fn content_region(sp: Spruce, content: String, block: Block) -> List(String) {
   raw_lines
   |> list.map(fn(line) { pad_pos(line, region_width, block.horizontal) })
   |> apply_height(region_width, block.height, block.vertical)
-  |> list.map(fn(line) { style.render(sp, content_style(block), line) })
+  |> list.map(fn(line) { style.render(sp, foreground_style(block), line) })
 }
 
-fn content_style(block: Block) -> style.Style {
-  let style = style.new()
-  let style = case block.foreground {
-    Some(color) -> style.fg(style, color)
-    None -> style
+fn foreground_style(block: Block) -> style.Style {
+  case block.foreground {
+    Some(color) -> style.fg(style.new(), color)
+    None -> style.new()
   }
+}
 
+fn background_style(block: Block) -> style.Style {
   case block.background {
-    Some(color) -> style.bg(style, color)
-    None -> style
+    Some(color) -> style.bg(style.new(), color)
+    None -> style.new()
   }
 }
 
@@ -276,7 +277,11 @@ fn padding_counts(extra: Int, pos: Pos) -> #(Int, Int) {
   }
 }
 
-fn apply_padding(lines: List(String), block: Block) -> List(String) {
+fn apply_padding(
+  sp: Spruce,
+  lines: List(String),
+  block: Block,
+) -> List(String) {
   let content_width = find_max_width(lines, 0)
   let padded_width = content_width + block.padding_left + block.padding_right
   let blank = string.repeat(" ", padded_width)
@@ -290,6 +295,7 @@ fn apply_padding(lines: List(String), block: Block) -> List(String) {
   repeat_line(blank, block.padding_top)
   |> list.append(body)
   |> list.append(repeat_line(blank, block.padding_bottom))
+  |> list.map(fn(line) { style.render(sp, background_style(block), line) })
 }
 
 fn apply_border(sp: Spruce, lines: List(String), block: Block) -> List(String) {
@@ -524,10 +530,19 @@ fn find_max_width(lines: List(String), min_width: Int) -> Int {
 }
 
 fn take_lines(lines: List(String), count: Int) -> List(String) {
+  take_lines_loop(lines, non_negative(count), [])
+  |> list.reverse
+}
+
+fn take_lines_loop(
+  lines: List(String),
+  count: Int,
+  acc: List(String),
+) -> List(String) {
   case lines, count {
-    _, count if count <= 0 -> []
-    [], _ -> []
-    [line, ..rest], count -> [line, ..take_lines(rest, count - 1)]
+    _, 0 -> acc
+    [], _ -> acc
+    [line, ..rest], count -> take_lines_loop(rest, count - 1, [line, ..acc])
   }
 }
 

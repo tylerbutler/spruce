@@ -4,7 +4,7 @@
 
 - Gleam 1.11 or newer for package compatibility; CI uses Gleam 1.16.0
 - Erlang/OTP 26 or newer for the Erlang target
-- Node.js 20 or newer for the JavaScript target
+- Node.js 20.19 or newer for the JavaScript target
 
 ## Common commands
 
@@ -18,7 +18,7 @@
 ## Release workflow
 
 1. Add a changelog fragment under `.changes/unreleased/` using the project’s Changie setup.
-2. Keep `gleam.toml` at the last released version until the release PR merges; the release PR is what bumps the package to `1.0.0`.
+2. Keep `gleam.toml` at the last released version until the release PR merges; the release PR is what bumps the package to the next version.
 3. Run `just ci` before opening a pull request.
 4. Ensure repository secrets are configured for automation:
    - `HEX_API_KEY`

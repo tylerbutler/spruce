@@ -179,6 +179,46 @@ pub fn render_basic_downgrades_rgb_to_nearest_basic_color_test() {
   expect.to_be_true(string.contains(out, "\u{001b}[31m"))
 }
 
+pub fn render_ansi256_fg_uses_256_color_sequence_test() {
+  style.render(
+    spruce.with_color_level(tty.Ansi256),
+    style.new() |> style.fg(style.Ansi256(200)),
+    "x",
+  )
+  |> expect.to_equal("\u{001b}[38;5;200mx\u{001b}[39m")
+}
+
+pub fn render_ansi256_rgb_uses_nearest_256_color_sequence_test() {
+  style.render(
+    spruce.with_color_level(tty.Ansi256),
+    style.new() |> style.fg(style.Rgb(135, 75, 253)),
+    "x",
+  )
+  |> expect.to_equal("\u{001b}[38;5;135mx\u{001b}[39m")
+}
+
+pub fn render_ansi256_hex_uses_nearest_256_color_sequence_test() {
+  style.render(
+    spruce.with_color_level(tty.Ansi256),
+    style.new() |> style.fg(style.Hex(0x874BFD)),
+    "x",
+  )
+  |> expect.to_equal("\u{001b}[38;5;135mx\u{001b}[39m")
+}
+
+pub fn render_ansi256_fg_and_bg_keep_separate_resets_test() {
+  style.render(
+    spruce.with_color_level(tty.Ansi256),
+    style.new()
+      |> style.fg(style.Ansi256(200))
+      |> style.bg(style.Ansi256(21)),
+    "x",
+  )
+  |> expect.to_equal(
+    "\u{001b}[48;5;21m\u{001b}[38;5;200mx\u{001b}[39m\u{001b}[49m",
+  )
+}
+
 pub fn render_hex_and_rgb_match_for_same_color_test() {
   let sp = spruce.with_color_level(tty.TrueColor)
   let rgb =

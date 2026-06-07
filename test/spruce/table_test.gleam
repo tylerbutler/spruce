@@ -61,6 +61,25 @@ pub fn table_style_fn_applies_to_headers_with_negative_row_test() {
   expect.to_be_true(string.contains(out, "\u{001b}[32mx"))
 }
 
+pub fn table_style_fn_wraps_each_line_independently_test() {
+  table.new()
+  |> table.rows([["alpha beta", "z"]])
+  |> table.column_widths([5, 1])
+  |> table.style_fn(fn(_row, col) {
+    case col {
+      0 -> style.new() |> style.fg(style.Red)
+      _ -> style.new()
+    }
+  })
+  |> table.render(spruce.with_color_level(tty.TrueColor), _)
+  |> expect.to_equal(
+    "┌───────┬───┐\n"
+    <> "│ \u{001b}[31malpha\u{001b}[39m │ z │\n"
+    <> "│ \u{001b}[31mbeta\u{001b}[39m  │   │\n"
+    <> "└───────┴───┘",
+  )
+}
+
 pub fn empty_table_renders_empty_string_test() {
   table.new()
   |> table.render(spruce.no_color(), _)

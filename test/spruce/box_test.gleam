@@ -49,6 +49,21 @@ pub fn titled_box_keeps_equal_visual_widths_test() {
   expect.to_equal(align.visual_length(top), align.visual_length(bottom))
 }
 
+pub fn box_title_newline_stays_on_single_top_border_test() {
+  let lines =
+    box.render(
+      spruce.no_color(),
+      "hi",
+      box.options(title: "A\nB", color: style.Cyan),
+    )
+    |> string.split("\n")
+
+  let assert [top, body, bottom] = lines
+  expect.to_equal("╭─ A B ╮", top)
+  expect.to_equal(align.visual_length(body), align.visual_length(top))
+  expect.to_equal(align.visual_length(bottom), align.visual_length(top))
+}
+
 pub fn box_color_leaves_title_unstyled_test() {
   let out =
     box.render(

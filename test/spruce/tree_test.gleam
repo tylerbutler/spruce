@@ -36,6 +36,23 @@ pub fn render_multiline_labels_indent_subsequent_lines_test() {
   |> expect.to_equal("root\n`- line one\n   line two")
 }
 
+pub fn render_multiline_non_last_label_keeps_unicode_guide_test() {
+  tree.root("root")
+  |> tree.child(tree.root("line one\nline two"))
+  |> tree.child(tree.root("sibling"))
+  |> tree.render(spruce.with_color_level(tty.TrueColor), _)
+  |> expect.to_equal("root\n├─ line one\n│  line two\n└─ sibling")
+}
+
+pub fn render_multiline_non_last_label_keeps_ascii_guide_test() {
+  tree.root("root")
+  |> tree.child(tree.root("line one\nline two"))
+  |> tree.child(tree.root("sibling"))
+  |> tree.ascii()
+  |> tree.render(spruce.with_color_level(tty.TrueColor), _)
+  |> expect.to_equal("root\n|- line one\n|  line two\n`- sibling")
+}
+
 pub fn custom_enumerator_renders_current_branch_test() {
   tree.root("root")
   |> tree.child(tree.root("child"))
