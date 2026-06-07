@@ -80,6 +80,13 @@ changelog-preview:
 changelog:
     changie merge
 
+# === SBOM ===
+
+# Generate a CycloneDX SBOM (requires licence_audit from mise)
+sbom output="dist/spruce.cdx.json":
+    mkdir -p $(dirname {{output}})
+    licence_audit sbom --output={{output}}
+
 # === MAINTENANCE ===
 
 # Remove build artifacts

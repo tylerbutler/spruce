@@ -1,9 +1,14 @@
 [tools]
 changie = "latest"
-erlang = "27"
+# OTP 28: licence_audit (used for SBOM generation) is compiled with OTP 28 and
+# its BEAM files can't be loaded by older runtimes. CI already sweeps 26/27/28.
+erlang = "28"
 gleam = "latest"
 just = "latest"
 node = "22.22.3"
+# licence_audit: CycloneDX SBOM + Hex licence auditing, installed from GitHub
+# releases via mise's github backend. Run `just sbom` to generate an SBOM.
+"github:tylerbutler/licence_audit" = "0.2.0"
 
 [env]
 LC_ALL = "en_US.UTF-8"
