@@ -1,4 +1,20 @@
 //// Composable ANSI styling helpers.
+////
+//// A `Style` is an immutable value built with `new` and refined through piped
+//// combinators such as `fg`, `bold`, and `underline`. Apply it to text with
+//// `render`, which downgrades or drops colors to match the context's color
+//// level and resolves adaptive colors against its background.
+////
+//// ```gleam
+//// import spruce
+//// import spruce/style
+////
+//// pub fn main() {
+////   let sp = spruce.detect()
+////   let heading = style.new() |> style.fg(style.Cyan) |> style.bold
+////   echo style.render(sp, heading, "Hello")
+//// }
+//// ```
 
 import gleam/bool
 import gleam/int
@@ -9,6 +25,13 @@ import gleam_community/ansi
 import spruce.{type Spruce}
 import tty
 
+/// A color usable as a foreground or background.
+///
+/// The named constructors map to the 16 standard ANSI colors. `Rgb`, `Hex`,
+/// and `Ansi256` give finer control and are downgraded to the nearest
+/// representable color when the terminal lacks support. `Complete` and
+/// `Adaptive` select a color based on the color level and terminal background
+/// respectively (see `complete` and `adaptive`).
 pub type Color {
   Black
   Red
@@ -41,6 +64,8 @@ type RgbValue {
   RgbValue(r: Int, g: Int, b: Int)
 }
 
+/// An immutable set of text attributes (colors and SGR flags). Build one with
+/// `new` and the combinators in this module, then apply it with `render`.
 pub opaque type Style {
   Style(
     fg: Option(Color),
@@ -56,6 +81,7 @@ pub opaque type Style {
   )
 }
 
+/// Create an empty style with no color and no attributes set.
 pub fn new() -> Style {
   Style(
     fg: None,
@@ -71,14 +97,19 @@ pub fn new() -> Style {
   )
 }
 
+/// Set the foreground (text) color.
 pub fn fg(style: Style, color: Color) -> Style {
   Style(..style, fg: Some(color))
 }
 
+/// Set the background color.
 pub fn bg(style: Style, color: Color) -> Style {
   Style(..style, bg: Some(color))
 }
 
+/// Build a color with an explicit variant per color level: `ansi` for basic
+/// terminals, `ansi256` for 256-color, and `truecolor` for truecolor. The
+/// level detected in the context selects which variant is used at render time.
 pub fn complete(
   ansi ansi: Color,
   ansi256 ansi256: Color,
@@ -95,38 +126,53 @@ pub fn adaptive(light light: Color, dark dark: Color) -> Color {
   Adaptive(light:, dark:)
 }
 
+/// Enable bold text.
 pub fn bold(style: Style) -> Style {
   Style(..style, bold: True)
 }
 
+/// Enable dim (faint) text.
 pub fn dim(style: Style) -> Style {
   Style(..style, dim: True)
 }
 
+/// Enable italic text.
 pub fn italic(style: Style) -> Style {
   Style(..style, italic: True)
 }
 
+/// Enable underlined text.
 pub fn underline(style: Style) -> Style {
   Style(..style, underline: True)
 }
 
+/// Enable strikethrough text.
 pub fn strikethrough(style: Style) -> Style {
   Style(..style, strikethrough: True)
 }
 
+/// Enable reverse video, swapping the foreground and background colors.
 pub fn reverse(style: Style) -> Style {
   Style(..style, reverse: True)
 }
 
+/// Enable faint text. This is an alias for `dim`.
 pub fn faint(style: Style) -> Style {
   Style(..style, faint: True)
 }
 
+/// Collapse newlines in the text to single spaces when rendering, keeping a
+/// styled value on one line.
 pub fn inline(style: Style) -> Style {
   Style(..style, inline: True)
 }
 
+/// Apply a style to `text`, returning the styled string.
+///
+/// When the context does not support color, all color and attribute styling is
+/// dropped (only the `inline` transform is applied). Colors the terminal cannot
+/// represent are downgraded to the nearest available color, and `Adaptive`
+/// colors are resolved against the context's background.
 pub fn render(sp: Spruce, style: Style, text: String) -> String {
   let text = render_inline(text, style.inline)
 

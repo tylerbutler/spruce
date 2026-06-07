@@ -18,6 +18,7 @@ import spruce/line
 import spruce/list as splist
 import spruce/markdown
 import spruce/message
+import spruce/output
 import spruce/palette
 import spruce/severity
 import spruce/style
@@ -47,6 +48,7 @@ pub fn main() {
   align_section(sp)
   layout_section(sp)
   group_section(sp)
+  output_section(sp)
 
   io.println("")
   io.println(message.success(sp, "Demo complete."))
@@ -505,6 +507,20 @@ fn group_section(sp: spruce.Spruce) -> Nil {
     message.success(sp, "javascript target green"),
     spruce.depth(sp),
   ))
+}
+
+fn output_section(sp: spruce.Spruce) -> Nil {
+  heading("output — pipeable, buffered composition")
+
+  output.new(sp)
+  |> output.append(message.start(_, "compiling"))
+  |> output.group("test", fn(o) {
+    o
+    |> output.append(message.success(_, "erlang target green"))
+    |> output.append(message.success(_, "javascript target green"))
+  })
+  |> output.append(message.ready(_, "release ready"))
+  |> output.print
 }
 
 fn color_level_name(level: spruce.ColorLevel) -> String {

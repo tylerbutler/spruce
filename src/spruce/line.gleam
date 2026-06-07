@@ -1,4 +1,8 @@
-//// Compact terminal line composition.
+//// Compact single-line message composition.
+////
+//// A `Line` wraps a main message with an optional timestamp, severity, scope,
+//// and key-value details, rendered to one styled line via `render`. Build one
+//// with `new` and the combinators in this module.
 
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -9,6 +13,7 @@ import spruce/internal/layout
 import spruce/severity as severity_module
 import spruce/style
 
+/// A composable single-line message with optional prefixes and details.
 pub opaque type Line {
   Line(
     text: String,

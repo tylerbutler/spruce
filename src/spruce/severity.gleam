@@ -20,6 +20,9 @@ pub type Severity {
   Fatal
 }
 
+/// Controls how a `Severity` is rendered: its style (label, badge, simple, or
+/// custom), whether icons are shown, the glyph mode, and the padding width.
+/// Construct one with `label`, `badge`, `simple`, or `custom`.
 pub opaque type Formatter {
   Formatter(kind: FormatKind, icons: Bool, mode: symbol.Mode, target_width: Int)
 }

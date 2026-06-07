@@ -11,6 +11,8 @@ import spruce/box
 import spruce/internal/layout
 import spruce/style
 
+/// A table of string cells with an optional header row. Build one with `new`
+/// and the configuration functions in this module, then render it with `render`.
 pub opaque type Table {
   Table(
     headers: List(String),

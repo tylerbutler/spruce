@@ -38,6 +38,7 @@ const modules: Array<[string, string]> = [
   ["spruce/list", "Bulleted and ordered lists with arbitrary nesting."],
   ["spruce/tree", "Tree-structured output with Unicode or ASCII."],
   ["spruce/group", "Depth-in-context grouping and indentation."],
+  ["spruce/output", "Pipeable, buffered output composition."],
   ["spruce/message", "Semantic one-liners with label, badge, or simple style."],
   ["spruce/severity", "Generic severity and status labels and badges."],
   ["spruce/details", "Key and value detail rendering."],

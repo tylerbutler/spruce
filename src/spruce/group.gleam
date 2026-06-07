@@ -10,9 +10,21 @@ import spruce/style
 import spruce/symbol
 
 /// Print a group title, then run `body` with a context indented one level deeper.
+///
+/// This is the eager, streaming form of grouping: the title prints immediately
+/// and `body` runs right away, so its output appears as work happens and it may
+/// perform IO and return any value. For deferred, pipe-composable grouping that
+/// buffers output instead, see `spruce/output.group`.
 pub fn group(sp: Spruce, title: String, body: fn(Spruce) -> result) -> result {
-  io.println(layout.indent_prefix(sp) <> title_line(sp, title))
+  io.println(render_title(sp, title))
   body(spruce.indented(sp))
+}
+
+/// Render a group title line (indent prefix + styled marker + title), the same
+/// line that `group` prints. Exposed so buffered output (`spruce/output`) can
+/// compose group titles without duplicating the styling.
+pub fn render_title(sp: Spruce, title: String) -> String {
+  layout.indent_prefix(sp) <> title_line(sp, title)
 }
 
 fn title_line(sp: Spruce, title: String) -> String {
