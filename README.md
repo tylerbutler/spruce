@@ -1,7 +1,13 @@
-# spruce
+<p align="center">
+  <img src="https://spruce.tylerbutler.com/spruce.png" alt="spruce logo" width="200" height="200">
+</p>
 
-[![Package Version](https://img.shields.io/hexpm/v/spruce)](https://hex.pm/packages/spruce)
-[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/spruce/)
+<h1 align="center">spruce</h1>
+
+<p align="center">
+  <a href="https://hex.pm/packages/spruce"><img src="https://img.shields.io/hexpm/v/spruce" alt="Package Version"></a>
+  <a href="https://hexdocs.pm/spruce/"><img src="https://img.shields.io/badge/hex-docs-ffaff3" alt="Hex Docs"></a>
+</p>
 
 A terminal-UI kit for Gleam. spruce renders styled terminal output — colors,
 boxes, semantic message lines, icons, deterministic hash-colors, ANSI-aware

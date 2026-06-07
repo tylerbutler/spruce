@@ -171,17 +171,6 @@ function Features() {
           <Reveal className="cell c-2">
             <div className="cell-head">
               <span className="cell-ico">
-                <TerminalIcon />
-              </span>
-              <h3>Compact lines</h3>
-            </div>
-            <p>Severity, scope, and key/value details on one tidy line.</p>
-            <Terminal title="line" html={T.line} />
-          </Reveal>
-
-          <Reveal className="cell c-4" delay={0.05}>
-            <div className="cell-head">
-              <span className="cell-ico">
                 <TableIcon />
               </span>
               <h3>Tables that align</h3>
@@ -191,6 +180,17 @@ function Features() {
               and wrapping.
             </p>
             <Terminal title="table" html={T.table} />
+          </Reveal>
+
+          <Reveal className="cell c-4" delay={0.05}>
+            <div className="cell-head">
+              <span className="cell-ico">
+                <TerminalIcon />
+              </span>
+              <h3>Compact lines</h3>
+            </div>
+            <p>Severity, scope, and key/value details on one tidy line.</p>
+            <Terminal title="line" html={T.line} />
           </Reveal>
 
           <Reveal className="cell c-3">
