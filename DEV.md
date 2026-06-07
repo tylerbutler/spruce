@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Gleam 1.11 or newer for package compatibility; CI uses Gleam 1.16.0
+- Gleam 1.16 or newer for package compatibility; CI uses Gleam 1.16.0
 - Erlang/OTP 26 or newer for the Erlang target
 - Node.js 20.19 or newer for the JavaScript target
 
