@@ -38,3 +38,76 @@ jobs:
           working-directory: "."
           hex-api-key: ${{ secrets.HEX_API_KEY }}
           skip-already-published: "true"
+
+  sbom:
+    name: Attest SBOM
+    # Runs after the package is on Hex so the GitHub Release (created here) only
+    # exists for versions that actually published. This job is the sole owner of
+    # the Release, so there is no race with auto-tag.yml (create-release: false).
+    needs: [validate, publish-hex]
+    if: ${{ needs.publish-hex.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6.0.2
+
+      - name: Setup mise tools
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # ratchet:jdx/mise-action@v2
+        env:
+          # Avoid unauthenticated GitHub API rate limits when mise resolves the
+          # licence_audit release and verifies its build attestations.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download dependencies
+        run: gleam deps download
+
+      - name: Generate CycloneDX SBOM
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          licence_audit sbom --output="dist/spruce-${REF_NAME}.cdx.json"
+
+      - name: Create source archive
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz --prefix="spruce-${REF_NAME}/" \
+            -o "dist/spruce-${REF_NAME}.tar.gz" HEAD
+
+      - name: Attest SBOM
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # ratchet:actions/attest@v4
+        with:
+          subject-path: dist/spruce-${{ github.ref_name }}.tar.gz
+          sbom-path: dist/spruce-${{ github.ref_name }}.cdx.json
+
+      - name: Publish SBOM to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # This job owns the Release (auto-tag.yml has create-release: false),
+          # and it only runs after publish-hex succeeds, so there is no race.
+          # Create the Release if it does not exist yet, then attach assets.
+          if ! gh release view "$REF_NAME" >/dev/null 2>&1; then
+            notes_file=".changes/${REF_NAME}.md"
+            if [ -f "$notes_file" ]; then
+              # Drop the changie "## vX.Y.Z - DATE" heading; the title carries it.
+              tail -n +2 "$notes_file" > /tmp/release-notes.md
+              gh release create "$REF_NAME" --title "$REF_NAME" \
+                --notes-file /tmp/release-notes.md
+            else
+              gh release create "$REF_NAME" --title "$REF_NAME" --generate-notes
+            fi
+          fi
+          gh release upload "$REF_NAME" \
+            "dist/spruce-${REF_NAME}.cdx.json" \
+            "dist/spruce-${REF_NAME}.tar.gz" \
+            --clobber

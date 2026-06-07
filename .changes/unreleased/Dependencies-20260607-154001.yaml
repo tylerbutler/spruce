@@ -1,0 +1,3 @@
+kind: Dependencies
+body: 'Pin local Erlang/OTP to 28 and add licence_audit (via mise github backend) as a development dependency for SBOM generation.'
+time: 2026-06-07T15:40:01.000000-07:00
