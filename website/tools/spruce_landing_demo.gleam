@@ -35,26 +35,12 @@ pub fn main() {
   })
 
   mark("messages")
-  io.println(message.success_with(
-    sp,
-    "Deploy complete",
-    message.default_options() |> message.with_formatter(message.badge()),
-  ))
-  io.println(message.error_with(
-    sp,
-    "Connection refused",
-    message.default_options() |> message.with_formatter(message.badge()),
-  ))
-  io.println(message.info_with(
-    sp,
-    "Cache warmed",
-    message.default_options() |> message.with_formatter(message.badge()),
-  ))
-  io.println(message.ready_with(
-    sp,
-    "Listening on :4000",
-    message.default_options() |> message.with_formatter(message.badge()),
-  ))
+  let badge =
+    message.default_options() |> message.with_formatter(message.badge())
+  io.println(message.success_with(sp, "Deploy complete", badge))
+  io.println(message.error_with(sp, "Connection refused", badge))
+  io.println(message.info_with(sp, "Cache warmed", badge))
+  io.println(message.ready_with(sp, "Listening on :4000", badge))
 
   mark("table")
   io.println(

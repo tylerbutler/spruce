@@ -11,31 +11,33 @@ import { CopyIcon, CheckIcon, MoonIcon, SunIcon } from "../icons";
 export function Reveal({
   children,
   delay = 0,
-  mount = false,
   className,
   ...rest
-}: { delay?: number; mount?: boolean } & HTMLMotionProps<"div">) {
+}: { delay?: number } & HTMLMotionProps<"div">) {
   const reduce = useReducedMotion();
-  const animateProps = mount
-    ? { animate: { opacity: 1, y: 0 } }
-    : {
-        whileInView: { opacity: 1, y: 0 },
-        viewport: {
-          once: true,
-          amount: 0.18,
-          margin: "0px 0px -8% 0px",
-        } as const,
-      };
   return (
     <motion.div
       className={className}
       initial={reduce ? false : { opacity: 0, y: 22 }}
-      {...animateProps}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.18, margin: "0px 0px -8% 0px" }}
       transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
       {...rest}
     >
       {children}
     </motion.div>
+  );
+}
+
+/* The three-dot title bar shared by every terminal-style panel. */
+export function TermBar({ title }: { title: string }) {
+  return (
+    <div className="term-bar">
+      <span className="dot r" />
+      <span className="dot m" />
+      <span className="dot m" />
+      <span className="term-title">{title}</span>
+    </div>
   );
 }
 
@@ -51,12 +53,7 @@ export function Terminal({
 }) {
   return (
     <div className="term">
-      <div className="term-bar">
-        <span className="dot r" />
-        <span className="dot m" />
-        <span className="dot m" />
-        <span className="term-title">{title}</span>
-      </div>
+      <TermBar title={title} />
       <pre className="term-body">
         <span dangerouslySetInnerHTML={{ __html: html }} />
         {caret && <span className="caret" />}
@@ -107,11 +104,9 @@ export function CopyButton({ text }: { text: string }) {
 }
 
 export function ThemeToggle() {
-  const [light, setLight] = useState(false);
-
-  useEffect(() => {
-    setLight(document.documentElement.classList.contains("light"));
-  }, []);
+  const [light, setLight] = useState(() =>
+    document.documentElement.classList.contains("light"),
+  );
 
   function toggle() {
     const el = document.documentElement;

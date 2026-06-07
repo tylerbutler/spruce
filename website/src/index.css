@@ -598,10 +598,6 @@ section {
 .code .s {
   color: #58c98c;
 }
-.code .c {
-  color: #6f7d75;
-  font-style: italic;
-}
 
 /* modules grid */
 .mods {

@@ -1,6 +1,7 @@
 // Converts captured spruce ANSI output into HTML spans, split by \u0001 markers.
+// Reads from the file named in argv[2], or from stdin; writes block JSON to stdout.
 const fs = require("fs");
-const raw = fs.readFileSync("/tmp/spruce_out.txt", "utf8");
+const raw = fs.readFileSync(process.argv[2] ?? 0, "utf8");
 
 const PAL = {
   30: "#3b403b", 31: "#ff7a7a", 32: "#58c98c", 33: "#e6c46a",
@@ -17,7 +18,7 @@ function convert(text) {
   let i = 0;
   let out = "";
   const st = { fg: null, bold: false, dim: false, italic: false };
-  let openSpan = false;
+  let openStyle = null;
 
   function styleStr() {
     const parts = [];
@@ -27,10 +28,16 @@ function convert(text) {
     if (st.italic) parts.push("font-style:italic");
     return parts.join(";");
   }
-  function reopen() {
-    if (openSpan) { out += "</span>"; openSpan = false; }
-    const s = styleStr();
-    if (s) { out += `<span style="${s}">`; openSpan = true; }
+  // Open/close spans lazily, only when text is actually emitted, so SGR
+  // changes with nothing between them never produce empty spans.
+  function emit(str) {
+    const want = styleStr() || null;
+    if (want !== openStyle) {
+      if (openStyle !== null) out += "</span>";
+      openStyle = want;
+      if (openStyle !== null) out += `<span style="${openStyle}">`;
+    }
+    out += str;
   }
 
   while (i < text.length) {
@@ -54,15 +61,14 @@ function convert(text) {
             st.fg = "#cccccc"; k += 2;
           } else if (PAL[code]) st.fg = PAL[code];
         }
-        reopen();
         i += m[0].length;
         continue;
       }
     }
-    out += esc(c);
+    emit(esc(c));
     i++;
   }
-  if (openSpan) out += "</span>";
+  if (openStyle !== null) out += "</span>";
   return out;
 }
 
@@ -79,5 +85,5 @@ for (const seg of segs) {
   blocks[name] = convert(body);
 }
 
-fs.writeFileSync("/tmp/spruce_blocks.json", JSON.stringify(blocks, null, 2));
-console.log("blocks:", Object.keys(blocks).join(", "));
+process.stdout.write(JSON.stringify(blocks, null, 2) + "\n");
+console.error("blocks:", Object.keys(blocks).join(", "));

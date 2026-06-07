@@ -1,4 +1,4 @@
-import { Reveal, Terminal, CopyButton, ThemeToggle } from "./components/ui";
+import { Reveal, Terminal, TermBar, CopyButton, ThemeToggle } from "./components/ui";
 import {
   GitHubIcon,
   ArrowIcon,
@@ -27,23 +27,23 @@ const runtimeAlt: Record<string, string> = {
 
 const modules: Array<[string, string]> = [
   ["spruce", "The render context: color level, background, indent depth."],
-  ["style", "Composable text styling: named, RGB, hex, 256, adaptive."],
-  ["block", "Padding, margin, sizing, alignment, per-side borders."],
-  ["symbol", "Named glyphs with automatic ASCII fallbacks."],
-  ["palette", "Deterministic hash colors from any string."],
-  ["align", "ANSI-aware visual length and padding."],
-  ["layout", "Compose multi-line text blocks together."],
-  ["box", "Boxed output with per-side borders and colors."],
-  ["table", "Widths, borders, separators, and cell wrapping."],
-  ["list", "Bulleted and ordered lists with arbitrary nesting."],
-  ["tree", "Tree-structured output with Unicode or ASCII."],
-  ["group", "Depth-in-context grouping and indentation."],
-  ["message", "Semantic one-liners with label, badge, or simple style."],
-  ["severity", "Generic severity and status labels and badges."],
-  ["details", "Key and value detail rendering."],
-  ["line", "Compact, single-line terminal log composition."],
-  ["markdown", "Markdown to ANSI, in the style of Glamour."],
-  ["highlight", "Syntax highlighting for fenced code blocks."],
+  ["spruce/style", "Composable text styling: named, RGB, hex, 256, adaptive."],
+  ["spruce/block", "Padding, margin, sizing, alignment, per-side borders."],
+  ["spruce/symbol", "Named glyphs with automatic ASCII fallbacks."],
+  ["spruce/palette", "Deterministic hash colors from any string."],
+  ["spruce/align", "ANSI-aware visual length and padding."],
+  ["spruce/layout", "Compose multi-line text blocks together."],
+  ["spruce/box", "Boxed output with per-side borders and colors."],
+  ["spruce/table", "Widths, borders, separators, and cell wrapping."],
+  ["spruce/list", "Bulleted and ordered lists with arbitrary nesting."],
+  ["spruce/tree", "Tree-structured output with Unicode or ASCII."],
+  ["spruce/group", "Depth-in-context grouping and indentation."],
+  ["spruce/message", "Semantic one-liners with label, badge, or simple style."],
+  ["spruce/severity", "Generic severity and status labels and badges."],
+  ["spruce/details", "Key and value detail rendering."],
+  ["spruce/line", "Compact, single-line terminal log composition."],
+  ["spruce/markdown", "Markdown to ANSI, in the style of Glamour."],
+  ["spruce/highlight", "Syntax highlighting for fenced code blocks."],
 ];
 
 function Nav() {
@@ -268,12 +268,7 @@ function Example() {
         </Reveal>
         <div className="example-grid">
           <Reveal className="code">
-            <div className="term-bar">
-              <span className="dot r" />
-              <span className="dot m" />
-              <span className="dot m" />
-              <span className="term-title">main.gleam</span>
-            </div>
+            <TermBar title="main.gleam" />
             <pre>
               <span className="k">import</span> <span className="m">spruce</span>
               {"\n"}
@@ -327,7 +322,7 @@ function Modules() {
               key={name}
               delay={Math.min(i, 8) * 0.02}
             >
-              <code>{name === "spruce" ? "spruce" : `spruce/${name}`}</code>
+              <code>{name}</code>
               <span>{desc}</span>
             </Reveal>
           ))}

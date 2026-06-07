@@ -22,13 +22,10 @@ TrueColor and converted span-for-span to HTML.
 To regenerate after changing spruce:
 
 1. Copy `tools/spruce_landing_demo.gleam` into the repo `src/` directory.
-2. From the repo root:
+2. From the repo root, pipe the captured output through the converter:
    ```sh
-   FORCE_COLOR=3 gleam run -m spruce_landing_demo --target javascript > /tmp/spruce_out.txt
-   node website/tools/ansi2html.cjs            # writes /tmp/spruce_blocks.json
+   FORCE_COLOR=3 gleam run -m spruce_landing_demo --target javascript \
+     | node website/tools/ansi2html.cjs > /tmp/spruce_blocks.json
    ```
 3. Rebuild `src/data/terminalBlocks.ts` from that JSON, then delete the demo
    module from `src/` (it must not ship in the published package).
-
-`tools/build-static-reference.cjs` is the original no-framework prototype kept
-for reference only; it is not part of the build.

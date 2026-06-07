@@ -22,13 +22,13 @@
       (function () {
         try {
           var t = localStorage.getItem("spruce-theme");
+          var light =
+            t === "light" ||
+            (t !== "dark" &&
+              window.matchMedia("(prefers-color-scheme: light)").matches);
           var d = document.documentElement;
           d.classList.remove("dark");
-          if (t === "light") d.classList.add("light");
-          else if (t === "dark") d.classList.add("dark");
-          else if (window.matchMedia("(prefers-color-scheme: light)").matches)
-            d.classList.add("light");
-          else d.classList.add("dark");
+          d.classList.add(light ? "light" : "dark");
         } catch (e) {
           document.documentElement.classList.add("dark");
         }
