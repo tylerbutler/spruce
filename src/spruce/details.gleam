@@ -16,7 +16,7 @@ pub fn new() -> Details {
 }
 
 /// Add a key-value pair, preserving insertion order.
-pub fn add(details: Details, key: String, value: String) -> Details {
+pub fn add(details: Details, key key: String, value value: String) -> Details {
   Details(..details, items: [#(key, value), ..details.items])
 }
 

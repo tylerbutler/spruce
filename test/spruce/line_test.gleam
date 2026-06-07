@@ -30,8 +30,8 @@ pub fn line_with_timestamp_and_scope_test() {
 pub fn line_with_details_test() {
   let details =
     details.new()
-    |> details.add("status", "200")
-    |> details.add("duration", "10ms")
+    |> details.add(key: "status", value: "200")
+    |> details.add(key: "duration", value: "10ms")
 
   line.new("Request complete")
   |> line.details(details)
@@ -51,7 +51,7 @@ pub fn colored_line_dims_timestamp_scope_and_details_test() {
     line.new("Request complete")
     |> line.timestamp("now")
     |> line.scope("api")
-    |> line.details(details.new() |> details.add("status", "200"))
+    |> line.details(details.new() |> details.add(key: "status", value: "200"))
     |> line.render(spruce.with_color_level(tty.TrueColor), _)
 
   expect.to_be_true(string.contains(out, "\u{001b}"))

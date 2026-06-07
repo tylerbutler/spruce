@@ -39,7 +39,7 @@ pub fn success_color_has_escapes_test() {
 pub fn message_with_details_test() {
   let details =
     details.new()
-    |> details.add("duration", "42ms")
+    |> details.add(key: "duration", value: "42ms")
 
   let options =
     message.default_options()
@@ -94,7 +94,7 @@ pub fn message_formatter_keeps_symbol_mode_authoritative_test() {
 pub fn message_formatter_with_details_test() {
   let details =
     details.new()
-    |> details.add("duration", "42ms")
+    |> details.add(key: "duration", value: "42ms")
 
   let options =
     message.default_options()

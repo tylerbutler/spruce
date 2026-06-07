@@ -1,5 +1,6 @@
 //// ANSI-aware text alignment helpers.
 
+import gleam/bool
 import gleam/int
 import gleam/list
 import gleam/string
@@ -59,7 +60,7 @@ fn is_ascii(text: String) -> Bool {
   is_ascii_codepoints(string.to_utf_codepoints(text))
 }
 
-fn is_ascii_codepoints(codepoints) -> Bool {
+fn is_ascii_codepoints(codepoints: List(UtfCodepoint)) -> Bool {
   case codepoints {
     [] -> True
     [codepoint, ..rest] ->
@@ -164,23 +165,19 @@ pub fn size(text: String) -> #(Int, Int) {
 /// ANSI escape sequences do not count toward the width and are never split.
 /// If `ellipsis` is wider than `width`, the ellipsis itself is visibly
 /// truncated to fit. Widths less than or equal to zero return an empty string.
-pub fn truncate(text: String, width: Int, ellipsis: String) -> String {
-  case width <= 0 {
-    True -> ""
-    False ->
-      case visual_length(text) <= width {
-        True -> text
-        False -> {
-          let ellipsis_width = visual_length(ellipsis)
+pub fn truncate(
+  text: String,
+  width width: Int,
+  ellipsis ellipsis: String,
+) -> String {
+  use <- bool.guard(when: width <= 0, return: "")
+  use <- bool.guard(when: visual_length(text) <= width, return: text)
+  let ellipsis_width = visual_length(ellipsis)
 
-          case ellipsis_width >= width {
-            True -> take_visible(ellipsis, width)
-            False ->
-              close_open_sgr(take_visible(text, width - ellipsis_width))
-              <> ellipsis
-          }
-        }
-      }
+  case ellipsis_width >= width {
+    True -> take_visible(ellipsis, width)
+    False ->
+      close_open_sgr(take_visible(text, width - ellipsis_width)) <> ellipsis
   }
 }
 
@@ -190,14 +187,11 @@ pub fn truncate(text: String, width: Int, ellipsis: String) -> String {
 /// Words longer than `width` are hard-wrapped at visible column boundaries.
 /// Widths less than or equal to zero return the input unchanged.
 pub fn wrap(text: String, width: Int) -> String {
-  case width <= 0 {
-    True -> text
-    False ->
-      text
-      |> string.split("\n")
-      |> list.map(wrap_line(_, width))
-      |> string.join("\n")
-  }
+  use <- bool.guard(when: width <= 0, return: text)
+  text
+  |> string.split("\n")
+  |> list.map(wrap_line(_, width))
+  |> string.join("\n")
 }
 
 fn wrap_line(line: String, width: Int) -> String {
@@ -410,10 +404,8 @@ fn add_wrapped_chunks(
 }
 
 fn close_open_sgr(text: String) -> String {
-  case has_open_sgr(text) {
-    True -> text <> "\u{001b}[0m"
-    False -> text
-  }
+  use <- bool.guard(when: !has_open_sgr(text), return: text)
+  text <> "\u{001b}[0m"
 }
 
 fn has_open_sgr(text: String) -> Bool {

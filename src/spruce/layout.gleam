@@ -43,11 +43,11 @@ pub fn join_horizontal(pos: Pos, blocks: List(String)) -> String {
 
 /// Place content in a region, preserving content larger than the requested size.
 pub fn place(
-  width: Int,
-  height: Int,
-  h: Pos,
-  v: Pos,
-  content: String,
+  width width: Int,
+  height height: Int,
+  horizontal h: Pos,
+  vertical v: Pos,
+  content content: String,
 ) -> String {
   let #(content_width, content_height) = align.size(content)
   let region_width = int.max(width, content_width)
@@ -158,6 +158,7 @@ fn repeat_line(line: String, times: Int) -> List(String) {
   |> list.reverse
 }
 
+// nolint: prefer_guard_clause -- a guard closure breaks tail-call optimization here, overflowing the JS stack on large inputs
 fn repeat_line_loop(
   line: String,
   times: Int,

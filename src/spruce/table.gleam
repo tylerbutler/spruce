@@ -1,5 +1,6 @@
 //// Bordered, ANSI-aware data table rendering.
 
+import gleam/bool
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -349,10 +350,8 @@ fn render_cell_lines(
 }
 
 fn wrap_cell(cell: String, width: Int) -> String {
-  case width > 0 {
-    True -> align.wrap(cell, width)
-    False -> cell
-  }
+  use <- bool.guard(when: width <= 0, return: cell)
+  align.wrap(cell, width)
 }
 
 fn max_cell_height(cells: List(List(String)), minimum: Int) -> Int {

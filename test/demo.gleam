@@ -175,8 +175,8 @@ fn message_section(sp: spruce.Spruce) -> Nil {
   // Details suffix: trailing key-value pairs after the message text.
   let warn_details =
     details.new()
-    |> details.add("option", "legacy_mode")
-    |> details.add("since", "0.4.0")
+    |> details.add(key: "option", value: "legacy_mode")
+    |> details.add(key: "since", value: "0.4.0")
   let detail_options =
     message.default_options()
     |> message.with_details(warn_details)
@@ -190,8 +190,8 @@ fn message_section(sp: spruce.Spruce) -> Nil {
     |> message.with_formatter(message.badge())
     |> message.with_details(
       details.new()
-      |> details.add("status", "500")
-      |> details.add("retries", "3"),
+      |> details.add(key: "status", value: "500")
+      |> details.add(key: "retries", value: "3"),
     )
   io.println(
     "  " <> message.fail_with(sp, "Upstream request failed", combined_options),
@@ -203,9 +203,9 @@ fn formatter_section(sp: spruce.Spruce) -> Nil {
 
   let request =
     details.new()
-    |> details.add("method", "GET")
-    |> details.add("path", "/api/users")
-    |> details.add("duration", "42ms")
+    |> details.add(key: "method", value: "GET")
+    |> details.add(key: "path", value: "/api/users")
+    |> details.add(key: "duration", value: "42ms")
 
   line.new("Request complete")
   |> line.timestamp("2026-06-05T20:00:00Z")
@@ -243,7 +243,7 @@ fn box_section(sp: spruce.Spruce) -> Nil {
   let opts =
     box.options(title: "Release", color: style.Green)
     |> box.border(box.Rounded)
-    |> box.padding(1, 2, 1, 2)
+    |> box.padding(top: 1, right: 2, bottom: 1, left: 2)
 
   box.render(sp, "spruce 0.1.0\nready to ship", opts)
   |> io.println
@@ -253,7 +253,7 @@ fn box_section(sp: spruce.Spruce) -> Nil {
   let double =
     box.options(title: "Double", color: style.Magenta)
     |> box.border(box.Double)
-    |> box.padding(0, 1, 0, 1)
+    |> box.padding(top: 0, right: 1, bottom: 0, left: 1)
 
   box.render(sp, "thick borders\nfor emphasis", double)
   |> io.println
@@ -289,18 +289,18 @@ fn tree_section(sp: spruce.Spruce) -> Nil {
 
   tree.root("spruce")
   |> tree.child(
-    tree.root("src")
-    |> tree.child(tree.root("spruce.gleam"))
+    child: tree.root("src")
+    |> tree.child(child: tree.root("spruce.gleam"))
     |> tree.child(
-      tree.root("spruce")
-      |> tree.child(tree.root("style.gleam"))
-      |> tree.child(tree.root("box.gleam"))
-      |> tree.child(tree.root("table.gleam")),
+      child: tree.root("spruce")
+      |> tree.child(child: tree.root("style.gleam"))
+      |> tree.child(child: tree.root("box.gleam"))
+      |> tree.child(child: tree.root("table.gleam")),
     ),
   )
   |> tree.child(
-    tree.root("test")
-    |> tree.child(tree.root("spruce_test.gleam")),
+    child: tree.root("test")
+    |> tree.child(child: tree.root("spruce_test.gleam")),
   )
   |> tree.render(sp, _)
   |> io.println
@@ -466,7 +466,8 @@ fn align_section(sp: spruce.Spruce) -> Nil {
   io.println("  pad_left  : [" <> align.pad_left("right", 12) <> "]")
   io.println("  pad_center: [" <> align.pad_center("mid", 12) <> "]")
   io.println(
-    "  truncate  : " <> align.truncate("a rather long sentence", 14, "…"),
+    "  truncate  : "
+    <> align.truncate("a rather long sentence", width: 14, ellipsis: "…"),
   )
   io.println("  wrap:")
   align.wrap(

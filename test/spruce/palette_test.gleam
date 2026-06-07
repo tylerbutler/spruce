@@ -6,18 +6,18 @@ import tty
 
 pub fn hash_is_deterministic_test() {
   let sp = spruce.with_color_level(tty.Ansi256)
-  let a = style.render(sp, palette.hash(sp, "database"), "database")
-  let b = style.render(sp, palette.hash(sp, "database"), "database")
-  a
-  |> expect.to_equal(b)
+  let first = style.render(sp, palette.hash(sp, "database"), "database")
+  let second = style.render(sp, palette.hash(sp, "database"), "database")
+  first
+  |> expect.to_equal(second)
 }
 
 pub fn hash_foo_is_deterministic_test() {
   let sp = spruce.with_color_level(tty.Ansi256)
-  let a = style.render(sp, palette.hash(sp, "foo"), "foo")
-  let b = style.render(sp, palette.hash(sp, "foo"), "foo")
-  a
-  |> expect.to_equal(b)
+  let first = style.render(sp, palette.hash(sp, "foo"), "foo")
+  let second = style.render(sp, palette.hash(sp, "foo"), "foo")
+  first
+  |> expect.to_equal(second)
 }
 
 pub fn hash_distinguishes_simple_anagrams_test() {

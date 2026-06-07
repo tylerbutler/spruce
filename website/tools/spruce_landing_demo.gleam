@@ -23,10 +23,7 @@ pub fn main() {
   let sp = spruce.with_color_level(tty.TrueColor)
 
   mark("hero")
-  box.print(
-    sp,
-    "spruce",
-  )
+  box.print(sp, "spruce")
   group.group(sp, "Build", fn(sp) {
     message.print_start(sp, "compiling 14 modules")
     message.print_success(sp, "compiled in 312ms")
@@ -59,16 +56,16 @@ pub fn main() {
   io.println(
     tree.root("spruce")
     |> tree.child(
-      tree.root("style")
-      |> tree.child(tree.root("named"))
-      |> tree.child(tree.root("rgb / hex / 256"))
-      |> tree.child(tree.root("adaptive")),
+      child: tree.root("style")
+      |> tree.child(child: tree.root("named"))
+      |> tree.child(child: tree.root("rgb / hex / 256"))
+      |> tree.child(child: tree.root("adaptive")),
     )
     |> tree.child(
-      tree.root("layout")
-      |> tree.child(tree.root("box"))
-      |> tree.child(tree.root("table"))
-      |> tree.child(tree.root("tree")),
+      child: tree.root("layout")
+      |> tree.child(child: tree.root("box"))
+      |> tree.child(child: tree.root("table"))
+      |> tree.child(child: tree.root("tree")),
     )
     |> tree.render(sp, _),
   )
@@ -90,8 +87,8 @@ pub fn main() {
   mark("line")
   let meta =
     details.new()
-    |> details.add("duration", "42ms")
-    |> details.add("target", "javascript")
+    |> details.add(key: "duration", value: "42ms")
+    |> details.add(key: "target", value: "javascript")
   io.println(
     line.new("Request handled")
     |> line.severity(severity.Info)

@@ -45,6 +45,7 @@
 ////   module to neutralize untrusted HTML.
 ////
 
+import gleam/bool
 import gleam/int
 import gleam/io
 import gleam/list
@@ -282,11 +283,16 @@ fn render_code(
 ) -> String {
   let title = option_string(lang)
   let highlighted =
-    highlight.highlight_named_with(sp, text, title, options.theme.code)
+    highlight.highlight_named_with(
+      sp,
+      code: text,
+      name: title,
+      theme: options.theme.code,
+    )
 
   let options_ =
     box.options(title: title, color: options.theme.code_border)
-    |> box.padding(1, 0, 0, 0)
+    |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
   box.render(sp, highlighted, options_)
 }
 
@@ -316,14 +322,14 @@ fn render_plain_quote(
   let quote_block =
     block.new()
     |> block.border(box.Thick)
-    |> block.border_sides(False, False, False, True)
+    |> block.border_sides(top: False, right: False, bottom: False, left: True)
     |> block.border_colors(
-      options.theme.quote_border,
-      options.theme.quote_border,
-      options.theme.quote_border,
-      options.theme.quote_border,
+      top: options.theme.quote_border,
+      right: options.theme.quote_border,
+      bottom: options.theme.quote_border,
+      left: options.theme.quote_border,
     )
-    |> block.padding(0, 0, 0, 1)
+    |> block.padding(top: 0, right: 0, bottom: 0, left: 1)
 
   block.render(sp, content, quote_block)
 }
@@ -357,6 +363,7 @@ fn detect_alert(blocks: List(md.Block)) -> Option(Alert) {
               }
               Some(Alert(kind:, title:, body:))
             }
+            // nolint: thrown_away_error -- unrecognized alert tag means no alert
             Error(_) -> None
           }
         _ -> None
@@ -366,10 +373,8 @@ fn detect_alert(blocks: List(md.Block)) -> Option(Alert) {
 }
 
 fn alert_kind_from_tag(tag: String) -> Result(AlertKind, Nil) {
-  case string.starts_with(tag, "!") {
-    True -> alert_kind_from_name(string.drop_start(tag, 1))
-    False -> Error(Nil)
-  }
+  use <- bool.guard(when: !string.starts_with(tag, "!"), return: Error(Nil))
+  alert_kind_from_name(string.drop_start(tag, 1))
 }
 
 fn alert_kind_from_name(name: String) -> Result(AlertKind, Nil) {
@@ -443,9 +448,9 @@ fn render_admonition(sp: Spruce, alert: Alert, options: Options) -> String {
   let admonition_block =
     block.new()
     |> block.border(box.Thick)
-    |> block.border_sides(False, False, False, True)
-    |> block.border_colors(color, color, color, color)
-    |> block.padding(0, 0, 0, 1)
+    |> block.border_sides(top: False, right: False, bottom: False, left: True)
+    |> block.border_colors(top: color, right: color, bottom: color, left: color)
+    |> block.padding(top: 0, right: 0, bottom: 0, left: 1)
 
   block.render(sp, content, admonition_block)
 }
@@ -519,6 +524,7 @@ fn expand_line_outside_directive(
             None ->
               case parse_directive_open(line) {
                 Ok(opener) -> [opener, ..expand_lines(rest, True, None)]
+                // nolint: thrown_away_error -- not a directive, keep line as-is
                 Error(_) -> [line, ..expand_lines(rest, False, None)]
               }
           }
@@ -544,6 +550,7 @@ fn parse_fence_open(line: String) -> Option(Fence) {
         }
         _ -> None
       }
+    // nolint: thrown_away_error -- empty input means no fence
     Error(_) -> None
   }
 }
@@ -560,6 +567,7 @@ fn count_prefix(input: String, marker: String, count: Int) -> Int {
         True -> count_prefix(rest, marker, count + 1)
         False -> count
       }
+    // nolint: thrown_away_error -- end of input ends the run
     Error(_) -> count
   }
 }
@@ -569,10 +577,8 @@ fn is_directive_close(line: String) -> Bool {
 }
 
 fn quote_line(line: String) -> String {
-  case line == "" {
-    True -> ">"
-    False -> "> " <> line
-  }
+  use <- bool.guard(when: line == "", return: ">")
+  "> " <> line
 }
 
 /// Parse a directive opener such as `:::note` or `:::tip[Custom Title]`,
@@ -622,6 +628,7 @@ fn take_name(input: String, acc: String) -> #(String, String) {
         True -> take_name(rest, acc <> char)
         False -> #(acc, input)
       }
+    // nolint: thrown_away_error -- end of input ends the name
     Error(_) -> #(acc, "")
   }
 }

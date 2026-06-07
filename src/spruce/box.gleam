@@ -112,10 +112,10 @@ pub fn options(title title: String, color color: style.Color) -> BoxOptions {
 /// Set inner padding as top, right, bottom, left cell counts.
 pub fn padding(
   options: BoxOptions,
-  top: Int,
-  right: Int,
-  bottom: Int,
-  left: Int,
+  top top: Int,
+  right right: Int,
+  bottom bottom: Int,
+  left left: Int,
 ) -> BoxOptions {
   let config = box_config(options)
 
@@ -133,10 +133,10 @@ pub fn padding(
 /// Set outer margin as top, right, bottom, left cell counts.
 pub fn margin(
   options: BoxOptions,
-  top: Int,
-  right: Int,
-  bottom: Int,
-  left: Int,
+  top top: Int,
+  right right: Int,
+  bottom bottom: Int,
+  left left: Int,
 ) -> BoxOptions {
   let config = box_config(options)
 
@@ -160,10 +160,10 @@ pub fn border(options: BoxOptions, border: Border) -> BoxOptions {
 /// Set top, right, bottom, and left border colors independently.
 pub fn border_colors(
   options: BoxOptions,
-  top: style.Color,
-  right: style.Color,
-  bottom: style.Color,
-  left: style.Color,
+  top top: style.Color,
+  right right: style.Color,
+  bottom bottom: style.Color,
+  left left: style.Color,
 ) -> BoxOptions {
   let config = box_config(options)
 
@@ -181,10 +181,10 @@ pub fn border_colors(
 /// Set top, right, bottom, and left border visibility independently.
 pub fn border_sides(
   options: BoxOptions,
-  top: Bool,
-  right: Bool,
-  bottom: Bool,
-  left: Bool,
+  top top: Bool,
+  right right: Bool,
+  bottom bottom: Bool,
+  left left: Bool,
 ) -> BoxOptions {
   let config = box_config(options)
 

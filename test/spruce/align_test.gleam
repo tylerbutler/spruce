@@ -90,28 +90,28 @@ pub fn size_returns_widest_visual_line_and_height_test() {
 }
 
 pub fn truncate_plain_text_with_ellipsis_test() {
-  align.truncate("abcdef", 4, "…")
+  align.truncate("abcdef", width: 4, ellipsis: "…")
   |> expect.to_equal("abc…")
 }
 
 pub fn truncate_plain_text_without_truncation_test() {
-  align.truncate("abc", 5, "…")
+  align.truncate("abc", width: 5, ellipsis: "…")
   |> expect.to_equal("abc")
 }
 
 pub fn truncate_width_zero_is_empty_test() {
-  align.truncate("abcdef", 0, "…")
+  align.truncate("abcdef", width: 0, ellipsis: "…")
   |> expect.to_equal("")
 }
 
 pub fn truncate_trims_wide_ellipsis_to_fit_test() {
-  align.truncate("abcdef", 2, "...")
+  align.truncate("abcdef", width: 2, ellipsis: "...")
   |> expect.to_equal("..")
 }
 
 pub fn truncate_ansi_text_counts_visible_columns_test() {
   let text = "\u{001b}[31mred\u{001b}[0m blue"
-  let result = align.truncate(text, 5, "…")
+  let result = align.truncate(text, width: 5, ellipsis: "…")
 
   expect.to_be_true(string.contains(result, "\u{001b}[31m"))
   align.visual_length(result)
@@ -121,7 +121,7 @@ pub fn truncate_ansi_text_counts_visible_columns_test() {
 pub fn truncate_closes_unclosed_sgr_before_ellipsis_test() {
   let opening = "\u{001b}[31m"
 
-  align.truncate(opening <> "abcdef", 4, "…")
+  align.truncate(opening <> "abcdef", width: 4, ellipsis: "…")
   |> expect.to_equal(opening <> "abc\u{001b}[0m…")
 }
 

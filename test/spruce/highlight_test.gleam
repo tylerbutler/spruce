@@ -7,21 +7,25 @@ import tty
 pub fn no_color_round_trips_gleam_test() {
   let code = "pub fn main() {}"
 
-  highlight.highlight(spruce.no_color(), code, "gleam")
+  highlight.highlight(spruce.no_color(), code: code, name: "gleam")
   |> expect.to_equal(code)
 }
 
 pub fn colored_output_contains_escape_and_source_test() {
   let code = "pub fn main() {}"
   let out =
-    highlight.highlight(spruce.with_color_level(tty.TrueColor), code, "gleam")
+    highlight.highlight(
+      spruce.with_color_level(tty.TrueColor),
+      code: code,
+      name: "gleam",
+    )
 
   expect.to_be_true(string.contains(out, "\u{001b}"))
   expect.to_be_true(string.contains(out, "main"))
 }
 
 pub fn unknown_language_falls_back_to_plain_code_test() {
-  highlight.highlight(spruce.no_color(), "whatever", "not-a-lang")
+  highlight.highlight(spruce.no_color(), code: "whatever", name: "not-a-lang")
   |> expect.to_equal("whatever")
 }
 
@@ -36,7 +40,7 @@ pub fn language_aliases_resolve_test() {
 pub fn no_color_preserves_multiline_whitespace_test() {
   let code = "pub fn main() {\n  let x = 1\n  x\n}\n"
 
-  highlight.highlight(spruce.no_color(), code, "gleam")
+  highlight.highlight(spruce.no_color(), code: code, name: "gleam")
   |> expect.to_equal(code)
 }
 
@@ -59,9 +63,9 @@ pub fn named_custom_theme_path_works_test() {
 
   highlight.highlight_named_with(
     spruce.no_color(),
-    code,
-    "gleam",
-    highlight.dark_theme(),
+    code: code,
+    name: "gleam",
+    theme: highlight.dark_theme(),
   )
   |> expect.to_equal(code)
 }
@@ -69,6 +73,7 @@ pub fn named_custom_theme_path_works_test() {
 fn result_is_ok(result: Result(a, b)) -> Bool {
   case result {
     Ok(_) -> True
+    // nolint: thrown_away_error -- predicate intentionally ignores the error
     Error(_) -> False
   }
 }

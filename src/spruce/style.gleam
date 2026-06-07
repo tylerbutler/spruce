@@ -1,5 +1,6 @@
 //// Composable ANSI styling helpers.
 
+import gleam/bool
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -78,7 +79,11 @@ pub fn bg(style: Style, color: Color) -> Style {
   Style(..style, bg: Some(color))
 }
 
-pub fn complete(ansi: Color, ansi256: Color, truecolor: Color) -> Color {
+pub fn complete(
+  ansi ansi: Color,
+  ansi256 ansi256: Color,
+  truecolor truecolor: Color,
+) -> Color {
   Complete(ansi:, ansi256:, truecolor:)
 }
 
@@ -176,14 +181,11 @@ fn resolve_adaptive(color: Color, background: tty.Background) -> Color {
 }
 
 fn render_inline(text: String, enabled: Bool) -> String {
-  case enabled {
-    True ->
-      text
-      |> string.replace(each: "\r\n", with: " ")
-      |> string.replace(each: "\n", with: " ")
-      |> string.replace(each: "\r", with: " ")
-    False -> text
-  }
+  use <- bool.guard(when: !enabled, return: text)
+  text
+  |> string.replace(each: "\r\n", with: " ")
+  |> string.replace(each: "\n", with: " ")
+  |> string.replace(each: "\r", with: " ")
 }
 
 fn render_fg(
@@ -546,50 +548,36 @@ fn quantize_ansi256_cube_channel(value: Int) -> Int {
 }
 
 fn render_bold(text: String, enabled: Bool) -> String {
-  case enabled {
-    True -> ansi.bold(text)
-    False -> text
-  }
+  use <- bool.guard(when: !enabled, return: text)
+  ansi.bold(text)
 }
 
 fn render_dim(text: String, enabled: Bool) -> String {
-  case enabled {
-    True -> ansi.dim(text)
-    False -> text
-  }
+  use <- bool.guard(when: !enabled, return: text)
+  ansi.dim(text)
 }
 
 fn render_italic(text: String, enabled: Bool) -> String {
-  case enabled {
-    True -> ansi.italic(text)
-    False -> text
-  }
+  use <- bool.guard(when: !enabled, return: text)
+  ansi.italic(text)
 }
 
 fn render_underline(text: String, enabled: Bool) -> String {
-  case enabled {
-    True -> ansi.underline(text)
-    False -> text
-  }
+  use <- bool.guard(when: !enabled, return: text)
+  ansi.underline(text)
 }
 
 fn render_strikethrough(text: String, enabled: Bool) -> String {
-  case enabled {
-    True -> ansi.strikethrough(text)
-    False -> text
-  }
+  use <- bool.guard(when: !enabled, return: text)
+  ansi.strikethrough(text)
 }
 
 fn render_reverse(text: String, enabled: Bool) -> String {
-  case enabled {
-    True -> ansi.inverse(text)
-    False -> text
-  }
+  use <- bool.guard(when: !enabled, return: text)
+  ansi.inverse(text)
 }
 
 fn render_faint(text: String, enabled: Bool) -> String {
-  case enabled {
-    True -> ansi.dim(text)
-    False -> text
-  }
+  use <- bool.guard(when: !enabled, return: text)
+  ansi.dim(text)
 }

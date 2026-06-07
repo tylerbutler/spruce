@@ -102,14 +102,16 @@ pub fn box_custom_border_test() {
 }
 
 pub fn box_padding_adds_inner_rows_and_columns_test() {
-  let opts = box.default_options() |> box.padding(1, 2, 1, 2)
+  let opts =
+    box.default_options() |> box.padding(top: 1, right: 2, bottom: 1, left: 2)
 
   box.render(spruce.no_color(), "hi", opts)
   |> expect.to_equal("╭──────╮\n│      │\n│  hi  │\n│      │\n╰──────╯")
 }
 
 pub fn box_margin_adds_outer_space_after_indent_test() {
-  let opts = box.default_options() |> box.margin(1, 2, 1, 2)
+  let opts =
+    box.default_options() |> box.margin(top: 1, right: 2, bottom: 1, left: 2)
 
   box.render(spruce.no_color(), "hi", opts)
   |> expect.to_equal(
@@ -147,7 +149,7 @@ pub fn box_default_rendering_unchanged_after_per_side_options_test() {
 pub fn box_per_side_visibility_omits_hidden_columns_and_rows_test() {
   let opts =
     box.default_options()
-    |> box.border_sides(True, False, True, True)
+    |> box.border_sides(top: True, right: False, bottom: True, left: True)
 
   box.render(spruce.no_color(), "hi", opts)
   |> expect.to_equal("╭────\n│ hi \n╰────")
@@ -156,7 +158,7 @@ pub fn box_per_side_visibility_omits_hidden_columns_and_rows_test() {
 pub fn box_per_side_visibility_omits_corner_without_adjoining_side_test() {
   let opts =
     box.default_options()
-    |> box.border_sides(True, True, True, False)
+    |> box.border_sides(top: True, right: True, bottom: True, left: False)
 
   box.render(spruce.no_color(), "hi", opts)
   |> expect.to_equal("────╮\n hi │\n────╯")
@@ -165,7 +167,7 @@ pub fn box_per_side_visibility_omits_corner_without_adjoining_side_test() {
 pub fn box_per_side_visibility_all_hidden_matches_hidden_shape_test() {
   let opts =
     box.default_options()
-    |> box.border_sides(False, False, False, False)
+    |> box.border_sides(top: False, right: False, bottom: False, left: False)
 
   box.render(spruce.no_color(), "hi", opts)
   |> expect.to_equal(" hi ")
@@ -175,7 +177,12 @@ pub fn box_per_side_border_colors_are_applied_test() {
   let sp = spruce.with_color_level(tty.TrueColor)
   let opts =
     box.default_options()
-    |> box.border_colors(style.Red, style.Green, style.Blue, style.Yellow)
+    |> box.border_colors(
+      top: style.Red,
+      right: style.Green,
+      bottom: style.Blue,
+      left: style.Yellow,
+    )
   let out = box.render(sp, "hi", opts)
 
   expect.to_be_true(string.contains(out, "\u{001b}[31m"))

@@ -189,16 +189,16 @@ pub fn language(name: String) -> Result(Language, Nil) {
 
 /// Highlight code with the default adaptive theme, or return code unchanged for
 /// unknown languages.
-pub fn highlight(sp: Spruce, code: String, name: String) -> String {
-  highlight_named_with(sp, code, name, adaptive_theme())
+pub fn highlight(sp: Spruce, code code: String, name name: String) -> String {
+  highlight_named_with(sp, code:, name:, theme: adaptive_theme())
 }
 
 /// Highlight code with a string language name and explicit theme.
 pub fn highlight_named_with(
   sp: Spruce,
-  code: String,
-  name: String,
-  theme: Theme,
+  code code: String,
+  name name: String,
+  theme theme: Theme,
 ) -> String {
   case language(name) {
     Ok(language) -> highlight_with(sp, code, language, theme)

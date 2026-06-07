@@ -1,5 +1,6 @@
 //// Generic Birch-style severity/status formatting.
 
+import gleam/bool
 import gleam/string
 import spruce.{type Spruce}
 import spruce/align
@@ -200,10 +201,8 @@ fn label_color(severity: Severity) -> style.Color {
 }
 
 fn bool_width(enabled: Bool) -> Int {
-  case enabled {
-    True -> 10
-    False -> 8
-  }
+  use <- bool.guard(when: enabled, return: 10)
+  8
 }
 
 fn simple_color(severity: Severity) -> style.Color {

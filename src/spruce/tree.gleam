@@ -4,6 +4,7 @@
 //// default renderer uses Unicode branch glyphs when color is supported and a
 //// deterministic ASCII fallback when it is not.
 
+import gleam/bool
 import gleam/list
 import gleam/string
 import spruce.{type Spruce}
@@ -26,7 +27,7 @@ pub fn root(label: String) -> Tree {
 }
 
 /// Add a child to `parent`, preserving insertion order.
-pub fn child(parent: Tree, child: Tree) -> Tree {
+pub fn child(parent: Tree, child child: Tree) -> Tree {
   Tree(..parent, children: list.append(parent.children, [child]))
 }
 
@@ -173,31 +174,23 @@ fn ancestor_token(
 }
 
 fn unicode_branch(last: Bool) -> String {
-  case last {
-    True -> "└─ "
-    False -> "├─ "
-  }
+  use <- bool.guard(when: last, return: "└─ ")
+  "├─ "
 }
 
 fn ascii_branch(last: Bool) -> String {
-  case last {
-    True -> "`- "
-    False -> "|- "
-  }
+  use <- bool.guard(when: last, return: "`- ")
+  "|- "
 }
 
 fn unicode_ancestor(last: Bool) -> String {
-  case last {
-    True -> "   "
-    False -> "│  "
-  }
+  use <- bool.guard(when: last, return: "   ")
+  "│  "
 }
 
 fn ascii_ancestor(last: Bool) -> String {
-  case last {
-    True -> "   "
-    False -> "|  "
-  }
+  use <- bool.guard(when: last, return: "   ")
+  "|  "
 }
 
 fn spaces_like(text: String) -> String {

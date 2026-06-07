@@ -13,7 +13,8 @@ pub fn block_no_color_plain_output_test() {
 }
 
 pub fn block_padding_adds_inner_space_test() {
-  let options = block.new() |> block.padding(1, 2, 1, 2)
+  let options =
+    block.new() |> block.padding(top: 1, right: 2, bottom: 1, left: 2)
 
   block.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("      \n  hi  \n      ")
@@ -31,7 +32,7 @@ pub fn block_alignment_places_content_within_width_and_height_test() {
     block.new()
     |> block.width(6)
     |> block.height(3)
-    |> block.align(layout.Center, layout.Center)
+    |> block.align(horizontal: layout.Center, vertical: layout.Center)
 
   block.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("      \n  hi  \n      ")
@@ -50,7 +51,7 @@ pub fn block_per_side_border_behavior_test() {
   let options =
     block.new()
     |> block.border(box.Rounded)
-    |> block.border_sides(True, False, True, True)
+    |> block.border_sides(top: True, right: False, bottom: True, left: True)
 
   block.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("╭──\n│hi\n╰──")
@@ -60,7 +61,7 @@ pub fn block_hidden_top_omits_top_row_and_corners_test() {
   let options =
     block.new()
     |> block.border(box.Rounded)
-    |> block.border_sides(False, True, True, False)
+    |> block.border_sides(top: False, right: True, bottom: True, left: False)
 
   block.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("hi│\n──╯")
@@ -80,7 +81,9 @@ pub fn block_content_style_is_color_gated_test() {
 
 pub fn block_background_fills_padding_ring_test() {
   let options =
-    block.new() |> block.background(style.Blue) |> block.padding(1, 1, 1, 1)
+    block.new()
+    |> block.background(style.Blue)
+    |> block.padding(top: 1, right: 1, bottom: 1, left: 1)
 
   block.render(spruce.with_color_level(tty.TrueColor), "hi", options)
   |> expect.to_equal(
@@ -93,7 +96,12 @@ pub fn block_per_side_border_colors_are_applied_test() {
   let options =
     block.new()
     |> block.border(box.Rounded)
-    |> block.border_colors(style.Red, style.Green, style.Blue, style.Yellow)
+    |> block.border_colors(
+      top: style.Red,
+      right: style.Green,
+      bottom: style.Blue,
+      left: style.Yellow,
+    )
   let out = block.render(sp, "hi", options)
 
   expect.to_be_true(string.contains(out, "\u{001b}[31m"))
@@ -103,7 +111,8 @@ pub fn block_per_side_border_colors_are_applied_test() {
 }
 
 pub fn block_margin_adds_outer_space_after_indent_test() {
-  let options = block.new() |> block.margin(1, 2, 1, 2)
+  let options =
+    block.new() |> block.margin(top: 1, right: 2, bottom: 1, left: 2)
 
   block.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("      \n  hi  \n      ")

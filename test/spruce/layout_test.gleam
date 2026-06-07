@@ -46,12 +46,24 @@ pub fn join_horizontal_center_places_shorter_blocks_in_middle_test() {
 }
 
 pub fn place_centers_content_horizontally_and_places_at_bottom_test() {
-  layout.place(5, 3, layout.Center, layout.End, "ab\ncde")
+  layout.place(
+    width: 5,
+    height: 3,
+    horizontal: layout.Center,
+    vertical: layout.End,
+    content: "ab\ncde",
+  )
   |> expect.to_equal("     \n ab  \n cde ")
 }
 
 pub fn place_preserves_content_larger_than_region_test() {
-  layout.place(2, 1, layout.End, layout.End, "abcd\nef")
+  layout.place(
+    width: 2,
+    height: 1,
+    horizontal: layout.End,
+    vertical: layout.End,
+    content: "abcd\nef",
+  )
   |> expect.to_equal("abcd\n  ef")
 }
 

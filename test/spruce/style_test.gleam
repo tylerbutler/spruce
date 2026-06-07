@@ -77,9 +77,9 @@ pub fn render_complete_fg_chooses_basic_color_test() {
       spruce.with_color_level(tty.Basic),
       style.new()
         |> style.fg(style.complete(
-          style.Red,
-          style.BrightBlue,
-          style.BrightGreen,
+          ansi: style.Red,
+          ansi256: style.BrightBlue,
+          truecolor: style.BrightGreen,
         )),
       "x",
     )
@@ -93,9 +93,9 @@ pub fn render_complete_fg_chooses_ansi256_color_test() {
       spruce.with_color_level(tty.Ansi256),
       style.new()
         |> style.fg(style.complete(
-          style.Red,
-          style.BrightBlue,
-          style.BrightGreen,
+          ansi: style.Red,
+          ansi256: style.BrightBlue,
+          truecolor: style.BrightGreen,
         )),
       "x",
     )
@@ -109,9 +109,9 @@ pub fn render_complete_fg_chooses_truecolor_color_test() {
       spruce.with_color_level(tty.TrueColor),
       style.new()
         |> style.fg(style.complete(
-          style.Red,
-          style.BrightBlue,
-          style.BrightGreen,
+          ansi: style.Red,
+          ansi256: style.BrightBlue,
+          truecolor: style.BrightGreen,
         )),
       "x",
     )
@@ -125,9 +125,9 @@ pub fn render_complete_bg_chooses_color_level_test() {
       spruce.with_color_level(tty.Ansi256),
       style.new()
         |> style.bg(style.complete(
-          style.Red,
-          style.BrightBlue,
-          style.BrightGreen,
+          ansi: style.Red,
+          ansi256: style.BrightBlue,
+          truecolor: style.BrightGreen,
         )),
       "x",
     )
@@ -137,7 +137,11 @@ pub fn render_complete_bg_chooses_color_level_test() {
 
 pub fn render_complete_no_color_is_plain_test() {
   style.new()
-  |> style.fg(style.complete(style.Red, style.BrightBlue, style.BrightGreen))
+  |> style.fg(style.complete(
+    ansi: style.Red,
+    ansi256: style.BrightBlue,
+    truecolor: style.BrightGreen,
+  ))
   |> style.render(spruce.no_color(), _, "x")
   |> expect.to_equal("x")
 }

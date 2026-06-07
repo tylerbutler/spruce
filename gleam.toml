@@ -27,12 +27,41 @@ deny = []
 [tools.glinter]
 include = ["src/", "test/"]
 
+# label_possible nudges every 2+ parameter function toward labels. We label the
+# genuinely bug-prone public APIs (multiple same-typed, order-sensitive args)
+# explicitly, but leave pipe-subject and context (`Spruce`) parameters unlabeled
+# by convention, so the rule is disabled to avoid noise on those.
+[tools.glinter.rules]
+label_possible = "off"
+
 # Test files are exercised by startest, which discovers `*_test` functions by
 # reflection — so they're never imported (unused_exports) and conventionally
-# omit the `-> Nil` return annotation.
+# omit the `-> Nil` return annotation. Expected-output assertions are split into
+# one string literal per visual line for readability, so the concatenation rule
+# is suppressed here too. `let assert` is idiomatic for unwrapping known-good
+# values in tests.
 [tools.glinter.ignore]
 "test/**/*.gleam" = [
   "unused_exports",
   "missing_type_annotation",
   "redundant_case",
+  "unnecessary_string_concatenation",
+  "assert_ok_pattern",
 ]
+
+# spruce is a library: every public function/constant is part of the API, so
+# "unused by another module" is the expected state for these public modules.
+"src/spruce/box.gleam" = ["unused_exports"]
+"src/spruce/line.gleam" = ["unused_exports"]
+"src/spruce/message.gleam" = ["unused_exports"]
+"src/spruce/symbol.gleam" = ["unused_exports"]
+# severity also exposes a public string helper that is part of the API.
+"src/spruce/severity.gleam" = ["unused_exports"]
+# markdown exposes public API helpers and uses intentionally deep rendering and
+# parsing recursion.
+"src/spruce/markdown.gleam" = ["unused_exports", "deep_nesting"]
+# align's ANSI-aware scanners are intentionally nested grapheme/escape loops.
+"src/spruce/align.gleam" = ["deep_nesting"]
+# list defines its own opaque `List`, which shadows the prelude list type and
+# makes the list-of-string return/parameter types impossible to name here.
+"src/spruce/list.gleam" = ["missing_type_annotation"]

@@ -87,10 +87,10 @@ pub fn background(block: Block, color: style.Color) -> Block {
 /// Set inner padding as top, right, bottom, left cell counts.
 pub fn padding(
   block: Block,
-  top: Int,
-  right: Int,
-  bottom: Int,
-  left: Int,
+  top top: Int,
+  right right: Int,
+  bottom bottom: Int,
+  left left: Int,
 ) -> Block {
   Block(
     ..block,
@@ -104,10 +104,10 @@ pub fn padding(
 /// Set outer margin as top, right, bottom, left cell counts.
 pub fn margin(
   block: Block,
-  top: Int,
-  right: Int,
-  bottom: Int,
-  left: Int,
+  top top: Int,
+  right right: Int,
+  bottom bottom: Int,
+  left left: Int,
 ) -> Block {
   Block(
     ..block,
@@ -131,7 +131,11 @@ pub fn height(block: Block, height: Int) -> Block {
 }
 
 /// Align content horizontally within width and vertically within height.
-pub fn align(block: Block, horizontal: Pos, vertical: Pos) -> Block {
+pub fn align(
+  block: Block,
+  horizontal horizontal: Pos,
+  vertical vertical: Pos,
+) -> Block {
   Block(..block, horizontal: horizontal, vertical: vertical)
 }
 
@@ -143,10 +147,10 @@ pub fn border(block: Block, border: box.Border) -> Block {
 /// Set top, right, bottom, and left border colors independently.
 pub fn border_colors(
   block: Block,
-  top: style.Color,
-  right: style.Color,
-  bottom: style.Color,
-  left: style.Color,
+  top top: style.Color,
+  right right: style.Color,
+  bottom bottom: style.Color,
+  left left: style.Color,
 ) -> Block {
   Block(
     ..block,
@@ -160,10 +164,10 @@ pub fn border_colors(
 /// Set top, right, bottom, and left border visibility independently.
 pub fn border_sides(
   block: Block,
-  top: Bool,
-  right: Bool,
-  bottom: Bool,
-  left: Bool,
+  top top: Bool,
+  right right: Bool,
+  bottom bottom: Bool,
+  left left: Bool,
 ) -> Block {
   Block(
     ..block,

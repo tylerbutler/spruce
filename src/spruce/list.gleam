@@ -4,6 +4,7 @@
 //// Unicode bullet when color is supported and a deterministic ASCII marker when
 //// it is not. Ordered lists count from one at each nesting depth.
 
+import gleam/bool
 import gleam/int
 import gleam/list as gleam_list
 import gleam/string
@@ -190,8 +191,6 @@ fn marker(
 }
 
 fn bullet_marker(sp: Spruce) -> String {
-  case spruce.supports_color(sp) {
-    True -> "• "
-    False -> "- "
-  }
+  use <- bool.guard(when: !spruce.supports_color(sp), return: "- ")
+  "• "
 }
