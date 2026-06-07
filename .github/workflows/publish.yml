@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6.0.2
 
       - name: Setup Gleam
-        uses: tylerbutler/actions/setup-gleam@ee7def5950abcf0a519add705a95719ab345c05e # ratchet:tylerbutler/actions/setup-gleam@v1
+        uses: tylerbutler/actions/setup-gleam@1761c18aa4583d74916e1a53f2a106d1d70d72a8 # ratchet:tylerbutler/actions/setup-gleam@main
         with:
           erlang-version: "27.2"
           gleam-version: "1.16.0"
@@ -32,7 +32,7 @@ jobs:
         run: gleam deps download
 
       - name: Publish package to Hex
-        uses: tylerbutler/actions/gleam-publish@ee7def5950abcf0a519add705a95719ab345c05e # ratchet:tylerbutler/actions/gleam-publish@v1
+        uses: tylerbutler/actions/gleam-publish@1761c18aa4583d74916e1a53f2a106d1d70d72a8 # ratchet:tylerbutler/actions/gleam-publish@main
         with:
           packages: "."
           working-directory: "."
@@ -41,9 +41,10 @@ jobs:
 
   sbom:
     name: Attest SBOM
-    # Runs after the package is on Hex so the GitHub Release (created here) only
-    # exists for versions that actually published. This job is the sole owner of
-    # the Release, so there is no race with auto-tag.yml (create-release: false).
+    # Runs after the package is on Hex so assets are only attached for versions
+    # that actually published. changie-auto-tag (create-release: true) is the
+    # sole Release owner and creates the Release with the tag, so this job only
+    # uploads assets to the existing Release — no race, no create.
     needs: [validate, publish-hex]
     if: ${{ needs.publish-hex.result == 'success' }}
     runs-on: ubuntu-latest
@@ -86,27 +87,16 @@ jobs:
           subject-path: dist/spruce-${{ github.ref_name }}.tar.gz
           sbom-path: dist/spruce-${{ github.ref_name }}.cdx.json
 
-      - name: Publish SBOM to GitHub Release
+      - name: Upload SBOM to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          # This job owns the Release (auto-tag.yml has create-release: false),
-          # and it only runs after publish-hex succeeds, so there is no race.
-          # Create the Release if it does not exist yet, then attach assets.
-          if ! gh release view "$REF_NAME" >/dev/null 2>&1; then
-            notes_file=".changes/${REF_NAME}.md"
-            if [ -f "$notes_file" ]; then
-              # Drop the changie "## vX.Y.Z - DATE" heading; the title carries it.
-              tail -n +2 "$notes_file" > /tmp/release-notes.md
-              gh release create "$REF_NAME" --title "$REF_NAME" \
-                --notes-file /tmp/release-notes.md
-            else
-              gh release create "$REF_NAME" --title "$REF_NAME" --generate-notes
-            fi
-          fi
+          # changie-auto-tag (create-release: true) already created the Release
+          # together with the tag, so it exists before this tag-triggered run.
+          # We only attach assets here.
           gh release upload "$REF_NAME" \
             "dist/spruce-${REF_NAME}.cdx.json" \
             "dist/spruce-${REF_NAME}.tar.gz" \

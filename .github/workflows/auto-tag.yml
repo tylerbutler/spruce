@@ -11,12 +11,13 @@ permissions:
 
 jobs:
   auto-tag:
-    uses: tylerbutler/actions/.github/workflows/auto-tag.yml@ee7def5950abcf0a519add705a95719ab345c05e # ratchet:tylerbutler/actions/.github/workflows/auto-tag.yml@v1
+    uses: tylerbutler/actions/.github/workflows/auto-tag.yml@1761c18aa4583d74916e1a53f2a106d1d70d72a8 # ratchet:tylerbutler/actions/.github/workflows/auto-tag.yml@main
     with:
-      # The Publish workflow's `sbom` job owns the GitHub Release (it creates it
-      # after publishing to Hex, then attaches the signed SBOM). Creating it here
-      # too would race/conflict, so auto-tag only pushes the tag.
-      create-release: false
+      # changie-auto-tag is the sole, race-free Release owner: it creates the
+      # GitHub Release together with the tag (the Release exists before the tag
+      # is visible remotely). The downstream Publish `sbom` job only uploads
+      # assets to that Release, never creates it.
+      create-release: true
     secrets:
       app-id: ${{ secrets.RELEASE_APP_ID }}
       app-private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}

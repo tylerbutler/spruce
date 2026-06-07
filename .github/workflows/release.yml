@@ -22,7 +22,7 @@ jobs:
           app-id: ${{ secrets.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-      - uses: tylerbutler/actions/changie-release@ee7def5950abcf0a519add705a95719ab345c05e # ratchet:tylerbutler/actions/changie-release@v1
+      - uses: tylerbutler/actions/changie-release@1761c18aa4583d74916e1a53f2a106d1d70d72a8 # ratchet:tylerbutler/actions/changie-release@main
         id: release
         with:
           token: ${{ steps.app-token.outputs.token }}
