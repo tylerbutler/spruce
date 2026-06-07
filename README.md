@@ -59,7 +59,8 @@ escape-free, deterministic strings.
 - `spruce/table` — tables with widths, borders, separators, and cell wrapping
 - `spruce/list` — bulleted/ordered lists with arbitrary nesting
 - `spruce/tree` — tree-structured output
-- `spruce/group` — depth-in-context grouping
+- `spruce/group` — depth-in-context grouping (eager/streaming)
+- `spruce/output` — pipeable, buffered output composition
 - `spruce/message` — semantic one-liners (success/fail/start/ready/info/warn/error), with configurable label/badge/simple prefixes
 - `spruce/severity` — generic severity/status labels and badges
 - `spruce/details` — key-value detail rendering
@@ -114,6 +115,133 @@ pub fn compact_line_example() {
   |> echo
 }
 ```
+
+## Composability
+
+Every spruce primitive is a plain value or a `String`-returning function, so
+they combine freely.
+
+**Styles are reusable values.** Build one with `style.new`, extend it with more
+combinators, and apply it with `style.render`. Hash colors and adaptive
+light/dark colors compose the same way.
+
+```gleam
+import spruce
+import spruce/palette
+import spruce/style
+
+pub fn styles() {
+  let sp = spruce.detect()
+
+  // Build a style once, then derive variants from it.
+  let heading = style.new() |> style.bold |> style.underline
+  let accent = heading |> style.fg(style.Cyan)
+  echo style.render(sp, accent, "spruce")
+
+  // `palette.hash` returns a `Style`, so it pipes into more combinators.
+  let service = palette.hash(sp, "api") |> style.bold
+  echo style.render(sp, service, "api")
+
+  // Adaptive colors resolve against the detected background at render time.
+  let brand =
+    style.new()
+    |> style.fg(style.adaptive(
+      light: style.Hex(0x0369a1),
+      dark: style.Hex(0x7dd3fc),
+    ))
+  echo style.render(sp, brand, "brand")
+}
+```
+
+**Renderers nest, because they all return `String`.** Render a table, then drop
+it straight into a box:
+
+```gleam
+import spruce
+import spruce/box
+import spruce/style
+import spruce/table
+
+pub fn renderers_nest() {
+  let sp = spruce.detect()
+
+  let grid =
+    table.new()
+    |> table.headers(["package", "target"])
+    |> table.rows([["spruce", "erlang"], ["spruce", "javascript"]])
+    |> table.render(sp, _)
+
+  box.render(sp, grid, box.options(title: "build", color: style.Cyan))
+  |> echo
+}
+```
+
+**Containers nest their own structure.** Lists and trees compose to any depth,
+and the parent's kind and enumerator drive rendering throughout:
+
+```gleam
+import spruce
+import spruce/list
+
+pub fn lists_nest() {
+  let sp = spruce.detect()
+
+  list.new()
+  |> list.kind(list.Ordered)
+  |> list.item("setup")
+  |> list.nested(
+    "build",
+    list.new() |> list.item("erlang") |> list.item("javascript"),
+  )
+  |> list.render(sp, _)
+  |> echo
+}
+```
+
+**Multi-line blocks compose side by side.** `spruce/layout` joins blocks
+horizontally or vertically while staying ANSI-aware:
+
+```gleam
+import gleam/string
+import spruce/layout
+
+pub fn columns() {
+  let names = ["package", "spruce", "tty"] |> string.join("\n")
+  let versions = ["version", "1.0.0", "1.1.0"] |> string.join("\n")
+
+  // Each block is padded to its own width, so the columns line up.
+  layout.join_horizontal(layout.Start, [names, "   ", versions])
+  |> echo
+}
+```
+
+**Thread the context through a pipeline.** `spruce/output` accumulates rendered
+blocks so several renderers — and nested groups — compose with `|>` and emit
+together. `append` works with any `Spruce -> String` renderer via a `_` capture,
+and nothing prints until `print`:
+
+```gleam
+import spruce
+import spruce/message
+import spruce/output
+
+pub fn report() {
+  let sp = spruce.detect()
+
+  output.new(sp)
+  |> output.append(message.start(_, "compiling"))
+  |> output.group("Tests", fn(o) {
+    o
+    |> output.append(message.success(_, "erlang"))
+    |> output.append(message.success(_, "javascript"))
+  })
+  |> output.append(message.ready(_, "release ready"))
+  |> output.print
+}
+```
+
+For eager, streaming grouping that prints as work happens and can return a value
+from the body, reach for `spruce/group.group` instead.
 
 ## Development
 

@@ -65,6 +65,8 @@ import spruce/style
 import spruce/symbol
 import spruce/table
 
+/// A set of styles controlling how each Markdown element is rendered.
+/// Construct one with `dark_theme`, `light_theme`, or `adaptive_theme`.
 pub opaque type Theme {
   Theme(
     h1: style.Style,
@@ -89,10 +91,12 @@ pub opaque type Theme {
   )
 }
 
+/// Markdown rendering options: the theme and an optional wrap width.
 pub opaque type Options {
   Options(theme: Theme, width: Option(Int))
 }
 
+/// Build a theme tuned for dark terminal backgrounds.
 pub fn dark_theme() -> Theme {
   Theme(
     h1: style.new() |> style.bold |> style.fg(style.Hex(0x7dd3fc)),
@@ -117,6 +121,7 @@ pub fn dark_theme() -> Theme {
   )
 }
 
+/// Build a theme tuned for light terminal backgrounds.
 pub fn light_theme() -> Theme {
   Theme(
     h1: style.new() |> style.bold |> style.fg(style.Hex(0x0369a1)),
@@ -172,22 +177,27 @@ pub fn adaptive_theme() -> Theme {
   )
 }
 
+/// Default options: the adaptive theme and no width limit.
 pub fn default_options() -> Options {
   Options(theme: adaptive_theme(), width: None)
 }
 
+/// Use a specific theme when rendering.
 pub fn with_theme(options: Options, theme: Theme) -> Options {
   Options(..options, theme:)
 }
 
+/// Wrap rendered output to a maximum visual width. Negative values clamp to 0.
 pub fn with_width(options: Options, width: Int) -> Options {
   Options(..options, width: Some(int.max(0, width)))
 }
 
+/// Render Markdown to styled terminal text using the default options.
 pub fn render(sp: Spruce, markdown: String) -> String {
   render_with(sp, markdown, default_options())
 }
 
+/// Render Markdown to styled terminal text with explicit options.
 pub fn render_with(sp: Spruce, markdown: String, options: Options) -> String {
   let md.Document(_, blocks, _, _) =
     mork.configure()
@@ -200,6 +210,7 @@ pub fn render_with(sp: Spruce, markdown: String, options: Options) -> String {
   render_blocks(sp, blocks, options)
 }
 
+/// Render Markdown with the default options and print it to stdout.
 pub fn print(sp: Spruce, markdown: String) -> Nil {
   io.println(render(sp, markdown))
 }

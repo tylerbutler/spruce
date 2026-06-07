@@ -10,6 +10,8 @@ versionFormat: '## {{.Version}} - {{.Time.Format "2006-01-02"}}'
 kindFormat: '### {{.Kind}}'
 changeFormat: '- {{.Body}}'
 kinds:
+    - label: Major Release
+      auto: major
     - label: Added
       auto: minor
     - label: Fixed
@@ -18,8 +20,6 @@ kinds:
       auto: patch
     - label: Changed
       auto: patch
-    - label: MajorRelease
-      auto: major
     - label: Reverted
       auto: patch
     - label: Dependencies

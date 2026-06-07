@@ -6,6 +6,7 @@ import spruce.{type Spruce}
 import spruce/palette
 import spruce/style
 
+/// An ordered collection of key-value detail pairs.
 pub opaque type Details {
   Details(items: List(#(String, String)), show_internal: Bool)
 }
