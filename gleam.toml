@@ -3,7 +3,7 @@ version = "0.1.0"
 description = "A terminal-UI kit for Gleam: styled text, boxes, semantic messages, icons, and aligned/grouped output (Erlang + JavaScript)"
 licences = ["MIT", "Apache-2.0"]
 repository = { type = "github", user = "tylerbutler", repo = "spruce" }
-gleam = ">= 1.11.0"
+gleam = ">= 1.16.0"
 internal_modules = ["spruce/internal", "spruce/internal/*"]
 
 [javascript]
