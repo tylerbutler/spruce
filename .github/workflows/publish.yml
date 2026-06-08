@@ -40,7 +40,7 @@ jobs:
           skip-already-published: "true"
 
   sbom:
-    name: Attest SBOM
+    name: Attest and Upload Artifacts
     # Runs after the package is on Hex so assets are only attached for versions
     # that actually published. changie-auto-tag (create-release: true) is the
     # sole Release owner and creates the Release with the tag, so this job only
@@ -91,11 +91,36 @@ jobs:
           git archive --format=tar.gz --prefix="spruce-${VERSION}/" \
             -o "dist/spruce-${VERSION}.tar.gz" HEAD
 
+      - name: Generate checksums
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          # SHA-256 checksums for the published artifacts. Run from dist/ so the
+          # file records bare names (not dist/ prefixes); the checksums file does
+          # not include itself.
+          cd dist
+          sha256sum \
+            "spruce-${VERSION}.tar.gz" \
+            "spruce-${VERSION}.cdx.json" \
+            > "spruce-${VERSION}.sha256sum"
+
       - name: Attest SBOM
         uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # ratchet:actions/attest@v4
         with:
           subject-path: dist/spruce-${{ steps.version.outputs.version }}.tar.gz
           sbom-path: dist/spruce-${{ steps.version.outputs.version }}.cdx.json
+
+      - name: Attest build provenance
+        # SLSA build provenance for every shipped artifact, including the
+        # checksums file — verifying the checksums file's provenance lets
+        # consumers verify the rest offline against it.
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # ratchet:actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            dist/spruce-${{ steps.version.outputs.version }}.tar.gz
+            dist/spruce-${{ steps.version.outputs.version }}.cdx.json
+            dist/spruce-${{ steps.version.outputs.version }}.sha256sum
 
       - name: Upload SBOM to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -112,4 +137,5 @@ jobs:
           gh release upload "$REF_NAME" \
             "dist/spruce-${VERSION}.cdx.json" \
             "dist/spruce-${VERSION}.tar.gz" \
+            "dist/spruce-${VERSION}.sha256sum" \
             --clobber

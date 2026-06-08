@@ -87,6 +87,24 @@ sbom output="dist/spruce.cdx.json":
     mkdir -p $(dirname {{output}})
     licence_audit sbom --output={{output}}
 
+# Build the full release artifact set into dist/ (source archive, SBOM,
+# checksums) using the version from gleam.toml — parity with the publish
+# workflow. Requires licence_audit from mise.
+dist version=`grep '^version' gleam.toml | sed -E 's/.*"(.*)".*/\1/'`:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p dist
+    git archive --format=tar.gz --prefix="spruce-{{version}}/" \
+        -o "dist/spruce-{{version}}.tar.gz" HEAD
+    licence_audit sbom --output="dist/spruce-{{version}}.cdx.json"
+    # Run from dist/ so the checksums file records bare names and excludes itself.
+    cd dist
+    sha256sum \
+        "spruce-{{version}}.tar.gz" \
+        "spruce-{{version}}.cdx.json" \
+        > "spruce-{{version}}.sha256sum"
+    echo "Wrote dist/spruce-{{version}}.{tar.gz,cdx.json,sha256sum}"
+
 # === MAINTENANCE ===
 
 # Remove build artifacts
