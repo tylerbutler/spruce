@@ -54,11 +54,17 @@ jobs:
   # A fixed OTP only hosts the Gleam compiler; it does not affect JS output.
   test-javascript:
     runs-on: ubuntu-latest
-    name: Test JavaScript (Node ${{ matrix.node }})
+    name: Test JavaScript (Node ${{ matrix.node.major }})
     strategy:
       fail-fast: false
       matrix:
-        node: ["20.19.6", "22.22.3", "24.16.0"]
+        node:
+          - version: "20.19.6"
+            major: "20"
+          - version: "22.22.3"
+            major: "22"
+          - version: "24.16.0"
+            major: "24"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
 
@@ -68,7 +74,7 @@ jobs:
           otp-version: "27"
           gleam-version: "1.16.0"
           node: "true"
-          node-version: ${{ matrix.node }}
+          node-version: ${{ matrix.node.version }}
 
       - name: Build (warnings as errors)
         run: gleam build --target javascript --warnings-as-errors

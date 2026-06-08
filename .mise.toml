@@ -3,7 +3,10 @@ changie = "latest"
 # OTP 28: licence_audit (used for SBOM generation) is compiled with OTP 28 and
 # its BEAM files can't be loaded by older runtimes. CI already sweeps 26/27/28.
 erlang = "28"
-gleam = "latest"
+# Pin gleam to match .tool-versions and the CI/publish jobs (which pin 1.16.0)
+# so the SBOM job resolves dependencies with the same toolchain as everything
+# else. Bump in lockstep with .tool-versions and the workflow version pins.
+gleam = "1.16.0"
 just = "latest"
 node = "22.22.3"
 # licence_audit: CycloneDX SBOM + Hex licence auditing, installed from GitHub

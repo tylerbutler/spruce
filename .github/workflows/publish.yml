@@ -65,39 +65,51 @@ jobs:
       - name: Download dependencies
         run: gleam deps download
 
-      - name: Generate CycloneDX SBOM
+      - name: Resolve version
+        id: version
         env:
           REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # Strip the leading "v" from the tag so asset names use bare semver
+          # (e.g. spruce-1.0.0.cdx.json), matching the Hex package version.
+          echo "version=${REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate CycloneDX SBOM
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           mkdir -p dist
-          licence_audit sbom --output="dist/spruce-${REF_NAME}.cdx.json"
+          licence_audit sbom --output="dist/spruce-${VERSION}.cdx.json"
 
       - name: Create source archive
         env:
-          REF_NAME: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          git archive --format=tar.gz --prefix="spruce-${REF_NAME}/" \
-            -o "dist/spruce-${REF_NAME}.tar.gz" HEAD
+          git archive --format=tar.gz --prefix="spruce-${VERSION}/" \
+            -o "dist/spruce-${VERSION}.tar.gz" HEAD
 
       - name: Attest SBOM
         uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # ratchet:actions/attest@v4
         with:
-          subject-path: dist/spruce-${{ github.ref_name }}.tar.gz
-          sbom-path: dist/spruce-${{ github.ref_name }}.cdx.json
+          subject-path: dist/spruce-${{ steps.version.outputs.version }}.tar.gz
+          sbom-path: dist/spruce-${{ steps.version.outputs.version }}.cdx.json
 
       - name: Upload SBOM to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REF_NAME: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           # changie-auto-tag (create-release: true) already created the Release
           # together with the tag, so it exists before this tag-triggered run.
-          # We only attach assets here.
+          # We only attach assets here. The Release is keyed by the tag
+          # ($REF_NAME, e.g. v1.0.0); asset files use bare semver ($VERSION).
           gh release upload "$REF_NAME" \
-            "dist/spruce-${REF_NAME}.cdx.json" \
-            "dist/spruce-${REF_NAME}.tar.gz" \
+            "dist/spruce-${VERSION}.cdx.json" \
+            "dist/spruce-${VERSION}.tar.gz" \
             --clobber
