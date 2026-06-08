@@ -95,7 +95,7 @@ pub fn colored_badge_is_bold_test() {
   expect.to_be_true(string.contains(out, "[WARN]"))
 }
 
-pub fn all_birch_levels_are_retained_test() {
+pub fn all_rfc5424_levels_are_retained_test() {
   [
     severity.Trace,
     severity.Debug,
@@ -121,7 +121,7 @@ pub fn all_birch_levels_are_retained_test() {
   ])
 }
 
-pub fn birch_level_order_is_retained_test() {
+pub fn rfc5424_level_order_is_retained_test() {
   severity.to_int(severity.Trace)
   |> expect.to_equal(0)
   severity.to_int(severity.Err)

@@ -1,4 +1,4 @@
-//// Generic Birch-style severity/status formatting.
+//// Generic RFC 5424 severity/status formatting.
 
 import gleam/bool
 import gleam/string
@@ -7,7 +7,7 @@ import spruce/align
 import spruce/style
 import spruce/symbol
 
-/// Birch-compatible severity levels, in ascending order.
+/// RFC 5424 severity levels, in ascending order.
 pub type Severity {
   Trace
   Debug
@@ -101,7 +101,7 @@ pub fn render_padded(
   |> align.pad_right(formatter.target_width)
 }
 
-/// Convert a severity to its Birch ordering integer.
+/// Convert a severity to its RFC 5424 ordering integer.
 pub fn to_int(severity: Severity) -> Int {
   case severity {
     Trace -> 0
