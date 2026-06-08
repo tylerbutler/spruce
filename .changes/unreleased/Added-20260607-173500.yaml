@@ -1,0 +1,3 @@
+kind: Added
+body: 'Release pipeline now adds SLSA build-provenance attestations alongside the existing SBOM attestation, and publishes a SHA-256 checksums file (spruce-<version>.sha256sum) that is itself attested and uploaded to the GitHub Release. A `just dist` recipe builds the same artifact set (source archive, SBOM, checksums) locally.'
+time: 2026-06-07T17:35:00.000000-07:00
