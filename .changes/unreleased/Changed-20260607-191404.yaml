@@ -1,3 +1,0 @@
-kind: Changed
-body: 'Documentation for spruce/severity now refers to the RFC 5424 logging levels it follows, rather than the birch library it was extracted from.'
-time: 2026-06-07T19:14:04.000000-07:00
