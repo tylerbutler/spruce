@@ -1,3 +1,0 @@
-kind: Added
-body: 'Semantic line modules: spruce/severity (generic severity/status labels and badges), spruce/message (success/fail/start/ready/info/warn/error one-liners with configurable label, badge, and simple prefixes), spruce/details (key-value detail rendering), and spruce/line (compact terminal line composition).'
-time: 2026-06-05T07:36:00.000000-07:00

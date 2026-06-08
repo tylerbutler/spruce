@@ -1,3 +1,0 @@
-kind: Added
-body: 'Arbitrary colors: style.Rgb, style.Hex, and style.Ansi256, with automatic downgrade to the nearest representable color for lower color levels.'
-time: 2026-06-05T15:29:39.755171-07:00

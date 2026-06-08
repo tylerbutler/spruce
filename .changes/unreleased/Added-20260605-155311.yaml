@@ -1,3 +1,0 @@
-kind: Added
-body: 'New spruce/highlight module: syntax highlighting for 36 languages (via smalto) with dark/light/adaptive themes, a name/alias language resolver, and automatic color gating. Fenced code blocks in spruce/markdown are highlighted by default, with a plain fallback for unknown languages.'
-time: 2026-06-05T15:53:11.691644-07:00

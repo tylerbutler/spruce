@@ -1,3 +1,0 @@
-kind: Added
-body: 'spruce/markdown renders admonitions/callouts: GitHub-style alerts (> [!NOTE|TIP|IMPORTANT|WARNING|CAUTION]) and Astro/Starlight :::type[Title] container directives, each with a colored left border, icon, and title (custom titles supported).'
-time: 2026-06-05T16:17:00.000000-07:00
