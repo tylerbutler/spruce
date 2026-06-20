@@ -18,6 +18,16 @@
   --brand-strong: #4cb782;
   --brand-ink: #061009;
   --accent: #ec6a82;
+  --terminal-border: rgba(255, 255, 255, 0.08);
+  --terminal-bar-bg: rgba(255, 255, 255, 0.025);
+  --terminal-bar-border: rgba(255, 255, 255, 0.06);
+  --terminal-dot-muted: #3a443e;
+  --terminal-title: #7c8a81;
+  --terminal-body: #cdd6d0;
+  --code-coral: #ec6a82;
+  --code-teal: #56b3a4;
+  --code-blue: #6aa9e9;
+  --code-green: #58c98c;
   --shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.7),
     0 8px 24px -16px rgba(20, 60, 42, 0.35);
 
@@ -212,8 +222,8 @@ h3 {
 .icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
   background: var(--card);
@@ -327,7 +337,7 @@ h3 {
 /* terminal */
 .term {
   background: var(--term-bg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--terminal-border);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow);
@@ -338,8 +348,8 @@ h3 {
   gap: 8px;
   height: 40px;
   padding: 0 14px;
-  background: rgba(255, 255, 255, 0.025);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--terminal-bar-bg);
+  border-bottom: 1px solid var(--terminal-bar-border);
 }
 .dot {
   width: 11px;
@@ -351,13 +361,13 @@ h3 {
   background: var(--accent);
 }
 .dot.m {
-  background: #3a443e;
+  background: var(--terminal-dot-muted);
 }
 .term-title {
   margin-left: 8px;
   font-family: var(--font-mono);
   font-size: 0.74rem;
-  color: #7c8a81;
+  color: var(--terminal-title);
   letter-spacing: 0.02em;
 }
 .term-body {
@@ -366,7 +376,7 @@ h3 {
   font-family: var(--font-mono);
   font-size: 0.82rem;
   line-height: 1.62;
-  color: #cdd6d0;
+  color: var(--terminal-body);
   white-space: pre;
   overflow-x: auto;
   tab-size: 2;
@@ -434,6 +444,8 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 44px;
+  padding: 10px 2px;
   transition: color 0.2s var(--ease);
 }
 .hero-cta .docs-link:hover {
@@ -595,7 +607,7 @@ section {
 }
 .code {
   background: var(--term-bg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--terminal-border);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow);
@@ -606,21 +618,21 @@ section {
   font-family: var(--font-mono);
   font-size: 0.86rem;
   line-height: 1.7;
-  color: #cdd6d0;
+  color: var(--terminal-body);
   white-space: pre;
   overflow-x: auto;
 }
 .code .k {
-  color: #ec6a82;
+  color: var(--code-coral);
 }
 .code .m {
-  color: #56b3a4;
+  color: var(--code-teal);
 }
 .code .f {
-  color: #6aa9e9;
+  color: var(--code-blue);
 }
 .code .s {
-  color: #58c98c;
+  color: var(--code-green);
 }
 
 /* modules grid */
