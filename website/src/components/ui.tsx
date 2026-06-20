@@ -63,35 +63,45 @@ export function Terminal({
 }
 
 export function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
 
   useEffect(() => {
-    if (!copied) return;
-    const t = setTimeout(() => setCopied(false), 1600);
+    if (copyState === "idle") return;
+    const t = setTimeout(() => setCopyState("idle"), 1800);
     return () => clearTimeout(t);
-  }, [copied]);
+  }, [copyState]);
 
   async function onCopy() {
+    let ok = false;
     try {
       await navigator.clipboard.writeText(text);
+      ok = true;
     } catch {
       const ta = document.createElement("textarea");
       ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
       document.body.appendChild(ta);
       ta.select();
       try {
-        document.execCommand("copy");
+        ok = document.execCommand("copy");
       } catch {
-        /* ignore */
+        ok = false;
       }
       document.body.removeChild(ta);
     }
-    setCopied(true);
+    setCopyState(ok ? "copied" : "failed");
   }
+
+  const copied = copyState === "copied";
+  const failed = copyState === "failed";
 
   return (
     <button
-      className={"copy" + (copied ? " copied" : "")}
+      className={"copy" + (copied ? " copied" : "") + (failed ? " failed" : "")}
       onClick={onCopy}
       aria-label={`Copy: ${text}`}
     >
@@ -99,6 +109,9 @@ export function CopyButton({ text }: { text: string }) {
         <span className="prompt">$</span> {text}
       </span>
       <span className="ico">{copied ? <CheckIcon /> : <CopyIcon />}</span>
+      <span className="sr-only" aria-live="polite">
+        {copied ? "Copied install command" : failed ? "Copy failed" : ""}
+      </span>
     </button>
   );
 }
