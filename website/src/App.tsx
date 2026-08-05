@@ -25,26 +25,54 @@ const runtimeAlt: Record<string, string> = {
   nodedotjs: "Node.js",
 };
 
-const modules: Array<[string, string]> = [
-  ["spruce", "The render context: color level, background, indent depth."],
-  ["spruce/align", "ANSI-aware visual length and padding."],
-  ["spruce/block", "Padding, margin, sizing, alignment, per-side borders."],
-  ["spruce/box", "Boxed output with per-side borders and colors."],
-  ["spruce/details", "Key and value detail rendering."],
-  ["spruce/group", "Depth-in-context grouping and indentation."],
-  ["spruce/highlight", "Syntax highlighting for fenced code blocks."],
-  ["spruce/layout", "Compose multi-line text blocks together."],
-  ["spruce/line", "Compact, single-line terminal log composition."],
-  ["spruce/list", "Bulleted and ordered lists with arbitrary nesting."],
-  ["spruce/markdown", "Markdown to ANSI, in the style of Glamour."],
-  ["spruce/message", "Semantic one-liners with label, badge, or simple style."],
-  ["spruce/output", "Pipeable, buffered output composition."],
-  ["spruce/palette", "Deterministic hash colors from any string."],
-  ["spruce/severity", "Generic severity and status labels and badges."],
-  ["spruce/style", "Composable text styling: named, RGB, hex, 256, adaptive."],
-  ["spruce/symbol", "Named glyphs with automatic ASCII fallbacks."],
-  ["spruce/table", "Widths, borders, separators, and cell wrapping."],
-  ["spruce/tree", "Tree-structured output with Unicode or ASCII."],
+const moduleGroups: Array<{
+  title: string;
+  summary: string;
+  modules: Array<[string, string]>;
+}> = [
+  {
+    title: "Render context",
+    summary: "Detect once, then thread pure render state everywhere.",
+    modules: [
+      ["spruce", "Color level, background, and indent depth."],
+      ["spruce/output", "Pipeable, buffered output composition."],
+      ["spruce/group", "Depth-in-context grouping and indentation."],
+    ],
+  },
+  {
+    title: "Style and symbols",
+    summary: "Build reusable terminal styling without leaking IO.",
+    modules: [
+      ["spruce/style", "Named, RGB, hex, 256, and adaptive color styling."],
+      ["spruce/palette", "Deterministic hash colors from any string."],
+      ["spruce/symbol", "Named glyphs with automatic ASCII fallbacks."],
+      ["spruce/severity", "Generic severity and status labels and badges."],
+    ],
+  },
+  {
+    title: "Structure and layout",
+    summary: "Keep multiline output aligned, nested, and readable.",
+    modules: [
+      ["spruce/align", "ANSI-aware visual length and padding."],
+      ["spruce/layout", "Compose multi-line text blocks together."],
+      ["spruce/block", "Padding, margin, sizing, alignment, per-side borders."],
+      ["spruce/box", "Boxed output with per-side borders and colors."],
+      ["spruce/table", "Widths, borders, separators, and cell wrapping."],
+      ["spruce/list", "Bulleted and ordered lists with arbitrary nesting."],
+      ["spruce/tree", "Tree-structured output with Unicode or ASCII."],
+    ],
+  },
+  {
+    title: "Semantic output",
+    summary: "Turn raw strings into meaningful developer-facing lines.",
+    modules: [
+      ["spruce/message", "Semantic one-liners with label, badge, or simple style."],
+      ["spruce/line", "Compact severity, scope, and key/value details."],
+      ["spruce/details", "Key and value detail rendering."],
+      ["spruce/highlight", "Syntax highlighting for fenced code blocks."],
+      ["spruce/markdown", "Markdown to ANSI, in the style of Glamour."],
+    ],
+  },
 ];
 
 function Nav() {
@@ -83,7 +111,7 @@ function Hero() {
         <div>
           <p className="eyebrow">Terminal UI kit for Gleam</p>
           <h1>
-            Make the terminal <span className="grad">look good.</span>
+            Make the terminal <span className="solid-emphasis">look good.</span>
           </h1>
           <p className="lead">
             spruce renders styled text, boxes, tables, and semantic messages
@@ -317,14 +345,24 @@ function Modules() {
           </p>
         </Reveal>
         <div className="mods">
-          {modules.map(([name, desc], i) => (
+          {moduleGroups.map((group, groupIndex) => (
             <Reveal
-              className="mod"
-              key={name}
-              delay={Math.min(i, 8) * 0.02}
+              className="module-group"
+              key={group.title}
+              delay={groupIndex * 0.04}
             >
-              <code>{name}</code>
-              <span>{desc}</span>
+              <div className="module-group-head">
+                <h3>{group.title}</h3>
+                <p>{group.summary}</p>
+              </div>
+              <div className="module-list">
+                {group.modules.map(([name, desc]) => (
+                  <div className="mod" key={name}>
+                    <code>{name}</code>
+                    <span>{desc}</span>
+                  </div>
+                ))}
+              </div>
             </Reveal>
           ))}
         </div>
