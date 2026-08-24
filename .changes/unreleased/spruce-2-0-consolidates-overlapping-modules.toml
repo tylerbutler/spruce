@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Major Release"
+body = "spruce 2.0 consolidates overlapping modules into one box builder, one set of border glyphs, one status formatter, one indentation helper, and one output-composition module. Only spruce/tree, spruce/details, spruce/highlight, and spruce/markdown are unchanged; the entries below describe each change and its replacement."

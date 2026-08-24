@@ -1,3 +1,0 @@
-kind: Major Release
-body: 'The Border and BorderChars types move from spruce/box to the new spruce/border module. Replace box.Rounded, box.Custom(...), and the other border constructors with their spruce/border equivalents, including in calls to table.border.'
-time: 2026-08-24T13:25:48.569942751-07:00

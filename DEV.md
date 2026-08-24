@@ -17,7 +17,7 @@
 
 ## Release workflow
 
-1. Add a changelog fragment under `.changes/unreleased/` using the project’s Changie setup.
+1. Add a changelog fragment with `just change <kind> "<text>"`.
 2. Keep `gleam.toml` at the last released version until the release PR merges; the release PR is what bumps the package to the next version.
 3. Run `just ci` before opening a pull request.
 4. Ensure repository secrets are configured for automation:
@@ -25,7 +25,7 @@
    - `RELEASE_APP_ID`
    - `RELEASE_APP_PRIVATE_KEY`
 5. Merge the release PR to `main`.
-6. When the release PR closes, the auto-tag workflow creates a tag and GitHub release.
+6. When the `release/pending` PR closes, Trellis creates the tag and GitHub release.
 7. The `Publish` workflow runs on tag push and publishes the package to Hex.
 
 ## Public API expectations

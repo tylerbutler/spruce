@@ -16,49 +16,47 @@ default:
 
 # Download project dependencies
 deps:
-    gleam deps download
+    trellis run deps
 
 # === BUILD ===
 
 # Compile the project
 build:
-    gleam build
+    trellis run build
 
 # Build with warnings as errors (both targets)
 build-strict:
-    gleam build --target erlang --warnings-as-errors
-    gleam build --target javascript --warnings-as-errors
+    trellis run build --target all --strict
 
 # === TESTING ===
 
 # Run tests on both targets
 test:
-    gleam test --target erlang
-    gleam test --target javascript
+    trellis run test --target all
 
 # === CODE QUALITY ===
 
 # Format code
 format:
-    gleam format src test
+    trellis run format
 
 # Check formatting without changes
 format-check:
-    gleam format --check src test
+    trellis run format --check
 
 # Type check without building
 check:
-    gleam check
+    trellis run check
 
 # Run linter (format check + glinter)
 lint: format-check
-    gleam run -m glinter
+    trellis run lint
 
 # === DOCUMENTATION ===
 
 # Build API documentation
 docs:
-    gleam docs build
+    trellis run docs
 
 # === DEMO ===
 
@@ -69,16 +67,16 @@ demo target="erlang":
 # === CHANGELOG ===
 
 # Create a new changelog entry
-change:
-    changie new
+change kind body:
+    trellis changelog new --kind "{{kind}}" --body "{{body}}"
 
-# Preview unreleased changelog
+# Preview the next release
 changelog-preview:
-    changie batch auto --dry-run
+    trellis version plan
 
-# Generate CHANGELOG.md
+# Apply the planned version and changelog updates
 changelog:
-    changie merge
+    trellis version apply
 
 # === SBOM ===
 
@@ -109,7 +107,7 @@ dist version=`grep '^version' gleam.toml | sed -E 's/.*"(.*)".*/\1/'`:
 
 # Remove build artifacts
 clean:
-    rm -rf build
+    trellis run clean
 
 # === CI ===
 

@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Added"
+body = "Box builders gain title, border_color, height, align, foreground, and background, so a titled box can also be sized, aligned, and colored."

@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
 
       - name: Setup Gleam
         uses: tylerbutler/actions/setup-gleam@1761c18aa4583d74916e1a53f2a106d1d70d72a8 # ratchet:tylerbutler/actions/setup-gleam@main
@@ -31,19 +33,20 @@ jobs:
       - name: Download dependencies
         run: gleam deps download
 
+      - name: Install Trellis
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf \
+            https://github.com/tylerbutler/trellis/releases/download/v0.11.2/trellis-gleam-installer.sh | sh
+
       - name: Publish package to Hex
-        uses: tylerbutler/actions/gleam-publish@1761c18aa4583d74916e1a53f2a106d1d70d72a8 # ratchet:tylerbutler/actions/gleam-publish@main
-        with:
-          packages: "."
-          working-directory: "."
-          hex-api-key: ${{ secrets.HEX_API_KEY }}
-          skip-already-published: "true"
+        env:
+          HEXPM_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: trellis publish --tag "$GITHUB_REF_NAME"
 
   sbom:
     name: Attest and Upload Artifacts
     # Runs after the package is on Hex so assets are only attached for versions
-    # that actually published. changie-auto-tag (create-release: true) is the
-    # sole Release owner and creates the Release with the tag, so this job only
+    # that actually published. Trellis creates the Release with the tag, so this job only
     # uploads assets to the existing Release — no race, no create.
     needs: [validate, publish-hex]
     if: ${{ needs.publish-hex.result == 'success' }}
@@ -130,8 +133,8 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          # changie-auto-tag (create-release: true) already created the Release
-          # together with the tag, so it exists before this tag-triggered run.
+          # Trellis already created the Release together with the tag, so it
+          # exists before this tag-triggered run.
           # We only attach assets here. The Release is keyed by the tag
           # ($REF_NAME, e.g. v1.0.0); asset files use bare semver ($VERSION).
           gh release upload "$REF_NAME" \
