@@ -1,5 +1,5 @@
 name = "spruce"
-version = "1.0.0"
+version = "1.0.1"
 description = "A terminal-UI kit for Gleam: styled text, boxes, semantic messages, icons, and aligned/grouped output (Erlang + JavaScript)"
 licences = ["MIT", "Apache-2.0"]
 repository = { type = "github", user = "tylerbutler", repo = "spruce" }
