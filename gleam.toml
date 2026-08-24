@@ -62,6 +62,3 @@ label_possible = "off"
 "src/spruce/markdown.gleam" = ["unused_exports", "deep_nesting"]
 # align's ANSI-aware scanners are intentionally nested grapheme/escape loops.
 "src/spruce/align.gleam" = ["deep_nesting"]
-# list defines its own opaque `List`, which shadows the prelude list type and
-# makes the list-of-string return/parameter types impossible to name here.
-"src/spruce/list.gleam" = ["missing_type_annotation"]

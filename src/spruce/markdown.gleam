@@ -59,7 +59,7 @@ import spruce/align
 import spruce/border
 import spruce/box
 import spruce/highlight
-import spruce/list as ui_list
+import spruce/items
 import spruce/style
 import spruce/symbol
 import spruce/table
@@ -242,15 +242,16 @@ fn render_block_list(
 fn render_block(sp: Spruce, block_: md.Block, options: Options) -> String {
   case block_ {
     md.BlockQuote(blocks) -> render_quote(sp, blocks, options)
-    md.BulletList(pack, items) -> render_list(sp, pack, items, None, options)
+    md.BulletList(pack, entries) ->
+      render_list(sp, pack, entries, None, options)
     md.Code(lang, text) -> render_code(sp, lang, text, options)
     md.Empty -> ""
     md.Heading(level, _, raw, inlines) ->
       render_heading(sp, level, raw, inlines, options)
     md.HtmlBlock(raw) -> render_html_block(sp, raw, options.theme)
     md.Newline -> ""
-    md.OrderedList(pack, items, start) ->
-      render_list(sp, pack, items, start, options)
+    md.OrderedList(pack, entries, start) ->
+      render_list(sp, pack, entries, start, options)
     md.Paragraph(_, inlines) -> render_paragraph(sp, inlines, options)
     md.Table(header, rows) -> render_table(sp, header, rows, options)
     md.ThematicBreak -> render_rule(sp, options)
@@ -738,37 +739,37 @@ fn is_name_char(char: String) -> Bool {
 fn render_list(
   sp: Spruce,
   pack: md.ListPack,
-  items: List(md.ListItem),
+  entries: List(md.ListItem),
   start: Option(Int),
   options: Options,
 ) -> String {
-  let labels = render_list_labels(items, pack, sp, options)
+  let labels = render_list_labels(entries, pack, sp, options)
   let list_ =
     labels
-    |> list.fold(ui_list.new(), fn(list_, label) { ui_list.item(list_, label) })
+    |> list.fold(items.new(), fn(list_, label) { items.item(list_, label) })
 
   case start {
-    None -> ui_list.render(sp, list_)
+    None -> items.render(sp, list_)
     Some(start) -> {
       let list_ =
         list_
-        |> ui_list.kind(ui_list.Ordered)
-        |> ui_list.enumerator(fn(index, _depth) {
+        |> items.kind(items.Ordered)
+        |> items.enumerator(fn(index, _depth) {
           int.to_string(start + index - 1) <> ". "
         })
 
-      ui_list.render(sp, list_)
+      items.render(sp, list_)
     }
   }
 }
 
 fn render_list_labels(
-  items: List(md.ListItem),
+  entries: List(md.ListItem),
   pack: md.ListPack,
   sp: Spruce,
   options: Options,
 ) -> List(String) {
-  case items {
+  case entries {
     [] -> []
     [md.ListItem(blocks, _, _), ..rest] -> [
       render_list_item_blocks(blocks, pack, sp, options),

@@ -13,8 +13,8 @@ import spruce/align
 import spruce/border
 import spruce/box
 import spruce/details
+import spruce/items
 import spruce/line
-import spruce/list as splist
 import spruce/markdown
 import spruce/message
 import spruce/output
@@ -218,27 +218,27 @@ fn box_section(sp: spruce.Spruce) -> Nil {
 }
 
 fn list_section(sp: spruce.Spruce) -> Nil {
-  heading("list — bullet and ordered lists")
+  heading("items — bullet and ordered lists")
 
-  splist.new()
-  |> splist.item("Fetch dependencies")
-  |> splist.child("Compile sources", [
+  items.new()
+  |> items.item("Fetch dependencies")
+  |> items.child("Compile sources", [
     "spruce.gleam",
     "style.gleam",
     "box.gleam",
   ])
-  |> splist.item("Run tests")
-  |> splist.render(sp, _)
+  |> items.item("Run tests")
+  |> items.render(sp, _)
   |> io.println
 
   io.println("")
 
-  splist.new()
-  |> splist.kind(splist.Ordered)
-  |> splist.item("Plan the work")
-  |> splist.item("Do the work")
-  |> splist.item("Ship the work")
-  |> splist.render(sp, _)
+  items.new()
+  |> items.kind(items.Ordered)
+  |> items.item("Plan the work")
+  |> items.item("Do the work")
+  |> items.item("Ship the work")
+  |> items.render(sp, _)
   |> io.println
 }
 
