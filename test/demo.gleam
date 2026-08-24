@@ -13,7 +13,6 @@ import spruce/align
 import spruce/box
 import spruce/details
 import spruce/group
-import spruce/layout
 import spruce/line
 import spruce/list as splist
 import spruce/markdown
@@ -481,14 +480,14 @@ fn align_section(sp: spruce.Spruce) -> Nil {
 }
 
 fn layout_section(sp: spruce.Spruce) -> Nil {
-  heading("layout — composing blocks")
+  heading("align — composing blocks")
 
   let left =
     box.render(sp, "left\nblock", box.options(title: "A", color: style.Blue))
   let right =
     box.render(sp, "right\nblock", box.options(title: "B", color: style.Green))
 
-  layout.join_horizontal(layout.Center, [left, "   ", right])
+  align.join_horizontal(align.Center, [left, "   ", right])
   |> io.println
 }
 

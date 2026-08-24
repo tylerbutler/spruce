@@ -1,8 +1,8 @@
 import gleam/string
 import spruce
+import spruce/align
 import spruce/block
 import spruce/box
-import spruce/layout
 import spruce/style
 import startest/expect
 import tty
@@ -32,7 +32,7 @@ pub fn block_alignment_places_content_within_width_and_height_test() {
     block.new()
     |> block.width(6)
     |> block.height(3)
-    |> block.align(horizontal: layout.Center, vertical: layout.Center)
+    |> block.align(horizontal: align.Center, vertical: align.Center)
 
   block.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("      \n  hi  \n      ")

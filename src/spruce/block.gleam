@@ -6,10 +6,9 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
 import spruce.{type Spruce}
-import spruce/align as text_align
+import spruce/align.{type Pos, Center, End, Start} as text_align
 import spruce/box
 import spruce/internal/layout as internal_layout
-import spruce/layout.{type Pos, Center, End, Start}
 import spruce/style
 
 /// Options for rendering a multiline block.

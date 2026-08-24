@@ -1,5 +1,6 @@
 import gleam/order
 import spruce
+import spruce/internal/layout as internal_layout
 import startest/expect
 import tty
 
@@ -92,4 +93,17 @@ pub fn detect_returns_a_known_background_test() {
 pub fn truecolor_outranks_no_color_test() {
   tty.color_level_compare(tty.TrueColor, tty.NoColor)
   |> expect.to_equal(order.Gt)
+}
+
+pub fn indent_prefix_depth_zero_test() {
+  internal_layout.indent_prefix(spruce.no_color())
+  |> expect.to_equal("")
+}
+
+pub fn indent_prefix_depth_two_test() {
+  spruce.no_color()
+  |> spruce.indented
+  |> spruce.indented
+  |> internal_layout.indent_prefix
+  |> expect.to_equal("    ")
 }
