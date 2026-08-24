@@ -31,14 +31,22 @@ for now.
   state every render function consults (color level and indent depth). Color
   level and stream detection are delegated to the `tty` package; styling escape
   codes come from `gleam_community_ansi`. spruce itself has **no FFI**.
-- Implemented public modules include:
-  - `spruce/style` — composable `Style` builder, gated by color level
-  - `spruce/symbol` — icon/glyph set with ASCII fallbacks
-  - `spruce/palette` — deterministic hash color from a string
-  - `spruce/align` — ANSI-aware `visual_length` and padding
-  - `spruce/box` — boxed output
-  - `spruce/group` — depth-in-context indentation/grouping
-  - `spruce/message` — semantic one-liners (success/fail/start/ready/info/warn)
+- Public modules (`src/spruce/*`):
+  - `style` — composable `Style` builder, gated by color level, plus
+    `style.hashed` deterministic hash colors
+  - `symbol` — icon/glyph set with ASCII fallbacks (`symbol.status`)
+  - `align` — ANSI-aware `visual_length`, padding, wrapping, and block
+    composition (`join_horizontal`, `join_vertical`, `place`)
+  - `border` — `Border`/`BorderChars` glyph sets shared by `box` and `table`
+  - `box` — one builder for boxed and styled blocks (title, padding, margin,
+    sizing, alignment, per-side borders)
+  - `table`, `items`, `tree` — structured output
+  - `severity`, `details`, `line`, `message` — status lines; `severity`
+    owns the single prefix `Formatter`, `message` is sugar for the seven
+    common one-liners
+  - `output` — buffered composition, `group`, `stream_group`, and `title`
+  - `highlight`, `markdown` — syntax highlighting and Markdown rendering
+- `docs/adr/` records the layout decisions (ADR 0001 drove the 2.0 reshape).
 
 ## Key conventions
 
@@ -49,9 +57,10 @@ for now.
   `color_level(sp) == NoColor`; downgrade to the nearest representable color
   rather than emitting unsupported sequences.
 - **Indentation lives in the context, not in global state.** Block-producing
-  functions (`message.*`, `box.*`, group titles) prepend the context's indent;
-  inline functions (`style`, `symbol`, `palette`, `align`) do not. `group` hands
-  the body a `spruce.indented` context.
+  functions (`message.*`, `box.*`, `line`, `table`, `items`, `tree`, group
+  titles) prepend `spruce.indent_prefix(sp)`; inline functions (`style`,
+  `symbol`, `align`) do not. `output.group`/`output.stream_group` hand the body
+  a `spruce.indented` context.
 - **Target parity.** Behavior must match on Erlang and JavaScript; validate on
   both targets.
 - For release work, add changelog fragments under `.changes/unreleased/` and

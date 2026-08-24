@@ -35,30 +35,27 @@ const moduleGroups: Array<{
     summary: "Detect once, then thread pure render state everywhere.",
     modules: [
       ["spruce", "Color level, background, and indent depth."],
-      ["spruce/output", "Pipeable, buffered output composition."],
-      ["spruce/group", "Depth-in-context grouping and indentation."],
+      ["spruce/output", "Pipeable, buffered composition and grouping."],
     ],
   },
   {
     title: "Style and symbols",
     summary: "Build reusable terminal styling without leaking IO.",
     modules: [
-      ["spruce/style", "Named, RGB, hex, 256, and adaptive color styling."],
-      ["spruce/palette", "Deterministic hash colors from any string."],
+      ["spruce/style", "Named, RGB, hex, 256, adaptive, and hashed colors."],
       ["spruce/symbol", "Named glyphs with automatic ASCII fallbacks."],
-      ["spruce/severity", "Generic severity and status labels and badges."],
+      ["spruce/severity", "RFC 5424 severity labels, badges, and formatters."],
     ],
   },
   {
     title: "Structure and layout",
     summary: "Keep multiline output aligned, nested, and readable.",
     modules: [
-      ["spruce/align", "ANSI-aware visual length and padding."],
-      ["spruce/layout", "Compose multi-line text blocks together."],
-      ["spruce/block", "Padding, margin, sizing, alignment, per-side borders."],
-      ["spruce/box", "Boxed output with per-side borders and colors."],
+      ["spruce/align", "ANSI-aware length, padding, and block composition."],
+      ["spruce/border", "Border styles and glyphs shared by boxes and tables."],
+      ["spruce/box", "Titles, padding, margin, sizing, alignment, borders."],
       ["spruce/table", "Widths, borders, separators, and cell wrapping."],
-      ["spruce/list", "Bulleted and ordered lists with arbitrary nesting."],
+      ["spruce/items", "Bulleted and ordered lists with arbitrary nesting."],
       ["spruce/tree", "Tree-structured output with Unicode or ASCII."],
     ],
   },
@@ -66,7 +63,7 @@ const moduleGroups: Array<{
     title: "Semantic output",
     summary: "Turn raw strings into meaningful developer-facing lines.",
     modules: [
-      ["spruce/message", "Semantic one-liners with label, badge, or simple style."],
+      ["spruce/message", "Semantic one-liners: success, fail, start, and more."],
       ["spruce/line", "Compact severity, scope, and key/value details."],
       ["spruce/details", "Key and value detail rendering."],
       ["spruce/highlight", "Syntax highlighting for fenced code blocks."],
@@ -299,6 +296,9 @@ function Example() {
           <Reveal className="code">
             <TermBar title="main.gleam" />
             <pre>
+              <span className="k">import</span>{" "}
+              <span className="m">gleam/io</span>
+              {"\n"}
               <span className="k">import</span> <span className="m">spruce</span>
               {"\n"}
               <span className="k">import</span>{" "}
@@ -317,9 +317,10 @@ function Example() {
               <span className="m">box</span>.<span className="f">print</span>(sp,{" "}
               <span className="s">"spruce"</span>)
               {"\n  "}
+              <span className="m">io</span>.<span className="f">println</span>(
               <span className="m">message</span>.
-              <span className="f">print_success</span>(sp,{" "}
-              <span className="s">"ready"</span>)
+              <span className="f">success</span>(sp,{" "}
+              <span className="s">"ready"</span>))
               {"\n"}
               {"}"}
             </pre>

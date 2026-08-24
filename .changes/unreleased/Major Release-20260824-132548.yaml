@@ -1,0 +1,3 @@
+kind: Major Release
+body: Border and BorderChars move from spruce/box to the new spruce/border module (border.Rounded, border.Custom(...), border.chars). table.border now takes a border.Border.
+time: 2026-08-24T13:25:48.569942751-07:00

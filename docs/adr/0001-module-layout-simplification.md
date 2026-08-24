@@ -1,6 +1,6 @@
 # ADR 0001: Simplify the module layout for 2.0
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented for 2.0)
 - **Date:** 2026-08-24
 - **Scope:** `src/spruce.gleam` and `src/spruce/*`
 - **Breaking:** Yes — targets a 2.0 release
@@ -154,3 +154,19 @@ Each step is independently shippable on the 2.0 branch.
    resolve the `tty` alias question.
 7. Update docs, demo, website module groups; add `.changes/unreleased/`
    fragments per step.
+
+## Resolution of open choices
+
+Decisions taken while implementing:
+
+- `spruce` owns `ColorLevel`, `Background`, and `Stream` enums and converts
+  at the `tty` detection boundary, rather than documenting `tty` as the API.
+- `box.new()` keeps the 1.x default box (rounded cyan border, one cell of
+  horizontal padding); `box.plain()` is the borderless, unpadded starting
+  point that `block.new()` used to be. `box.simple` and `box.print` stay.
+- The eager grouping form is kept as `output.stream_group`.
+- `group.indent` is dropped without replacement; `spruce.indent_prefix`
+  covers the context case and callers can prefix lines themselves.
+- `message` renders its seven lines directly (there is no RFC 5424 severity
+  for success/fail/start/ready) and no longer takes options; `line` with
+  `severity.Formatter` is the configurable path.

@@ -1,0 +1,3 @@
+kind: Added
+body: box.title, box.border_color, box.height, box.align, box.foreground, and box.background on the unified box builder, so titled boxes can also be sized, aligned, and colored.
+time: 2026-08-24T13:25:58.932998166-07:00

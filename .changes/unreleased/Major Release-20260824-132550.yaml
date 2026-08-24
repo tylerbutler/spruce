@@ -1,0 +1,3 @@
+kind: Major Release
+body: spruce.indent_prefix(sp) is the single indentation helper. spruce/internal/layout and group.indent are removed.
+time: 2026-08-24T13:25:50.639324186-07:00

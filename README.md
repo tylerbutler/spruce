@@ -49,39 +49,37 @@ escape-free, deterministic strings.
 ## Modules
 
 - `spruce` — the `Spruce` context (color level + terminal background + indent depth)
-- `spruce/style` — composable text styling (named, RGB/hex/256, complete, and adaptive light/dark colors)
-- `spruce/block` — styled blocks: padding, margin, sizing, alignment, per-side borders
+- `spruce/style` — composable text styling (named, RGB/hex/256, complete, and adaptive light/dark colors) and deterministic hash colors
 - `spruce/symbol` — named glyphs (with ASCII fallbacks)
-- `spruce/palette` — deterministic hash colors
-- `spruce/align` — ANSI-aware length and padding
-- `spruce/layout` — compose multi-line text blocks
-- `spruce/box` — boxed output (per-side borders and colors)
+- `spruce/align` — ANSI-aware length, padding, wrapping, and multi-line block composition
+- `spruce/border` — border styles and glyphs shared by boxes and tables
+- `spruce/box` — boxed and styled blocks: title, padding, margin, sizing, alignment, per-side borders and colors
 - `spruce/table` — tables with widths, borders, separators, and cell wrapping
-- `spruce/list` — bulleted/ordered lists with arbitrary nesting
+- `spruce/items` — bulleted/ordered lists with arbitrary nesting
 - `spruce/tree` — tree-structured output
-- `spruce/group` — depth-in-context grouping (eager/streaming)
-- `spruce/output` — pipeable, buffered output composition
-- `spruce/message` — semantic one-liners (success/fail/start/ready/info/warn/error), with configurable label/badge/simple prefixes
-- `spruce/severity` — generic severity/status labels and badges
+- `spruce/severity` — RFC 5424 severity labels, badges, and the status `Formatter`
 - `spruce/details` — key-value detail rendering
-- `spruce/line` — compact terminal line composition
+- `spruce/line` — compact terminal line composition (timestamp, severity, scope, details)
+- `spruce/message` — semantic one-liners (success/fail/start/ready/info/warn/error)
+- `spruce/output` — pipeable, buffered output composition and grouping
 - `spruce/highlight` — smalto-backed syntax highlighting with adaptive light/dark themes
 - `spruce/markdown` — Markdown-to-ANSI rendering (Glamour-style), built on `mork`
 
 ## Example
 
 ```gleam
+import gleam/io
 import spruce
 import spruce/box
-import spruce/group
 import spruce/message
+import spruce/output
 
 pub fn main() {
   let sp = spruce.detect()
   box.print(sp, "spruce")
-  group.group(sp, "Building", fn(sp) {
-    message.print_start(sp, "compiling")
-    message.print_success(sp, "done")
+  output.stream_group(sp, "Building", fn(sp) {
+    io.println(message.start(sp, "compiling"))
+    io.println(message.success(sp, "done"))
   })
 }
 ```
@@ -90,7 +88,6 @@ pub fn main() {
 import spruce
 import spruce/details
 import spruce/line
-import spruce/message
 import spruce/severity
 
 pub fn compact_line_example() {
@@ -107,11 +104,11 @@ pub fn compact_line_example() {
   |> line.render(sp, _)
   |> echo
 
-  message.success_with(
-    sp,
-    "Build complete",
-    message.default_options() |> message.with_formatter(message.badge()),
-  )
+  // Badge-style prefixes come from the severity formatter.
+  line.new("Build complete")
+  |> line.severity(severity.Notice)
+  |> line.severity_formatter(severity.badge())
+  |> line.render(sp, _)
   |> echo
 }
 ```
@@ -127,7 +124,6 @@ light/dark colors compose the same way.
 
 ```gleam
 import spruce
-import spruce/palette
 import spruce/style
 
 pub fn styles() {
@@ -138,8 +134,8 @@ pub fn styles() {
   let accent = heading |> style.fg(style.Cyan)
   echo style.render(sp, accent, "spruce")
 
-  // `palette.hash` returns a `Style`, so it pipes into more combinators.
-  let service = palette.hash(sp, "api") |> style.bold
+  // `style.hashed` returns a `Style`, so it pipes into more combinators.
+  let service = style.hashed(sp, "api") |> style.bold
   echo style.render(sp, service, "api")
 
   // Adaptive colors resolve against the detected background at render time.
@@ -159,7 +155,6 @@ it straight into a box:
 ```gleam
 import spruce
 import spruce/box
-import spruce/style
 import spruce/table
 
 pub fn renderers_nest() {
@@ -171,7 +166,7 @@ pub fn renderers_nest() {
     |> table.rows([["spruce", "erlang"], ["spruce", "javascript"]])
     |> table.render(sp, _)
 
-  box.render(sp, grid, box.options(title: "build", color: style.Cyan))
+  box.render(sp, grid, box.new() |> box.title("build"))
   |> echo
 }
 ```
@@ -181,36 +176,36 @@ and the parent's kind and enumerator drive rendering throughout:
 
 ```gleam
 import spruce
-import spruce/list
+import spruce/items
 
 pub fn lists_nest() {
   let sp = spruce.detect()
 
-  list.new()
-  |> list.kind(list.Ordered)
-  |> list.item("setup")
-  |> list.nested(
+  items.new()
+  |> items.kind(items.Ordered)
+  |> items.item("setup")
+  |> items.nested(
     "build",
-    list.new() |> list.item("erlang") |> list.item("javascript"),
+    items.new() |> items.item("erlang") |> items.item("javascript"),
   )
-  |> list.render(sp, _)
+  |> items.render(sp, _)
   |> echo
 }
 ```
 
-**Multi-line blocks compose side by side.** `spruce/layout` joins blocks
+**Multi-line blocks compose side by side.** `spruce/align` joins blocks
 horizontally or vertically while staying ANSI-aware:
 
 ```gleam
 import gleam/string
-import spruce/layout
+import spruce/align
 
 pub fn columns() {
   let names = ["package", "spruce", "tty"] |> string.join("\n")
-  let versions = ["version", "1.0.0", "1.1.0"] |> string.join("\n")
+  let versions = ["version", "2.0.0", "1.1.0"] |> string.join("\n")
 
   // Each block is padded to its own width, so the columns line up.
-  layout.join_horizontal(layout.Start, [names, "   ", versions])
+  align.join_horizontal(align.Start, [names, "   ", versions])
   |> echo
 }
 ```
@@ -241,7 +236,7 @@ pub fn report() {
 ```
 
 For eager, streaming grouping that prints as work happens and can return a value
-from the body, reach for `spruce/group.group` instead.
+from the body, reach for `output.stream_group` instead.
 
 ## Development
 

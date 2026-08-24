@@ -1,0 +1,3 @@
+kind: Added
+body: 'spruce/border: a new leaf module with Border, BorderChars, and chars(border) shared by box and table.'
+time: 2026-08-24T13:25:57.89572634-07:00
