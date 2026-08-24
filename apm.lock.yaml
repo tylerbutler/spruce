@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-08-24T20:43:12.963627+00:00'
+generated_at: '2026-08-24T22:30:16.764694+00:00'
 apm_version: 0.28.0
 dependencies:
 - repo_url: tylerbutler/apm-base
@@ -21,21 +21,6 @@ dependencies:
     .claude/skills/prose-banlist/SKILL.md: sha256:48330781d0d69dc91cf4ef295fadc04d6d14f5a195d82b293d31677829e6f2b0
     .github/instructions/use-ste.instructions.md: sha256:c4512aac8ae85c13578effb80b704cc72a14a6a13a3c5f3db036ca2e899513de
   content_hash: sha256:b10858094b9c569b54852cc3f84556cf28bc1662d9cf6d8316753e2018cf1791
-- repo_url: tylerbutler/trellis
-  name: trellis
-  host: github.com
-  resolved_commit: 3641114efc8a3657e0875d49daa63a054825cbe0
-  version: 1.0.0
-  package_type: apm_package
-  deployed_files:
-  - .agents/skills/trellis-onboarding
-  - .agents/skills/trellis-onboarding/SKILL.md
-  - .claude/skills/trellis-onboarding
-  - .claude/skills/trellis-onboarding/SKILL.md
-  deployed_file_hashes:
-    .agents/skills/trellis-onboarding/SKILL.md: sha256:2b147d03e89aca49126605bf858828428c6c6f3640d71c0e018d7fde7eaa3ef3
-    .claude/skills/trellis-onboarding/SKILL.md: sha256:2b147d03e89aca49126605bf858828428c6c6f3640d71c0e018d7fde7eaa3ef3
-  content_hash: sha256:68c0bd554e673f153793270e08c54e6cc523775951e6776bc6b5cb2fe8548ed0
 - repo_url: dietrichgebert/ponytail
   materialization_repo_url: DietrichGebert/ponytail
   name: ponytail
@@ -502,24 +487,6 @@ deployments:
   active_owner: hardikpandya/stop-slop
   content_hash: sha256:ffbf1316c7fb5aaf552de005609a64a9639b546ecd76bfb0e482864d5bbe6f58
 - kind: project-relative
-  target: claude
-  value: .claude/skills/trellis-onboarding
-  runtime: null
-  scope: project
-  owners:
-  - tylerbutler/trellis
-  active_owner: tylerbutler/trellis
-  content_hash: null
-- kind: project-relative
-  target: claude
-  value: .claude/skills/trellis-onboarding/SKILL.md
-  runtime: null
-  scope: project
-  owners:
-  - tylerbutler/trellis
-  active_owner: tylerbutler/trellis
-  content_hash: sha256:2b147d03e89aca49126605bf858828428c6c6f3640d71c0e018d7fde7eaa3ef3
-- kind: project-relative
   target: copilot
   value: .agents/skills/caveman-commit
   runtime: null
@@ -744,24 +711,6 @@ deployments:
   - hardikpandya/stop-slop
   active_owner: hardikpandya/stop-slop
   content_hash: sha256:ffbf1316c7fb5aaf552de005609a64a9639b546ecd76bfb0e482864d5bbe6f58
-- kind: project-relative
-  target: copilot
-  value: .agents/skills/trellis-onboarding
-  runtime: null
-  scope: project
-  owners:
-  - tylerbutler/trellis
-  active_owner: tylerbutler/trellis
-  content_hash: null
-- kind: project-relative
-  target: copilot
-  value: .agents/skills/trellis-onboarding/SKILL.md
-  runtime: null
-  scope: project
-  owners:
-  - tylerbutler/trellis
-  active_owner: tylerbutler/trellis
-  content_hash: sha256:2b147d03e89aca49126605bf858828428c6c6f3640d71c0e018d7fde7eaa3ef3
 - kind: project-relative
   target: copilot
   value: .github/hooks/ponytail-copilot-hooks.json
