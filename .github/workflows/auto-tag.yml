@@ -11,13 +11,26 @@ permissions:
 
 jobs:
   auto-tag:
-    uses: tylerbutler/actions/.github/workflows/auto-tag.yml@1761c18aa4583d74916e1a53f2a106d1d70d72a8 # ratchet:tylerbutler/actions/.github/workflows/auto-tag.yml@main
-    with:
-      # changie-auto-tag is the sole, race-free Release owner: it creates the
-      # GitHub Release together with the tag (the Release exists before the tag
-      # is visible remotely). The downstream Publish `sbom` job only uploads
-      # assets to that Release, never creates it.
-      create-release: true
-    secrets:
-      app-id: ${{ secrets.RELEASE_APP_ID }}
-      app-private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'release/pending'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # ratchet:actions/create-github-app-token@v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Install Trellis
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf \
+            https://github.com/tylerbutler/trellis/releases/download/v0.11.2/trellis-gleam-installer.sh | sh
+
+      - name: Create tag and GitHub release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: trellis tag create --github-release

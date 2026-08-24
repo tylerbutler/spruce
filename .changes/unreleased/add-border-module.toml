@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Added"
+body = "The spruce/border module, which defines the Border styles, the BorderChars record, and border.chars for looking up the glyphs of a style. Boxes and tables share it."

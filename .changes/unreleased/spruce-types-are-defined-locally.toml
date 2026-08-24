@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Major Release"
+body = "The ColorLevel, Background, and Stream types are now defined in spruce rather than re-exported from tty, so their constructors can be used without importing tty, for example spruce.with_color_level(spruce.TrueColor), spruce.with_background(spruce.Dark), and spruce.detect_stream(spruce.Stderr). Replace tty.TrueColor, tty.Light, tty.Stderr, and the other tty constructors with their spruce equivalents."

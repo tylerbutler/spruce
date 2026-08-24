@@ -25,6 +25,12 @@ runs:
     - name: Setup just
       uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6 # ratchet:extractions/setup-just@v2
 
+    - name: Install Trellis
+      shell: bash
+      run: |
+        curl --proto '=https' --tlsv1.2 -LsSf \
+          https://github.com/tylerbutler/trellis/releases/download/v0.11.2/trellis-gleam-installer.sh | sh
+
     - name: Setup BEAM (explicit versions)
       if: inputs.otp-version != '' && inputs.gleam-version != ''
       uses: erlef/setup-beam@fc68ffb90438ef2936bbb3251622353b3dcb2f93 # ratchet:erlef/setup-beam@v1

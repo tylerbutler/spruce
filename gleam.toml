@@ -23,6 +23,34 @@ glinter = ">= 2.19.0 and < 3.0.0"
 allow = ["Apache-2.0", "MIT"]
 deny = []
 
+[tools.trellis]
+
+[tools.trellis.tasks.lint]
+command = "gleam run -m glinter"
+needs_deps = true
+
+[tools.trellis.publish]
+exact_tag_format = "v{version}"
+package_tags = ["exact"]
+
+[tools.trellis.changelog]
+header_format = """# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)."""
+kinds = [
+  { label = "Major Release", bump = "major" },
+  { label = "Added", bump = "minor" },
+  { label = "Fixed", bump = "patch" },
+  { label = "Performance", bump = "patch" },
+  { label = "Changed", bump = "patch" },
+  { label = "Reverted", bump = "patch" },
+  { label = "Dependencies", bump = "patch" },
+  { label = "Security", bump = "patch" },
+]
+
 [tools.glinter]
 include = ["src/", "test/"]
 

@@ -1,3 +1,0 @@
-kind: Major Release
-body: 'spruce/message now provides only the seven one-line functions success, fail, start, ready, info, warn, and error, each of which renders an icon, a label, and the message text. The Options and Formatter types, default_options, with_details, with_symbol_mode, with_formatter, label, badge, simple, custom, line_with, the *_with functions, and the print_* functions are removed. For badges, key-value details, ASCII glyphs, or custom prefixes, build a spruce/line with line.severity and line.severity_formatter. Print lines with io.println, or collect them with spruce/output.'
-time: 2026-08-24T13:25:51.679267784-07:00
