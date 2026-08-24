@@ -152,52 +152,20 @@ fn message_section(sp: spruce.Spruce) -> Nil {
   io.println(style.render(
     sp,
     style.new() |> style.dim,
-    "  the *_with variants take Options — formatters and trailing details:",
+    "  for badges, details, timestamps, and scopes, compose a spruce/line:",
   ))
 
-  // Badge formatter: uppercase bracketed prefix, e.g. [WARN].
-  let badge_options =
-    message.default_options()
-    |> message.with_formatter(message.badge())
-  io.println(
-    "  " <> message.warn_with(sp, "Deprecated option in config", badge_options),
-  )
-  io.println(
-    "  " <> message.error_with(sp, "Could not reach registry", badge_options),
-  )
-
-  // Simple formatter: bare uppercase label, no icon.
-  let simple_options =
-    message.default_options()
-    |> message.with_formatter(message.simple())
-  io.println(
-    "  " <> message.info_with(sp, "Resolving dependencies", simple_options),
-  )
-
-  // Details suffix: trailing key-value pairs after the message text.
-  let warn_details =
+  let deprecation =
     details.new()
     |> details.add(key: "option", value: "legacy_mode")
     |> details.add(key: "since", value: "0.4.0")
-  let detail_options =
-    message.default_options()
-    |> message.with_details(warn_details)
-  io.println(
-    "  " <> message.warn_with(sp, "Deprecated option in config", detail_options),
-  )
 
-  // Badge plus details together.
-  let combined_options =
-    message.default_options()
-    |> message.with_formatter(message.badge())
-    |> message.with_details(
-      details.new()
-      |> details.add(key: "status", value: "500")
-      |> details.add(key: "retries", value: "3"),
-    )
-  io.println(
-    "  " <> message.fail_with(sp, "Upstream request failed", combined_options),
-  )
+  line.new("Deprecated option in config")
+  |> line.severity(severity.Warn)
+  |> line.severity_formatter(severity.badge())
+  |> line.details(deprecation)
+  |> line.render(sp, _)
+  |> fn(rendered) { io.println("  " <> rendered) }
 }
 
 fn formatter_section(sp: spruce.Spruce) -> Nil {
