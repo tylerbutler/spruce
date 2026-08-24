@@ -13,7 +13,6 @@ import spruce/align
 import spruce/border
 import spruce/box
 import spruce/details
-import spruce/group
 import spruce/line
 import spruce/list as splist
 import spruce/markdown
@@ -472,12 +471,12 @@ fn layout_section(sp: spruce.Spruce) -> Nil {
 }
 
 fn group_section(sp: spruce.Spruce) -> Nil {
-  heading("group — depth-in-context indentation")
+  heading("output — eager, streaming groups")
 
-  use sp <- group.group(sp, "build")
+  use sp <- output.stream_group(sp, "build")
   io.println(message.start(sp, "compiling"))
 
-  use sp <- group.group(sp, "test")
+  use sp <- output.stream_group(sp, "test")
   io.println(message.success(sp, "erlang target green"))
   io.println(message.success(sp, "javascript target green"))
 }

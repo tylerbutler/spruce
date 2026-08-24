@@ -71,3 +71,22 @@ pub fn context_reflects_group_depth_test() {
   |> output.to_string
   |> expect.to_equal("▸ G")
 }
+
+pub fn stream_group_passes_deeper_context_test() {
+  output.stream_group(spruce.no_color(), "Build", fn(inner) {
+    spruce.depth(inner)
+  })
+  |> expect.to_equal(1)
+}
+
+pub fn stream_group_returns_body_result_test() {
+  output.stream_group(spruce.no_color(), "Build", fn(_inner) { 42 })
+  |> expect.to_equal(42)
+}
+
+pub fn title_is_indented_and_marked_test() {
+  spruce.no_color()
+  |> spruce.indented
+  |> output.title("Build")
+  |> expect.to_equal("  ▸ Build")
+}
