@@ -1,0 +1,3 @@
+kind: Added
+body: 'spruce.indent_prefix, which returns the context''s indentation; output.title, which renders a styled group heading; and output.stream_group, which prints a group heading and runs its body immediately.'
+time: 2026-08-24T13:25:59.967475135-07:00

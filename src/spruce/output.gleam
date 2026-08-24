@@ -26,13 +26,14 @@
 //// `append` accepts any `Spruce -> String` renderer via a `_` capture, so it
 //// works with every spruce module without per-type variants. For eager,
 //// streaming grouping that prints as work happens and can return a value, use
-//// `spruce/group.group` instead.
+//// `stream_group` instead.
 
 import gleam/io
 import gleam/list
 import gleam/string
 import spruce.{type Spruce}
-import spruce/group
+import spruce/style
+import spruce/symbol
 
 /// An accumulator of rendered blocks plus the context they render with.
 /// Build one with `new` and the combinators in this module, then finish with
@@ -71,16 +72,47 @@ pub fn blank(output: Output) -> Output {
 
 /// Append a styled group title, then run `body` with the output's context
 /// indented one level deeper. Blocks appended inside `body` nest under the
-/// title. Unlike `spruce/group.group`, this buffers output rather than printing.
+/// title. Unlike `stream_group`, this buffers output rather than printing.
 pub fn group(
   output: Output,
-  title: String,
+  heading: String,
   body: fn(Output) -> Output,
 ) -> Output {
-  let titled = text(output, group.render_title(output.sp, title))
+  let titled = text(output, title(output.sp, heading))
   let body_output =
     body(Output(sp: spruce.indented(output.sp), chunks: titled.chunks))
   Output(sp: output.sp, chunks: body_output.chunks)
+}
+
+/// Print a group title, then run `body` with a context indented one level
+/// deeper, returning its result.
+///
+/// This is the eager, streaming form of grouping: the title prints
+/// immediately and `body` runs right away, so its output appears as work
+/// happens and it may perform IO and return any value. For deferred,
+/// pipe-composable grouping that buffers output instead, see `group`.
+pub fn stream_group(
+  sp: Spruce,
+  heading: String,
+  body: fn(Spruce) -> result,
+) -> result {
+  io.println(title(sp, heading))
+  body(spruce.indented(sp))
+}
+
+/// Render a group title line (indent prefix + styled marker + title), the same
+/// line that `group` and `stream_group` emit.
+pub fn title(sp: Spruce, heading: String) -> String {
+  let marker = symbol.status(symbol.Unicode, symbol.Arrow)
+  let line = case spruce.supports_color(sp) {
+    False -> marker <> " " <> heading
+    True ->
+      style.render(sp, style.hashed(sp, heading), marker)
+      <> " "
+      <> style.render(sp, style.new() |> style.bold, heading)
+  }
+
+  spruce.indent_prefix(sp) <> line
 }
 
 /// Render the accumulated output to a single string, blocks joined by newlines.

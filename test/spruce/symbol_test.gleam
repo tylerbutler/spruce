@@ -1,48 +1,26 @@
 import spruce/symbol
 import startest/expect
 
-pub fn info_glyph_test() {
-  symbol.info
+pub fn unicode_status_glyphs_test() {
+  symbol.status(symbol.Unicode, symbol.Info)
   |> expect.to_equal("ℹ")
-}
-
-pub fn success_glyph_test() {
-  symbol.success
+  symbol.status(symbol.Unicode, symbol.Success)
   |> expect.to_equal("✔")
-}
-
-pub fn error_glyph_test() {
-  symbol.error
+  symbol.status(symbol.Unicode, symbol.Error)
   |> expect.to_equal("✖")
-}
-
-pub fn ascii_fallback_test() {
-  symbol.error_ascii
-  |> expect.to_equal("x")
-}
-
-pub fn resolve_unicode_mode_test() {
-  symbol.resolve(
-    symbol.Unicode,
-    unicode: symbol.success,
-    ascii: symbol.success_ascii,
-  )
-  |> expect.to_equal("✔")
-}
-
-pub fn resolve_ascii_mode_test() {
-  symbol.resolve(
-    symbol.Ascii,
-    unicode: symbol.success,
-    ascii: symbol.success_ascii,
-  )
-  |> expect.to_equal("+")
-}
-
-pub fn resolve_named_status_glyphs_test() {
-  symbol.status(symbol.Ascii, symbol.Success)
-  |> expect.to_equal("+")
-
   symbol.status(symbol.Unicode, symbol.Warn)
   |> expect.to_equal("⚠")
+  symbol.status(symbol.Unicode, symbol.Arrow)
+  |> expect.to_equal("▸")
+}
+
+pub fn ascii_status_glyphs_test() {
+  symbol.status(symbol.Ascii, symbol.Success)
+  |> expect.to_equal("+")
+  symbol.status(symbol.Ascii, symbol.Error)
+  |> expect.to_equal("x")
+  symbol.status(symbol.Ascii, symbol.Warn)
+  |> expect.to_equal("!")
+  symbol.status(symbol.Ascii, symbol.Bullet)
+  |> expect.to_equal("-")
 }

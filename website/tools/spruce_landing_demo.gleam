@@ -3,41 +3,45 @@
 
 import gleam/io
 import spruce
+import spruce/border
 import spruce/box
 import spruce/details
-import spruce/group
+import spruce/items
 import spruce/line
-import spruce/list
 import spruce/message
+import spruce/output
 import spruce/severity
 import spruce/style
 import spruce/table
 import spruce/tree
-import tty
 
 fn mark(name: String) -> Nil {
   io.println("\u{0001}" <> name)
 }
 
 pub fn main() {
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
 
   mark("hero")
   box.print(sp, "spruce")
-  group.group(sp, "Build", fn(sp) {
-    message.print_start(sp, "compiling 14 modules")
-    message.print_success(sp, "compiled in 312ms")
-    message.print_info(sp, "target: javascript")
-    message.print_warn(sp, "2 deprecation notices")
+  output.stream_group(sp, "Build", fn(sp) {
+    io.println(message.start(sp, "compiling 14 modules"))
+    io.println(message.success(sp, "compiled in 312ms"))
+    io.println(message.info(sp, "target: javascript"))
+    io.println(message.warn(sp, "2 deprecation notices"))
   })
 
   mark("messages")
-  let badge =
-    message.default_options() |> message.with_formatter(message.badge())
-  io.println(message.success_with(sp, "Deploy complete", badge))
-  io.println(message.error_with(sp, "Connection refused", badge))
-  io.println(message.info_with(sp, "Cache warmed", badge))
-  io.println(message.ready_with(sp, "Listening on :4000", badge))
+  let badge = fn(sev: severity.Severity, text: String) {
+    line.new(text)
+    |> line.severity(sev)
+    |> line.severity_formatter(severity.badge())
+    |> line.render(sp, _)
+  }
+  io.println(badge(severity.Info, "Deploy complete"))
+  io.println(badge(severity.Err, "Connection refused"))
+  io.println(badge(severity.Debug, "Cache warmed"))
+  io.println(badge(severity.Notice, "Listening on :4000"))
 
   mark("table")
   io.println(
@@ -48,7 +52,7 @@ pub fn main() {
       ["spruce/table", "javascript", "0.8ms"],
       ["spruce/markdown", "erlang", "4.1ms"],
     ])
-    |> table.border(box.Rounded)
+    |> table.border(border.Rounded)
     |> table.render(sp, _),
   )
 
@@ -72,16 +76,16 @@ pub fn main() {
 
   mark("list")
   io.println(
-    list.new()
-    |> list.item("Auto-detects color support")
-    |> list.nested(
+    items.new()
+    |> items.item("Auto-detects color support")
+    |> items.nested(
       "Renders on both runtimes",
-      list.new()
-        |> list.item("Erlang / BEAM")
-        |> list.item("JavaScript / Node"),
+      items.new()
+        |> items.item("Erlang / BEAM")
+        |> items.item("JavaScript / Node"),
     )
-    |> list.item("Pure, testable string builders")
-    |> list.render(sp, _),
+    |> items.item("Pure, testable string builders")
+    |> items.render(sp, _),
   )
 
   mark("line")
@@ -104,11 +108,11 @@ pub fn main() {
   mark("hero_plain")
   let np = spruce.no_color()
   box.print(np, "spruce")
-  group.group(np, "Build", fn(np) {
-    message.print_start(np, "compiling 14 modules")
-    message.print_success(np, "compiled in 312ms")
-    message.print_info(np, "target: javascript")
-    message.print_warn(np, "2 deprecation notices")
+  output.stream_group(np, "Build", fn(np) {
+    io.println(message.start(np, "compiling 14 modules"))
+    io.println(message.success(np, "compiled in 312ms"))
+    io.println(message.info(np, "target: javascript"))
+    io.println(message.warn(np, "2 deprecation notices"))
   })
 
   mark("style")

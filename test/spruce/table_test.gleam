@@ -2,11 +2,10 @@ import gleam/list
 import gleam/string
 import spruce
 import spruce/align
-import spruce/box
+import spruce/border
 import spruce/style
 import spruce/table
 import startest/expect
-import tty
 
 pub fn table_renders_headers_and_rows_no_color_test() {
   table.new()
@@ -26,7 +25,7 @@ pub fn table_renders_headers_and_rows_no_color_test() {
 pub fn table_pads_short_rows_and_uses_ansi_aware_widths_test() {
   let red_long =
     style.render(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       style.new() |> style.fg(style.Red),
       "long",
     )
@@ -55,7 +54,7 @@ pub fn table_style_fn_applies_to_headers_with_negative_row_test() {
         _ -> style.new() |> style.fg(style.Green)
       }
     })
-    |> table.render(spruce.with_color_level(tty.TrueColor), _)
+    |> table.render(spruce.with_color_level(spruce.TrueColor), _)
 
   expect.to_be_true(string.contains(out, "\u{001b}[1mH"))
   expect.to_be_true(string.contains(out, "\u{001b}[32mx"))
@@ -71,7 +70,7 @@ pub fn table_style_fn_wraps_each_line_independently_test() {
       _ -> style.new()
     }
   })
-  |> table.render(spruce.with_color_level(tty.TrueColor), _)
+  |> table.render(spruce.with_color_level(spruce.TrueColor), _)
   |> expect.to_equal(
     "┌───────┬───┐\n"
     <> "│ \u{001b}[31malpha\u{001b}[39m │ z │\n"
@@ -148,7 +147,7 @@ pub fn table_rounded_border_style_test() {
   table.new()
   |> table.headers(["A", "B"])
   |> table.rows([["x", "y"]])
-  |> table.border(box.Rounded)
+  |> table.border(border.Rounded)
   |> table.render(spruce.no_color(), _)
   |> expect.to_equal(
     "╭───┬───╮\n"
@@ -163,7 +162,7 @@ pub fn table_thick_border_style_test() {
   table.new()
   |> table.headers(["A", "B"])
   |> table.rows([["x", "y"]])
-  |> table.border(box.Thick)
+  |> table.border(border.Thick)
   |> table.render(spruce.no_color(), _)
   |> expect.to_equal(
     "┏━━━┳━━━┓\n"
@@ -178,7 +177,7 @@ pub fn table_double_border_style_test() {
   table.new()
   |> table.headers(["A", "B"])
   |> table.rows([["x", "y"]])
-  |> table.border(box.Double)
+  |> table.border(border.Double)
   |> table.render(spruce.no_color(), _)
   |> expect.to_equal(
     "╔═══╦═══╗\n"

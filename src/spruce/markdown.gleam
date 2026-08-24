@@ -56,11 +56,10 @@ import mork
 import mork/document as md
 import spruce.{type Spruce}
 import spruce/align
-import spruce/block
+import spruce/border
 import spruce/box
 import spruce/highlight
-import spruce/internal/layout
-import spruce/list as ui_list
+import spruce/items
 import spruce/style
 import spruce/symbol
 import spruce/table
@@ -243,15 +242,16 @@ fn render_block_list(
 fn render_block(sp: Spruce, block_: md.Block, options: Options) -> String {
   case block_ {
     md.BlockQuote(blocks) -> render_quote(sp, blocks, options)
-    md.BulletList(pack, items) -> render_list(sp, pack, items, None, options)
+    md.BulletList(pack, entries) ->
+      render_list(sp, pack, entries, None, options)
     md.Code(lang, text) -> render_code(sp, lang, text, options)
     md.Empty -> ""
     md.Heading(level, _, raw, inlines) ->
       render_heading(sp, level, raw, inlines, options)
     md.HtmlBlock(raw) -> render_html_block(sp, raw, options.theme)
     md.Newline -> ""
-    md.OrderedList(pack, items, start) ->
-      render_list(sp, pack, items, start, options)
+    md.OrderedList(pack, entries, start) ->
+      render_list(sp, pack, entries, start, options)
     md.Paragraph(_, inlines) -> render_paragraph(sp, inlines, options)
     md.Table(header, rows) -> render_table(sp, header, rows, options)
     md.ThematicBreak -> render_rule(sp, options)
@@ -272,7 +272,7 @@ fn render_heading(
   let marker = string.repeat("#", int.clamp(level, min: 1, max: 6))
   let line = marker <> " " <> string.trim(text)
 
-  layout.indent_prefix(sp)
+  spruce.indent_prefix(sp)
   <> style.render(sp, heading_style(options.theme, level), line)
 }
 
@@ -283,7 +283,7 @@ fn render_paragraph(
 ) -> String {
   render_inlines(sp, inlines, options)
   |> wrap(options.width)
-  |> prefix_lines(layout.indent_prefix(sp))
+  |> prefix_lines(spruce.indent_prefix(sp))
 }
 
 fn render_code(
@@ -301,10 +301,12 @@ fn render_code(
       theme: options.theme.code,
     )
 
-  let options_ =
-    box.options(title: title, color: options.theme.code_border)
+  let code_box =
+    box.new()
+    |> box.title(title)
+    |> box.border_color(options.theme.code_border)
     |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
-  box.render(sp, highlighted, options_)
+  box.render(sp, highlighted, code_box)
 }
 
 fn render_quote(
@@ -330,19 +332,14 @@ fn render_plain_quote(
       render_blocks(sp, blocks, options),
     )
 
-  let quote_block =
-    block.new()
-    |> block.border(box.Thick)
-    |> block.border_sides(top: False, right: False, bottom: False, left: True)
-    |> block.border_colors(
-      top: options.theme.quote_border,
-      right: options.theme.quote_border,
-      bottom: options.theme.quote_border,
-      left: options.theme.quote_border,
-    )
-    |> block.padding(top: 0, right: 0, bottom: 0, left: 1)
+  let quote_box =
+    box.plain()
+    |> box.border(border.Thick)
+    |> box.border_sides(top: False, right: False, bottom: False, left: True)
+    |> box.border_color(options.theme.quote_border)
+    |> box.padding(top: 0, right: 0, bottom: 0, left: 1)
 
-  block.render(sp, content, quote_block)
+  box.render(sp, content, quote_box)
 }
 
 /// A GitHub-style alert / Astro-style aside detected inside a block quote.
@@ -456,14 +453,14 @@ fn render_admonition(sp: Spruce, alert: Alert, options: Options) -> String {
     body_text -> header <> "\n\n" <> body_text
   }
 
-  let admonition_block =
-    block.new()
-    |> block.border(box.Thick)
-    |> block.border_sides(top: False, right: False, bottom: False, left: True)
-    |> block.border_colors(top: color, right: color, bottom: color, left: color)
-    |> block.padding(top: 0, right: 0, bottom: 0, left: 1)
+  let admonition_box =
+    box.plain()
+    |> box.border(border.Thick)
+    |> box.border_sides(top: False, right: False, bottom: False, left: True)
+    |> box.border_color(color)
+    |> box.padding(top: 0, right: 0, bottom: 0, left: 1)
 
-  block.render(sp, content, admonition_block)
+  box.render(sp, content, admonition_box)
 }
 
 fn alert_properties(kind: AlertKind) -> #(style.Color, String, String) {
@@ -471,11 +468,31 @@ fn alert_properties(kind: AlertKind) -> #(style.Color, String, String) {
     style.adaptive(light: style.Hex(light), dark: style.Hex(dark))
   }
   case kind {
-    AlertNote -> #(adapt(0x1d4ed8, 0x60a5fa), symbol.info, "Note")
-    AlertTip -> #(adapt(0x15803d, 0x4ade80), symbol.success, "Tip")
-    AlertImportant -> #(adapt(0x7e22ce, 0xc084fc), symbol.notice, "Important")
-    AlertWarning -> #(adapt(0xb45309, 0xfbbf24), symbol.warn, "Warning")
-    AlertCaution -> #(adapt(0xb91c1c, 0xf87171), symbol.error, "Caution")
+    AlertNote -> #(
+      adapt(0x1d4ed8, 0x60a5fa),
+      symbol.status(symbol.Unicode, symbol.Info),
+      "Note",
+    )
+    AlertTip -> #(
+      adapt(0x15803d, 0x4ade80),
+      symbol.status(symbol.Unicode, symbol.Success),
+      "Tip",
+    )
+    AlertImportant -> #(
+      adapt(0x7e22ce, 0xc084fc),
+      symbol.status(symbol.Unicode, symbol.Notice),
+      "Important",
+    )
+    AlertWarning -> #(
+      adapt(0xb45309, 0xfbbf24),
+      symbol.status(symbol.Unicode, symbol.Warn),
+      "Warning",
+    )
+    AlertCaution -> #(
+      adapt(0xb91c1c, 0xf87171),
+      symbol.status(symbol.Unicode, symbol.Error),
+      "Caution",
+    )
   }
 }
 
@@ -722,37 +739,37 @@ fn is_name_char(char: String) -> Bool {
 fn render_list(
   sp: Spruce,
   pack: md.ListPack,
-  items: List(md.ListItem),
+  entries: List(md.ListItem),
   start: Option(Int),
   options: Options,
 ) -> String {
-  let labels = render_list_labels(items, pack, sp, options)
+  let labels = render_list_labels(entries, pack, sp, options)
   let list_ =
     labels
-    |> list.fold(ui_list.new(), fn(list_, label) { ui_list.item(list_, label) })
+    |> list.fold(items.new(), fn(list_, label) { items.item(list_, label) })
 
   case start {
-    None -> ui_list.render(sp, list_)
+    None -> items.render(sp, list_)
     Some(start) -> {
       let list_ =
         list_
-        |> ui_list.kind(ui_list.Ordered)
-        |> ui_list.enumerator(fn(index, _depth) {
+        |> items.kind(items.Ordered)
+        |> items.enumerator(fn(index, _depth) {
           int.to_string(start + index - 1) <> ". "
         })
 
-      ui_list.render(sp, list_)
+      items.render(sp, list_)
     }
   }
 }
 
 fn render_list_labels(
-  items: List(md.ListItem),
+  entries: List(md.ListItem),
   pack: md.ListPack,
   sp: Spruce,
   options: Options,
 ) -> List(String) {
-  case items {
+  case entries {
     [] -> []
     [md.ListItem(blocks, _, _), ..rest] -> [
       render_list_item_blocks(blocks, pack, sp, options),
@@ -849,13 +866,13 @@ fn render_rule(sp: Spruce, options: Options) -> String {
     _ -> 40
   }
 
-  layout.indent_prefix(sp)
+  spruce.indent_prefix(sp)
   <> style.render(sp, options.theme.rule, string.repeat("─", width))
 }
 
 fn render_html_block(sp: Spruce, raw: String, theme: Theme) -> String {
   style.render(sp, theme.html, raw)
-  |> prefix_lines(layout.indent_prefix(sp))
+  |> prefix_lines(spruce.indent_prefix(sp))
 }
 
 fn render_inlines(

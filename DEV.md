@@ -31,6 +31,7 @@
 ## Public API expectations
 
 - Keep the README-documented public modules (`spruce` and `spruce/*`) stable across minor releases.
-- `ColorLevel` is a closed 1.x API contract (`NoColor`, `Basic`, `Ansi256`, `TrueColor`).
-- Prefer additive changes over breaking changes for 1.x.
+- `ColorLevel` is a closed API contract (`NoColor`, `Basic`, `Ansi256`, `TrueColor`).
+- Prefer additive changes over breaking changes within a major version; module
+  layout changes are recorded as ADRs under `docs/adr/`.
 - If a behavior change is necessary, document it in the changelog and update the README examples when needed.

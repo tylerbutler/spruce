@@ -2,7 +2,6 @@ import gleam/string
 import spruce
 import spruce/tree
 import startest/expect
-import tty
 
 pub fn render_no_color_uses_ascii_fallback_test() {
   tree.root("app")
@@ -20,7 +19,7 @@ pub fn render_color_uses_unicode_branches_test() {
     child: tree.root("src") |> tree.child(child: tree.root("main.gleam")),
   )
   |> tree.child(child: tree.root("test"))
-  |> tree.render(spruce.with_color_level(tty.TrueColor), _)
+  |> tree.render(spruce.with_color_level(spruce.TrueColor), _)
   |> expect.to_equal("app\n├─ src\n│  └─ main.gleam\n└─ test")
 }
 
@@ -44,7 +43,7 @@ pub fn render_multiline_non_last_label_keeps_unicode_guide_test() {
   tree.root("root")
   |> tree.child(child: tree.root("line one\nline two"))
   |> tree.child(child: tree.root("sibling"))
-  |> tree.render(spruce.with_color_level(tty.TrueColor), _)
+  |> tree.render(spruce.with_color_level(spruce.TrueColor), _)
   |> expect.to_equal("root\n├─ line one\n│  line two\n└─ sibling")
 }
 
@@ -53,7 +52,7 @@ pub fn render_multiline_non_last_label_keeps_ascii_guide_test() {
   |> tree.child(child: tree.root("line one\nline two"))
   |> tree.child(child: tree.root("sibling"))
   |> tree.ascii()
-  |> tree.render(spruce.with_color_level(tty.TrueColor), _)
+  |> tree.render(spruce.with_color_level(spruce.TrueColor), _)
   |> expect.to_equal("root\n|- line one\n|  line two\n`- sibling")
 }
 

@@ -47,7 +47,7 @@ pub fn enumerator(tree: Tree, branch: fn(Int, Bool) -> String) -> Tree {
 
 /// Render a tree to a string.
 pub fn render(sp: Spruce, tree: Tree) -> String {
-  let base = string.repeat("  ", spruce.depth(sp))
+  let base = spruce.indent_prefix(sp)
   let lines =
     render_label(base, base, tree.label)
     |> list.append(render_children(

@@ -3,7 +3,6 @@
 import gleam/list
 import gleam/string
 import spruce.{type Spruce}
-import spruce/palette
 import spruce/style
 
 /// An ordered collection of key-value detail pairs.
@@ -41,7 +40,7 @@ pub fn render(sp: Spruce, details: Details) -> String {
 fn render_pair(sp: Spruce, pair: #(String, String)) -> String {
   let #(key, value) = pair
   let text = key <> "=" <> escape_value(value)
-  style.render(sp, palette.hash(sp, key), text)
+  style.render(sp, style.hashed(sp, key), text)
 }
 
 fn escape_value(value: String) -> String {

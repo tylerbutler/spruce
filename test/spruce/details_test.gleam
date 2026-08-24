@@ -2,7 +2,6 @@ import gleam/string
 import spruce
 import spruce/details
 import startest/expect
-import tty
 
 pub fn empty_details_render_empty_test() {
   details.render(spruce.no_color(), details.new())
@@ -49,7 +48,7 @@ pub fn colored_details_emit_escapes_test() {
   let out =
     details.new()
     |> details.add(key: "host", value: "localhost")
-    |> details.render(spruce.with_color_level(tty.Ansi256), _)
+    |> details.render(spruce.with_color_level(spruce.Ansi256), _)
 
   expect.to_be_true(string.contains(out, "\u{001b}"))
   expect.to_be_true(string.contains(out, "host=localhost"))

@@ -10,26 +10,23 @@ import gleam/list
 import gleam/string
 import spruce
 import spruce/align
+import spruce/border
 import spruce/box
 import spruce/details
-import spruce/group
-import spruce/layout
+import spruce/items
 import spruce/line
-import spruce/list as splist
 import spruce/markdown
 import spruce/message
 import spruce/output
-import spruce/palette
 import spruce/severity
 import spruce/style
 import spruce/symbol
 import spruce/table
 import spruce/tree
-import tty
 
 pub fn main() {
   // Force truecolor so the demo is vivid even when stdout is not a TTY.
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
 
   banner("spruce — a terminal-UI kit for Gleam")
   io.println("color level: " <> color_level_name(spruce.color_level(sp)))
@@ -39,7 +36,7 @@ pub fn main() {
   symbol_section(sp)
   message_section(sp)
   formatter_section(sp)
-  palette_section(sp)
+  hashed_section(sp)
   box_section(sp)
   list_section(sp)
   tree_section(sp)
@@ -55,13 +52,13 @@ pub fn main() {
 }
 
 fn banner(title: String) -> Nil {
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
   box.simple(sp, title)
   |> io.println
 }
 
 fn heading(label: String) -> Nil {
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
   let styled =
     style.render(
       sp,
@@ -100,41 +97,29 @@ fn style_section(sp: spruce.Spruce) -> Nil {
 fn symbol_section(_sp: spruce.Spruce) -> Nil {
   heading("symbol — icons with ASCII fallbacks")
 
-  let icons = [
-    #("info", symbol.info),
-    #("warn", symbol.warn),
-    #("error", symbol.error),
-    #("success", symbol.success),
-    #("start", symbol.start),
-    #("notice", symbol.notice),
-    #("alert", symbol.alert),
-    #("bullet", symbol.bullet),
-    #("arrow", symbol.arrow),
+  let statuses = [
+    #("info", symbol.Info),
+    #("warn", symbol.Warn),
+    #("error", symbol.Error),
+    #("success", symbol.Success),
+    #("start", symbol.Start),
+    #("notice", symbol.Notice),
+    #("alert", symbol.Alert),
+    #("bullet", symbol.Bullet),
+    #("arrow", symbol.Arrow),
   ]
 
-  icons
-  |> list.map(fn(pair) {
-    let #(name, glyph) = pair
-    glyph <> " " <> name
-  })
-  |> string.join("    ")
-  |> fn(line) { io.println("  " <> line) }
+  let row = fn(mode: symbol.Mode) {
+    statuses
+    |> list.map(fn(pair) {
+      let #(name, status) = pair
+      symbol.status(mode, status) <> " " <> name
+    })
+    |> string.join("    ")
+  }
 
-  io.println(
-    "  ascii: "
-    <> string.join(
-      [
-        symbol.info_ascii,
-        symbol.warn_ascii,
-        symbol.error_ascii,
-        symbol.success_ascii,
-        symbol.start_ascii,
-        symbol.arrow_ascii,
-        symbol.bullet_ascii,
-      ],
-      " ",
-    ),
-  )
+  io.println("  unicode: " <> row(symbol.Unicode))
+  io.println("  ascii:   " <> row(symbol.Ascii))
 }
 
 fn message_section(sp: spruce.Spruce) -> Nil {
@@ -152,52 +137,20 @@ fn message_section(sp: spruce.Spruce) -> Nil {
   io.println(style.render(
     sp,
     style.new() |> style.dim,
-    "  the *_with variants take Options — formatters and trailing details:",
+    "  for badges, details, timestamps, and scopes, compose a spruce/line:",
   ))
 
-  // Badge formatter: uppercase bracketed prefix, e.g. [WARN].
-  let badge_options =
-    message.default_options()
-    |> message.with_formatter(message.badge())
-  io.println(
-    "  " <> message.warn_with(sp, "Deprecated option in config", badge_options),
-  )
-  io.println(
-    "  " <> message.error_with(sp, "Could not reach registry", badge_options),
-  )
-
-  // Simple formatter: bare uppercase label, no icon.
-  let simple_options =
-    message.default_options()
-    |> message.with_formatter(message.simple())
-  io.println(
-    "  " <> message.info_with(sp, "Resolving dependencies", simple_options),
-  )
-
-  // Details suffix: trailing key-value pairs after the message text.
-  let warn_details =
+  let deprecation =
     details.new()
     |> details.add(key: "option", value: "legacy_mode")
     |> details.add(key: "since", value: "0.4.0")
-  let detail_options =
-    message.default_options()
-    |> message.with_details(warn_details)
-  io.println(
-    "  " <> message.warn_with(sp, "Deprecated option in config", detail_options),
-  )
 
-  // Badge plus details together.
-  let combined_options =
-    message.default_options()
-    |> message.with_formatter(message.badge())
-    |> message.with_details(
-      details.new()
-      |> details.add(key: "status", value: "500")
-      |> details.add(key: "retries", value: "3"),
-    )
-  io.println(
-    "  " <> message.fail_with(sp, "Upstream request failed", combined_options),
-  )
+  line.new("Deprecated option in config")
+  |> line.severity(severity.Warn)
+  |> line.severity_formatter(severity.badge())
+  |> line.details(deprecation)
+  |> line.render(sp, _)
+  |> fn(rendered) { io.println("  " <> rendered) }
 }
 
 fn formatter_section(sp: spruce.Spruce) -> Nil {
@@ -225,11 +178,11 @@ fn formatter_section(sp: spruce.Spruce) -> Nil {
   )
 }
 
-fn palette_section(sp: spruce.Spruce) -> Nil {
-  heading("palette — deterministic hash colors")
+fn hashed_section(sp: spruce.Spruce) -> Nil {
+  heading("style.hashed — deterministic hash colors")
 
   ["alice", "bob", "carol", "dave", "spruce", "gleam"]
-  |> list.map(fn(name) { style.render(sp, palette.hash(sp, name), name) })
+  |> list.map(fn(name) { style.render(sp, style.hashed(sp, name), name) })
   |> string.join("  ")
   |> fn(line) { io.println("  " <> line) }
 }
@@ -243,8 +196,9 @@ fn box_section(sp: spruce.Spruce) -> Nil {
   io.println("")
 
   let opts =
-    box.options(title: "Release", color: style.Green)
-    |> box.border(box.Rounded)
+    box.new()
+    |> box.title("Release")
+    |> box.border_color(style.Green)
     |> box.padding(top: 1, right: 2, bottom: 1, left: 2)
 
   box.render(sp, "spruce 0.1.0\nready to ship", opts)
@@ -253,8 +207,10 @@ fn box_section(sp: spruce.Spruce) -> Nil {
   io.println("")
 
   let double =
-    box.options(title: "Double", color: style.Magenta)
-    |> box.border(box.Double)
+    box.new()
+    |> box.title("Double")
+    |> box.border(border.Double)
+    |> box.border_color(style.Magenta)
     |> box.padding(top: 0, right: 1, bottom: 0, left: 1)
 
   box.render(sp, "thick borders\nfor emphasis", double)
@@ -262,27 +218,27 @@ fn box_section(sp: spruce.Spruce) -> Nil {
 }
 
 fn list_section(sp: spruce.Spruce) -> Nil {
-  heading("list — bullet and ordered lists")
+  heading("items — bullet and ordered lists")
 
-  splist.new()
-  |> splist.item("Fetch dependencies")
-  |> splist.child("Compile sources", [
+  items.new()
+  |> items.item("Fetch dependencies")
+  |> items.child("Compile sources", [
     "spruce.gleam",
     "style.gleam",
     "box.gleam",
   ])
-  |> splist.item("Run tests")
-  |> splist.render(sp, _)
+  |> items.item("Run tests")
+  |> items.render(sp, _)
   |> io.println
 
   io.println("")
 
-  splist.new()
-  |> splist.kind(splist.Ordered)
-  |> splist.item("Plan the work")
-  |> splist.item("Do the work")
-  |> splist.item("Ship the work")
-  |> splist.render(sp, _)
+  items.new()
+  |> items.kind(items.Ordered)
+  |> items.item("Plan the work")
+  |> items.item("Do the work")
+  |> items.item("Ship the work")
+  |> items.render(sp, _)
   |> io.println
 }
 
@@ -451,9 +407,9 @@ fn main() {
     )
 
   io.println("  dark_theme()")
-  io.println(group.indent(dark, 2))
+  io.println(indent(dark, 2))
   io.println("  light_theme()")
-  io.println(group.indent(light, 2))
+  io.println(indent(light, 2))
 }
 
 fn align_section(sp: spruce.Spruce) -> Nil {
@@ -476,37 +432,39 @@ fn align_section(sp: spruce.Spruce) -> Nil {
     "Spruce keeps width-aware wrapping deterministic across targets.",
     24,
   )
-  |> group.indent(2)
+  |> indent(2)
   |> io.println
 }
 
 fn layout_section(sp: spruce.Spruce) -> Nil {
-  heading("layout — composing blocks")
+  heading("align — composing blocks")
 
   let left =
-    box.render(sp, "left\nblock", box.options(title: "A", color: style.Blue))
+    box.render(
+      sp,
+      "left\nblock",
+      box.new() |> box.title("A") |> box.border_color(style.Blue),
+    )
   let right =
-    box.render(sp, "right\nblock", box.options(title: "B", color: style.Green))
+    box.render(
+      sp,
+      "right\nblock",
+      box.new() |> box.title("B") |> box.border_color(style.Green),
+    )
 
-  layout.join_horizontal(layout.Center, [left, "   ", right])
+  align.join_horizontal(align.Center, [left, "   ", right])
   |> io.println
 }
 
 fn group_section(sp: spruce.Spruce) -> Nil {
-  heading("group — depth-in-context indentation")
+  heading("output — eager, streaming groups")
 
-  use sp <- group.group(sp, "build")
-  io.println(group.indent(message.start(sp, "compiling"), spruce.depth(sp)))
+  use sp <- output.stream_group(sp, "build")
+  io.println(message.start(sp, "compiling"))
 
-  use sp <- group.group(sp, "test")
-  io.println(group.indent(
-    message.success(sp, "erlang target green"),
-    spruce.depth(sp),
-  ))
-  io.println(group.indent(
-    message.success(sp, "javascript target green"),
-    spruce.depth(sp),
-  ))
+  use sp <- output.stream_group(sp, "test")
+  io.println(message.success(sp, "erlang target green"))
+  io.println(message.success(sp, "javascript target green"))
 }
 
 fn output_section(sp: spruce.Spruce) -> Nil {
@@ -525,9 +483,19 @@ fn output_section(sp: spruce.Spruce) -> Nil {
 
 fn color_level_name(level: spruce.ColorLevel) -> String {
   case level {
-    tty.NoColor -> "NoColor"
-    tty.Basic -> "Basic"
-    tty.Ansi256 -> "Ansi256"
-    tty.TrueColor -> "TrueColor"
+    spruce.NoColor -> "NoColor"
+    spruce.Basic -> "Basic"
+    spruce.Ansi256 -> "Ansi256"
+    spruce.TrueColor -> "TrueColor"
   }
+}
+
+// Prefix every line of `text` with `level` levels of two-space indentation.
+fn indent(text: String, level: Int) -> String {
+  let prefix = string.repeat("  ", level)
+
+  text
+  |> string.split("\n")
+  |> list.map(fn(line) { prefix <> line })
+  |> string.join("\n")
 }

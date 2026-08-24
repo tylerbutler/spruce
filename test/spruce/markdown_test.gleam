@@ -3,7 +3,6 @@ import spruce
 import spruce/markdown
 import spruce/symbol
 import startest/expect
-import tty
 
 pub fn heading_no_color_test() {
   markdown.render(spruce.no_color(), "# Hello")
@@ -60,7 +59,7 @@ pub fn fenced_code_block_highlight_no_color_stays_plain_test() {
 pub fn fenced_code_block_highlight_color_applies_test() {
   let out =
     markdown.render(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       "```gleam\nlet x = 1\n```",
     )
 
@@ -86,7 +85,8 @@ pub fn blockquote_indented_test() {
 }
 
 pub fn blockquote_text_is_italic_when_colored_test() {
-  let out = markdown.render(spruce.with_color_level(tty.TrueColor), "> quoted")
+  let out =
+    markdown.render(spruce.with_color_level(spruce.TrueColor), "> quoted")
 
   expect.to_be_true(string.contains(out, "\u{001b}[3mquoted\u{001b}[23m"))
 }
@@ -96,7 +96,10 @@ pub fn github_alert_note_test() {
 
   expect.to_be_true(string.contains(out, "┃ "))
   expect.to_be_true(string.contains(out, "Note"))
-  expect.to_be_true(string.contains(out, symbol.info))
+  expect.to_be_true(string.contains(
+    out,
+    symbol.status(symbol.Unicode, symbol.Info),
+  ))
   expect.to_be_true(string.contains(out, "Pay attention."))
   expect.to_be_false(string.contains(out, "[!NOTE]"))
 }
@@ -105,7 +108,10 @@ pub fn github_alert_custom_title_test() {
   let out =
     markdown.render(spruce.no_color(), "> [!WARNING] Heads up\n> Be careful.")
 
-  expect.to_be_true(string.contains(out, symbol.warn))
+  expect.to_be_true(string.contains(
+    out,
+    symbol.status(symbol.Unicode, symbol.Warn),
+  ))
   expect.to_be_true(string.contains(out, "Heads up"))
   expect.to_be_true(string.contains(out, "Be careful."))
   expect.to_be_false(string.contains(out, "Warning\n"))
@@ -114,23 +120,35 @@ pub fn github_alert_custom_title_test() {
 pub fn github_alert_aliases_test() {
   let tip = markdown.render(spruce.no_color(), "> [!TIP]\n> A tip.")
   expect.to_be_true(string.contains(tip, "Tip"))
-  expect.to_be_true(string.contains(tip, symbol.success))
+  expect.to_be_true(string.contains(
+    tip,
+    symbol.status(symbol.Unicode, symbol.Success),
+  ))
 
   let important =
     markdown.render(spruce.no_color(), "> [!IMPORTANT]\n> Read this.")
   expect.to_be_true(string.contains(important, "Important"))
-  expect.to_be_true(string.contains(important, symbol.notice))
+  expect.to_be_true(string.contains(
+    important,
+    symbol.status(symbol.Unicode, symbol.Notice),
+  ))
 
   let caution = markdown.render(spruce.no_color(), "> [!CAUTION]\n> Danger.")
   expect.to_be_true(string.contains(caution, "Caution"))
-  expect.to_be_true(string.contains(caution, symbol.error))
+  expect.to_be_true(string.contains(
+    caution,
+    symbol.status(symbol.Unicode, symbol.Error),
+  ))
 }
 
 pub fn github_alert_unknown_stays_quote_test() {
   let out = markdown.render(spruce.no_color(), "> [!BOGUS]\n> body")
 
   expect.to_be_true(string.contains(out, "[!BOGUS]"))
-  expect.to_be_false(string.contains(out, symbol.info))
+  expect.to_be_false(string.contains(
+    out,
+    symbol.status(symbol.Unicode, symbol.Info),
+  ))
 }
 
 pub fn astro_directive_note_test() {
@@ -138,7 +156,10 @@ pub fn astro_directive_note_test() {
     markdown.render(spruce.no_color(), ":::note\nAstro aside body.\n:::")
 
   expect.to_be_true(string.contains(out, "Note"))
-  expect.to_be_true(string.contains(out, symbol.info))
+  expect.to_be_true(string.contains(
+    out,
+    symbol.status(symbol.Unicode, symbol.Info),
+  ))
   expect.to_be_true(string.contains(out, "Astro aside body."))
   expect.to_be_false(string.contains(out, ":::"))
 }
@@ -150,7 +171,10 @@ pub fn astro_directive_custom_title_test() {
       ":::danger[Watch Out]\nSomething risky.\n:::",
     )
 
-  expect.to_be_true(string.contains(out, symbol.error))
+  expect.to_be_true(string.contains(
+    out,
+    symbol.status(symbol.Unicode, symbol.Error),
+  ))
   expect.to_be_true(string.contains(out, "Watch Out"))
   expect.to_be_true(string.contains(out, "Something risky."))
   expect.to_be_false(string.contains(out, ":::"))
@@ -235,7 +259,8 @@ pub fn multi_element_smoke_test() {
 }
 
 pub fn heading_truecolor_is_styled_test() {
-  let out = markdown.render(spruce.with_color_level(tty.TrueColor), "# Hello")
+  let out =
+    markdown.render(spruce.with_color_level(spruce.TrueColor), "# Hello")
 
   expect.to_be_true(string.contains(out, "\u{001b}"))
 }
@@ -254,13 +279,14 @@ pub fn render_with_options_wraps_and_themes_test() {
 pub fn heading_theme_adapts_to_background_test() {
   let dark =
     markdown.render(
-      spruce.with_color_level(tty.TrueColor) |> spruce.with_background(tty.Dark),
+      spruce.with_color_level(spruce.TrueColor)
+        |> spruce.with_background(spruce.Dark),
       "# Hello",
     )
   let light =
     markdown.render(
-      spruce.with_color_level(tty.TrueColor)
-        |> spruce.with_background(tty.Light),
+      spruce.with_color_level(spruce.TrueColor)
+        |> spruce.with_background(spruce.Light),
       "# Hello",
     )
 

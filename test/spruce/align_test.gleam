@@ -324,3 +324,71 @@ fn is_csi_final(grapheme: String) -> Bool {
     }
   }
 }
+
+pub fn join_vertical_start_pads_each_line_to_widest_block_test() {
+  align.join_vertical(align.Start, ["a\nbb", "ccc"])
+  |> expect.to_equal("a  \nbb \nccc")
+}
+
+pub fn join_vertical_center_uses_visual_width_test() {
+  let red = "\u{001b}[31mR\u{001b}[0m"
+
+  align.join_vertical(align.Center, [red, "abc"])
+  |> expect.to_equal(" " <> red <> " \nabc")
+}
+
+pub fn join_horizontal_start_pads_lines_to_each_block_width_test() {
+  align.join_horizontal(align.Start, ["a\nbbb", "x\ny"])
+  |> expect.to_equal("a  x\nbbby")
+}
+
+pub fn join_horizontal_end_places_shorter_blocks_at_bottom_test() {
+  align.join_horizontal(align.End, ["a\nb", "XX"])
+  |> expect.to_equal("a  \nbXX")
+}
+
+pub fn join_horizontal_center_places_shorter_blocks_in_middle_test() {
+  align.join_horizontal(align.Center, ["1\n2\n3", "XX"])
+  |> expect.to_equal("1  \n2XX\n3  ")
+}
+
+pub fn place_centers_content_horizontally_and_places_at_bottom_test() {
+  align.place(
+    width: 5,
+    height: 3,
+    horizontal: align.Center,
+    vertical: align.End,
+    content: "ab\ncde",
+  )
+  |> expect.to_equal("     \n ab  \n cde ")
+}
+
+pub fn place_preserves_content_larger_than_region_test() {
+  align.place(
+    width: 2,
+    height: 1,
+    horizontal: align.End,
+    vertical: align.End,
+    content: "abcd\nef",
+  )
+  |> expect.to_equal("abcd\n  ef")
+}
+
+pub fn layout_handles_large_flattened_and_repeated_lines_test() {
+  let count = 20_000
+  let blocks = list.repeat("x", times: count)
+
+  align.join_vertical(align.Start, blocks)
+  |> string.split("\n")
+  |> list.length
+  |> expect.to_equal(count)
+
+  let tall_block =
+    list.repeat("y", times: count)
+    |> string.join("\n")
+
+  align.join_horizontal(align.End, ["x", tall_block])
+  |> string.split("\n")
+  |> list.length
+  |> expect.to_equal(count)
+}

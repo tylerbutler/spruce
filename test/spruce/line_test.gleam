@@ -4,7 +4,6 @@ import spruce/details
 import spruce/line
 import spruce/severity
 import startest/expect
-import tty
 
 pub fn simple_line_test() {
   line.new("Build complete")
@@ -52,7 +51,7 @@ pub fn colored_line_dims_timestamp_scope_and_details_test() {
     |> line.timestamp("now")
     |> line.scope("api")
     |> line.details(details.new() |> details.add(key: "status", value: "200"))
-    |> line.render(spruce.with_color_level(tty.TrueColor), _)
+    |> line.render(spruce.with_color_level(spruce.TrueColor), _)
 
   expect.to_be_true(string.contains(out, "\u{001b}"))
   expect.to_be_true(string.contains(out, "[api]"))

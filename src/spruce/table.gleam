@@ -7,8 +7,7 @@ import gleam/option.{type Option, None, Some}
 import gleam/string
 import spruce.{type Spruce}
 import spruce/align
-import spruce/box
-import spruce/internal/layout
+import spruce/border.{type Border, type BorderChars}
 import spruce/style
 
 /// A table of string cells with an optional header row. Build one with `new`
@@ -20,21 +19,18 @@ pub opaque type Table {
     style_fn: Option(fn(Int, Int) -> style.Style),
     width: Option(Int),
     column_widths: Option(List(Int)),
-    border: box.Border,
+    border: Border,
     row_separators: Bool,
   )
 }
 
 type GridChars {
   GridChars(
-    border: box.BorderChars,
+    border: BorderChars,
     top_mid: String,
-    header_left: String,
-    header_mid: String,
-    header_right: String,
-    row_left: String,
-    row_mid: String,
-    row_right: String,
+    left_mid: String,
+    cross: String,
+    right_mid: String,
     bottom_mid: String,
   )
 }
@@ -47,7 +43,7 @@ pub fn new() -> Table {
     style_fn: None,
     width: None,
     column_widths: None,
-    border: box.Normal,
+    border: border.Normal,
     row_separators: False,
   )
 }
@@ -89,7 +85,7 @@ pub fn column_widths(table: Table, widths: List(Int)) -> Table {
 ///
 /// Junctions are exact for Normal, Rounded, Thick, and Double. Other border
 /// styles approximate junctions from their edge characters.
-pub fn border(table: Table, border: box.Border) -> Table {
+pub fn border(table: Table, border: Border) -> Table {
   Table(..table, border: border)
 }
 
@@ -139,7 +135,7 @@ pub fn render(sp: Spruce, table: Table) -> String {
         |> list.append([render_bottom(widths, chars)])
 
       lines
-      |> list.map(fn(line) { layout.indent_prefix(sp) <> line })
+      |> list.map(fn(line) { spruce.indent_prefix(sp) <> line })
       |> string.join("\n")
     }
   }
@@ -264,7 +260,7 @@ fn render_header(
 
       case body {
         [] -> header
-        _ -> header |> list.append([render_header_separator(widths, chars)])
+        _ -> header |> list.append([render_inner_separator(widths, chars)])
       }
     }
   }
@@ -297,7 +293,7 @@ fn render_body_rows(
       case row_separators, rest {
         True, [_, ..] ->
           rendered
-          |> list.append([render_row_separator(widths, chars)])
+          |> list.append([render_inner_separator(widths, chars)])
           |> list.append(tail)
         _, _ -> rendered |> list.append(tail)
       }
@@ -459,22 +455,12 @@ fn render_top(widths: List(Int), chars: GridChars) -> String {
   )
 }
 
-fn render_header_separator(widths: List(Int), chars: GridChars) -> String {
+fn render_inner_separator(widths: List(Int), chars: GridChars) -> String {
   render_separator(
     widths,
-    chars.header_left,
-    chars.header_mid,
-    chars.header_right,
-    chars.border.top,
-  )
-}
-
-fn render_row_separator(widths: List(Int), chars: GridChars) -> String {
-  render_separator(
-    widths,
-    chars.row_left,
-    chars.row_mid,
-    chars.row_right,
+    chars.left_mid,
+    chars.cross,
+    chars.right_mid,
     chars.border.top,
   )
 }
@@ -521,147 +507,43 @@ fn render_separator_cells(
   }
 }
 
-fn grid_chars(border: box.Border) -> GridChars {
+fn grid_chars(border: Border) -> GridChars {
+  let chars = border.chars(border)
+
   case border {
-    box.Normal -> normal_grid_chars()
-    box.Rounded -> rounded_grid_chars()
-    box.Thick -> thick_grid_chars()
-    box.Double -> double_grid_chars()
-    box.Block -> block_grid_chars()
-    box.Hidden -> hidden_grid_chars()
-    box.Custom(chars) -> custom_grid_chars(chars)
+    border.Normal | border.Rounded ->
+      junctions(chars, top: "┬", left: "├", cross: "┼", right: "┤", bottom: "┴")
+    border.Thick ->
+      junctions(chars, top: "┳", left: "┣", cross: "╋", right: "┫", bottom: "┻")
+    border.Double ->
+      junctions(chars, top: "╦", left: "╠", cross: "╬", right: "╣", bottom: "╩")
+    border.Block | border.Hidden | border.Custom(_) ->
+      junctions(
+        chars,
+        top: chars.top,
+        left: chars.left,
+        cross: chars.top,
+        right: chars.right,
+        bottom: chars.bottom,
+      )
   }
 }
 
-fn normal_grid_chars() -> GridChars {
-  GridChars(
-    border: box.BorderChars(
-      top_left: "┌",
-      top: "─",
-      top_right: "┐",
-      right: "│",
-      bottom_right: "┘",
-      bottom: "─",
-      bottom_left: "└",
-      left: "│",
-    ),
-    top_mid: "┬",
-    header_left: "├",
-    header_mid: "┼",
-    header_right: "┤",
-    row_left: "├",
-    row_mid: "┼",
-    row_right: "┤",
-    bottom_mid: "┴",
-  )
-}
-
-fn rounded_grid_chars() -> GridChars {
-  GridChars(
-    border: box.BorderChars(
-      top_left: "╭",
-      top: "─",
-      top_right: "╮",
-      right: "│",
-      bottom_right: "╯",
-      bottom: "─",
-      bottom_left: "╰",
-      left: "│",
-    ),
-    top_mid: "┬",
-    header_left: "├",
-    header_mid: "┼",
-    header_right: "┤",
-    row_left: "├",
-    row_mid: "┼",
-    row_right: "┤",
-    bottom_mid: "┴",
-  )
-}
-
-fn thick_grid_chars() -> GridChars {
-  GridChars(
-    border: box.BorderChars(
-      top_left: "┏",
-      top: "━",
-      top_right: "┓",
-      right: "┃",
-      bottom_right: "┛",
-      bottom: "━",
-      bottom_left: "┗",
-      left: "┃",
-    ),
-    top_mid: "┳",
-    header_left: "┣",
-    header_mid: "╋",
-    header_right: "┫",
-    row_left: "┣",
-    row_mid: "╋",
-    row_right: "┫",
-    bottom_mid: "┻",
-  )
-}
-
-fn double_grid_chars() -> GridChars {
-  GridChars(
-    border: box.BorderChars(
-      top_left: "╔",
-      top: "═",
-      top_right: "╗",
-      right: "║",
-      bottom_right: "╝",
-      bottom: "═",
-      bottom_left: "╚",
-      left: "║",
-    ),
-    top_mid: "╦",
-    header_left: "╠",
-    header_mid: "╬",
-    header_right: "╣",
-    row_left: "╠",
-    row_mid: "╬",
-    row_right: "╣",
-    bottom_mid: "╩",
-  )
-}
-
-fn block_grid_chars() -> GridChars {
-  custom_grid_chars(box.BorderChars(
-    top_left: "█",
-    top: "█",
-    top_right: "█",
-    right: "█",
-    bottom_right: "█",
-    bottom: "█",
-    bottom_left: "█",
-    left: "█",
-  ))
-}
-
-fn hidden_grid_chars() -> GridChars {
-  custom_grid_chars(box.BorderChars(
-    top_left: "",
-    top: "",
-    top_right: "",
-    right: "",
-    bottom_right: "",
-    bottom: "",
-    bottom_left: "",
-    left: "",
-  ))
-}
-
-fn custom_grid_chars(chars: box.BorderChars) -> GridChars {
+fn junctions(
+  chars: BorderChars,
+  top top: String,
+  left left: String,
+  cross cross: String,
+  right right: String,
+  bottom bottom: String,
+) -> GridChars {
   GridChars(
     border: chars,
-    top_mid: chars.top,
-    header_left: chars.left,
-    header_mid: chars.top,
-    header_right: chars.right,
-    row_left: chars.left,
-    row_mid: chars.top,
-    row_right: chars.right,
-    bottom_mid: chars.bottom,
+    top_mid: top,
+    left_mid: left,
+    cross: cross,
+    right_mid: right,
+    bottom_mid: bottom,
   )
 }
 

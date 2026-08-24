@@ -4,7 +4,6 @@ description = "A terminal-UI kit for Gleam: styled text, boxes, semantic message
 licences = ["MIT", "Apache-2.0"]
 repository = { type = "github", user = "tylerbutler", repo = "spruce" }
 gleam = ">= 1.16.0"
-internal_modules = ["spruce/internal", "spruce/internal/*"]
 
 [javascript]
 typescript_declarations = true
@@ -51,6 +50,7 @@ label_possible = "off"
 
 # spruce is a library: every public function/constant is part of the API, so
 # "unused by another module" is the expected state for these public modules.
+"src/spruce/border.gleam" = ["unused_exports"]
 "src/spruce/box.gleam" = ["unused_exports"]
 "src/spruce/line.gleam" = ["unused_exports"]
 "src/spruce/message.gleam" = ["unused_exports"]
@@ -62,6 +62,3 @@ label_possible = "off"
 "src/spruce/markdown.gleam" = ["unused_exports", "deep_nesting"]
 # align's ANSI-aware scanners are intentionally nested grapheme/escape loops.
 "src/spruce/align.gleam" = ["deep_nesting"]
-# list defines its own opaque `List`, which shadows the prelude list type and
-# makes the list-of-string return/parameter types impossible to name here.
-"src/spruce/list.gleam" = ["missing_type_annotation"]

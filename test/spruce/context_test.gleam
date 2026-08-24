@@ -1,13 +1,11 @@
-import gleam/order
 import spruce
 import startest/expect
-import tty
 
 // The context's color level round-trips through with_color_level.
 pub fn with_color_level_sets_level_test() {
-  spruce.with_color_level(tty.Ansi256)
+  spruce.with_color_level(spruce.Ansi256)
   |> spruce.color_level
-  |> expect.to_equal(tty.Ansi256)
+  |> expect.to_equal(spruce.Ansi256)
 }
 
 // no_color() reports no color support.
@@ -19,7 +17,7 @@ pub fn no_color_disables_color_test() {
 
 // A non-NoColor level reports color support.
 pub fn truecolor_supports_color_test() {
-  spruce.with_color_level(tty.TrueColor)
+  spruce.with_color_level(spruce.TrueColor)
   |> spruce.supports_color
   |> expect.to_be_true
 }
@@ -43,15 +41,15 @@ pub fn indented_increments_depth_test() {
 // detect() returns one of the known levels without crashing on either target.
 pub fn detect_returns_a_known_level_test() {
   case spruce.color_level(spruce.detect()) {
-    tty.NoColor | tty.Basic | tty.Ansi256 | tty.TrueColor ->
+    spruce.NoColor | spruce.Basic | spruce.Ansi256 | spruce.TrueColor ->
       expect.to_be_true(True)
   }
 }
 
 // Smoke check that the re-exported Stream type is usable end to end.
 pub fn detect_stream_stderr_returns_a_known_level_test() {
-  case spruce.color_level(spruce.detect_stream(tty.Stderr)) {
-    tty.NoColor | tty.Basic | tty.Ansi256 | tty.TrueColor ->
+  case spruce.color_level(spruce.detect_stream(spruce.Stderr)) {
+    spruce.NoColor | spruce.Basic | spruce.Ansi256 | spruce.TrueColor ->
       expect.to_be_true(True)
   }
 }
@@ -59,37 +57,31 @@ pub fn detect_stream_stderr_returns_a_known_level_test() {
 // indented preserves the context's background.
 pub fn indented_preserves_background_test() {
   spruce.no_color()
-  |> spruce.with_background(tty.Light)
+  |> spruce.with_background(spruce.Light)
   |> spruce.indented
   |> spruce.background
-  |> expect.to_equal(tty.Light)
+  |> expect.to_equal(spruce.Light)
 }
 
 // with_background overrides the context background.
 pub fn with_background_sets_background_test() {
-  spruce.with_color_level(tty.TrueColor)
-  |> spruce.with_background(tty.Dark)
+  spruce.with_color_level(spruce.TrueColor)
+  |> spruce.with_background(spruce.Dark)
   |> spruce.background
-  |> expect.to_equal(tty.Dark)
+  |> expect.to_equal(spruce.Dark)
 }
 
 // A context built without detection defaults to an Unknown background.
 pub fn default_background_is_unknown_test() {
   spruce.no_color()
   |> spruce.background
-  |> expect.to_equal(tty.Unknown)
+  |> expect.to_equal(spruce.Unknown)
 }
 
 // detect() returns one of the known backgrounds without crashing on either
 // target.
 pub fn detect_returns_a_known_background_test() {
   case spruce.background(spruce.detect()) {
-    tty.Light | tty.Dark | tty.Unknown -> expect.to_be_true(True)
+    spruce.Light | spruce.Dark | spruce.Unknown -> expect.to_be_true(True)
   }
-}
-
-// Sanity anchor on the dependency ordering helper (keeps `order` import live).
-pub fn truecolor_outranks_no_color_test() {
-  tty.color_level_compare(tty.TrueColor, tty.NoColor)
-  |> expect.to_equal(order.Gt)
 }

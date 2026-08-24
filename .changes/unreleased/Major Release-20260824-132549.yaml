@@ -1,0 +1,3 @@
+kind: Major Release
+body: 'spruce/layout is merged into spruce/align. Pos (Start, Center, and End), join_vertical, join_horizontal, and place are unchanged apart from the module name.'
+time: 2026-08-24T13:25:49.603218901-07:00

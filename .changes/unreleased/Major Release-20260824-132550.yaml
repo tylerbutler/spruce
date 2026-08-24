@@ -1,0 +1,3 @@
+kind: Major Release
+body: 'spruce.indent_prefix(sp) returns the indentation for the context''s depth (two spaces per level), and every block renderer uses it. group.indent is removed; prefix lines with spruce.indent_prefix or string.repeat instead.'
+time: 2026-08-24T13:25:50.639324186-07:00
