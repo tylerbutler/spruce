@@ -1,3 +1,0 @@
-kind: Major Release
-body: 'spruce/block is merged into spruce/box, and boxes are configured with a single builder. Start from box.new() (a rounded cyan border with one cell of horizontal padding) or box.plain() (no border and no padding), then apply title, foreground, background, padding, margin, width, height, align, border, border_color, border_colors, and border_sides before calling render. BoxOptions, box.options, and box.default_options are removed. Replace box.options(title: t, color: c) with box.new() |> box.title(t) |> box.border_color(c), and replace block.new() with box.plain().'
-time: 2026-08-24T13:25:47.527122551-07:00

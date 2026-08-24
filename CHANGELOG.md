@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.0 - 2026-08-24
+
+
+### Major Release
+
+- spruce 2.0 consolidates overlapping modules into one box builder, one set of border glyphs, one status formatter, one indentation helper, and one output-composition module. Only spruce/tree, spruce/details, spruce/highlight, and spruce/markdown are unchanged; the entries below describe each change and its replacement.
+- spruce/block is merged into spruce/box, and boxes are configured with a single builder. Start from box.new() (a rounded cyan border with one cell of horizontal padding) or box.plain() (no border and no padding), then apply title, foreground, background, padding, margin, width, height, align, border, border_color, border_colors, and border_sides before calling render. BoxOptions, box.options, and box.default_options are removed. Replace box.options(title: t, color: c) with box.new() |> box.title(t) |> box.border_color(c), and replace block.new() with box.plain().
+- The Border and BorderChars types move from spruce/box to the new spruce/border module. Replace box.Rounded, box.Custom(...), and the other border constructors with their spruce/border equivalents, including in calls to table.border.
+- spruce/layout is merged into spruce/align. Pos (Start, Center, and End), join_vertical, join_horizontal, and place are unchanged apart from the module name.
+- spruce.indent_prefix(sp) returns the indentation for the context's depth (two spaces per level), and every block renderer uses it. group.indent is removed; prefix lines with spruce.indent_prefix or string.repeat instead.
+- spruce/message now provides only the seven one-line functions success, fail, start, ready, info, warn, and error, each of which renders an icon, a label, and the message text. The Options and Formatter types, default_options, with_details, with_symbol_mode, with_formatter, label, badge, simple, custom, line_with, the *_with functions, and the print_* functions are removed. For badges, key-value details, ASCII glyphs, or custom prefixes, build a spruce/line with line.severity and line.severity_formatter. Print lines with io.println, or collect them with spruce/output.
+- spruce/group is merged into spruce/output. group.render_title is renamed to output.title, and group.group, which prints its heading and runs its body immediately, is renamed to output.stream_group. The buffered output.group is unchanged.
+- spruce/palette is removed. Deterministic hash colors are now provided by style.hashed(sp, text), a drop-in replacement for palette.hash(sp, text).
+- spruce/symbol no longer exports the glyph constants (symbol.info, symbol.info_ascii, symbol.arrow, and the rest) or resolve. Use symbol.status(symbol.Unicode, symbol.Info) for a Unicode glyph and symbol.status(symbol.Ascii, symbol.Info) for its ASCII fallback.
+- spruce/list is renamed to spruce/items, and its List type is renamed to Items, so the module no longer conflicts with gleam/list or the built-in List type. The functions are unchanged, for example items.new() |> items.item(...) |> items.render(sp, _).
+- The ColorLevel, Background, and Stream types are now defined in spruce rather than re-exported from tty, so their constructors can be used without importing tty, for example spruce.with_color_level(spruce.TrueColor), spruce.with_background(spruce.Dark), and spruce.detect_stream(spruce.Stderr). Replace tty.TrueColor, tty.Light, tty.Stderr, and the other tty constructors with their spruce equivalents.
+
+### Added
+
+- The spruce/border module, which defines the Border styles, the BorderChars record, and border.chars for looking up the glyphs of a style. Boxes and tables share it.
+- Box builders gain title, border_color, height, align, foreground, and background, so a titled box can also be sized, aligned, and colored.
+- spruce.indent_prefix, which returns the context's indentation; output.title, which renders a styled group heading; and output.stream_group, which prints a group heading and runs its body immediately.
+
 ## v1.0.1 - 2026-08-05
 
 
