@@ -1,3 +1,3 @@
 kind: Major Release
-body: spruce/list is renamed to spruce/items and its opaque List type to Items; the functions are unchanged (items.new() |> items.item(...) |> items.render(sp, _)), and importers no longer need an alias.
+body: 'spruce/list is renamed to spruce/items and its List type to Items, so it no longer collides with gleam/list or the built-in List type. The functions are unchanged: items.new() |> items.item(...) |> items.render(sp, _).'
 time: 2026-08-24T13:25:55.827423148-07:00

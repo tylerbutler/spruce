@@ -1,3 +1,3 @@
 kind: Major Release
-body: 'spruce/group is folded into spruce/output: group.render_title is output.title and the eager, streaming group.group is output.stream_group. output.group is unchanged.'
+body: 'spruce/group is merged into spruce/output. group.render_title is now output.title, and the eager, streaming group.group is now output.stream_group. The buffered output.group is unchanged.'
 time: 2026-08-24T13:25:52.712896242-07:00

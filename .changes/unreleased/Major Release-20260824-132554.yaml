@@ -1,3 +1,3 @@
 kind: Major Release
-body: spruce/symbol drops the pub const glyphs (symbol.info, symbol.info_ascii, symbol.arrow, ...) and resolve. Use symbol.status(symbol.Unicode, symbol.Info) or symbol.status(symbol.Ascii, symbol.Info).
+body: 'spruce/symbol no longer exports individual glyph constants (symbol.info, symbol.info_ascii, symbol.arrow, ...) or resolve. Use symbol.status(symbol.Unicode, symbol.Info) for the Unicode glyph and symbol.status(symbol.Ascii, symbol.Info) for its ASCII fallback.'
 time: 2026-08-24T13:25:54.787013316-07:00
