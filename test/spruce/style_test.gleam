@@ -312,3 +312,82 @@ pub fn adaptive_is_plain_under_no_color_test() {
   |> style.render(spruce.no_color(), _, "x")
   |> expect.to_equal("x")
 }
+
+pub fn hashed_is_deterministic_test() {
+  let sp = spruce.with_color_level(spruce.Ansi256)
+  let first = style.render(sp, style.hashed(sp, "database"), "database")
+  let second = style.render(sp, style.hashed(sp, "database"), "database")
+  first
+  |> expect.to_equal(second)
+}
+
+pub fn hashed_foo_is_deterministic_test() {
+  let sp = spruce.with_color_level(spruce.Ansi256)
+  let first = style.render(sp, style.hashed(sp, "foo"), "foo")
+  let second = style.render(sp, style.hashed(sp, "foo"), "foo")
+  first
+  |> expect.to_equal(second)
+}
+
+pub fn hashed_distinguishes_simple_anagrams_test() {
+  let sp = spruce.with_color_level(spruce.Ansi256)
+  let ab = style.render(sp, style.hashed(sp, "ab"), "sample")
+  let ba = style.render(sp, style.hashed(sp, "ba"), "sample")
+
+  expect.to_be_true(ab != ba)
+}
+
+pub fn hashed_uses_valid_palette_color_test() {
+  let sp = spruce.with_color_level(spruce.Ansi256)
+  let text = "foo"
+  let out = style.render(sp, style.hashed(sp, text), text)
+
+  renders_like_valid_ansi256_palette_color(sp, out, text)
+  |> expect.to_be_true
+}
+
+pub fn hashed_no_color_is_plain_test() {
+  let sp = spruce.no_color()
+  style.render(sp, style.hashed(sp, "database"), "database")
+  |> expect.to_equal("database")
+}
+
+pub fn hashed_no_color_style_stays_plain_test() {
+  let hashed_style = style.hashed(spruce.no_color(), "database")
+
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    hashed_style,
+    "database",
+  )
+  |> expect.to_equal("database")
+}
+
+pub fn hashed_color_adds_escapes_test() {
+  let sp = spruce.with_color_level(spruce.Ansi256)
+  let out = style.render(sp, style.hashed(sp, "database"), "database")
+  expect.to_be_true(out != "database")
+}
+
+fn renders_like_valid_ansi256_palette_color(
+  sp: spruce.Spruce,
+  out: String,
+  text: String,
+) -> Bool {
+  let render = fn(color) {
+    style.render(sp, style.new() |> style.fg(color), text)
+  }
+
+  out == render(style.Red)
+  || out == render(style.Green)
+  || out == render(style.Yellow)
+  || out == render(style.Blue)
+  || out == render(style.Magenta)
+  || out == render(style.Cyan)
+  || out == render(style.BrightRed)
+  || out == render(style.BrightGreen)
+  || out == render(style.BrightYellow)
+  || out == render(style.BrightBlue)
+  || out == render(style.BrightMagenta)
+  || out == render(style.BrightCyan)
+}

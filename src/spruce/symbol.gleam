@@ -1,7 +1,12 @@
-//// Named terminal glyphs and ASCII fallbacks.
+//// Named terminal glyphs with ASCII fallbacks.
 ////
-//// Use the Unicode constants for rich terminal output, and the `_ascii`
-//// constants when output must stay plain ASCII.
+//// Resolve a `Status` to a glyph with `status`, choosing `Unicode` for rich
+//// terminal output or `Ascii` when output must stay plain ASCII.
+////
+//// ```gleam
+//// symbol.status(symbol.Unicode, symbol.Success) // "✔"
+//// symbol.status(symbol.Ascii, symbol.Success) // "+"
+//// ```
 
 /// Glyph rendering mode.
 pub type Mode {
@@ -24,96 +29,30 @@ pub type Status {
   Arrow
 }
 
-/// Informational message glyph.
-pub const info = "ℹ"
-
-/// Warning message glyph.
-pub const warn = "⚠"
-
-/// Error message glyph.
-pub const error = "✖"
-
-/// Success message glyph.
-pub const success = "✔"
-
-/// In-progress/start glyph.
-pub const start = "◐"
-
-/// Trace/detail glyph.
-pub const trace = "→"
-
-/// Debug message glyph.
-pub const debug = "⚙"
-
-/// Notice message glyph.
-pub const notice = "◉"
-
-/// Alert message glyph.
-pub const alert = "‼"
-
-/// Bullet list glyph.
-pub const bullet = "•"
-
-/// Disclosure arrow glyph.
-pub const arrow = "▸"
-
-/// ASCII informational glyph.
-pub const info_ascii = "i"
-
-/// ASCII warning glyph.
-pub const warn_ascii = "!"
-
-/// ASCII error glyph.
-pub const error_ascii = "x"
-
-/// ASCII success glyph.
-pub const success_ascii = "+"
-
-/// ASCII in-progress/start glyph.
-pub const start_ascii = "*"
-
-/// ASCII disclosure arrow glyph.
-pub const arrow_ascii = ">"
-
-/// ASCII bullet list glyph.
-pub const bullet_ascii = "-"
-
-/// Resolve a glyph pair according to the requested mode.
-pub fn resolve(
-  mode: Mode,
-  unicode unicode: String,
-  ascii ascii: String,
-) -> String {
-  case mode {
-    Unicode -> unicode
-    Ascii -> ascii
-  }
-}
-
 /// Resolve a named status glyph according to the requested mode.
 pub fn status(mode: Mode, status: Status) -> String {
   case status, mode {
-    Info, Unicode -> info
-    Info, Ascii -> info_ascii
-    Warn, Unicode -> warn
-    Warn, Ascii -> warn_ascii
-    Error, Unicode -> error
-    Error, Ascii -> error_ascii
-    Success, Unicode -> success
-    Success, Ascii -> success_ascii
-    Start, Unicode -> start
-    Start, Ascii -> start_ascii
-    Trace, Unicode -> trace
+    Info, Unicode -> "ℹ"
+    Info, Ascii -> "i"
+    Warn, Unicode -> "⚠"
+    Warn, Ascii -> "!"
+    Error, Unicode -> "✖"
+    Error, Ascii -> "x"
+    Success, Unicode -> "✔"
+    Success, Ascii -> "+"
+    Start, Unicode -> "◐"
+    Start, Ascii -> "*"
+    Trace, Unicode -> "→"
     Trace, Ascii -> ">"
-    Debug, Unicode -> debug
+    Debug, Unicode -> "⚙"
     Debug, Ascii -> "*"
-    Notice, Unicode -> notice
+    Notice, Unicode -> "◉"
     Notice, Ascii -> "o"
-    Alert, Unicode -> alert
+    Alert, Unicode -> "‼"
     Alert, Ascii -> "!!"
-    Bullet, Unicode -> bullet
-    Bullet, Ascii -> bullet_ascii
-    Arrow, Unicode -> arrow
-    Arrow, Ascii -> arrow_ascii
+    Bullet, Unicode -> "•"
+    Bullet, Ascii -> "-"
+    Arrow, Unicode -> "▸"
+    Arrow, Ascii -> ">"
   }
 }

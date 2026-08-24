@@ -634,3 +634,65 @@ fn render_faint(text: String, enabled: Bool) -> String {
   use <- bool.guard(when: !enabled, return: text)
   ansi.dim(text)
 }
+
+/// Map a string to a deterministic color style.
+///
+/// The same input always produces the same color, which keeps repeated
+/// identifiers (log categories, service names, user IDs) visually consistent.
+/// The palette adapts to the context's color level: a broader set of colors
+/// for `Ansi256` and `TrueColor`, a smaller set for `Basic`, and a plain style
+/// (no color) for `NoColor`.
+///
+/// ```gleam
+/// style.render(sp, style.hashed(sp, "database"), "database")
+/// ```
+pub fn hashed(sp: Spruce, text: String) -> Style {
+  case spruce.supports_color(sp) {
+    False -> new()
+    True -> {
+      let colors = hash_palette(spruce.color_level(sp))
+      let index = hash_text(text) % list.length(colors)
+      let color = case list.drop(colors, index) {
+        [c, ..] -> c
+        [] -> Cyan
+      }
+      new() |> fg(color)
+    }
+  }
+}
+
+fn hash_text(text: String) -> Int {
+  text
+  |> string.to_utf_codepoints
+  |> list.fold(5381, fn(hash, cp) {
+    let next = hash * 33 + string.utf_codepoint_to_int(cp)
+    bounded_modulo(next, 2_147_483_647)
+  })
+}
+
+fn bounded_modulo(value: Int, modulus: Int) -> Int {
+  case int.modulo(value, by: modulus) {
+    Ok(value) -> value
+    Error(Nil) -> 0
+  }
+}
+
+fn hash_palette(level: spruce.ColorLevel) -> List(Color) {
+  case level {
+    spruce.Ansi256 | spruce.TrueColor -> [
+      Red,
+      Green,
+      Yellow,
+      Blue,
+      Magenta,
+      Cyan,
+      BrightRed,
+      BrightGreen,
+      BrightYellow,
+      BrightBlue,
+      BrightMagenta,
+      BrightCyan,
+    ]
+    spruce.Basic | spruce.NoColor -> [Cyan, Green, Yellow, Magenta, Blue, Red]
+  }
+}

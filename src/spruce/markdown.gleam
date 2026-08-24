@@ -467,11 +467,31 @@ fn alert_properties(kind: AlertKind) -> #(style.Color, String, String) {
     style.adaptive(light: style.Hex(light), dark: style.Hex(dark))
   }
   case kind {
-    AlertNote -> #(adapt(0x1d4ed8, 0x60a5fa), symbol.info, "Note")
-    AlertTip -> #(adapt(0x15803d, 0x4ade80), symbol.success, "Tip")
-    AlertImportant -> #(adapt(0x7e22ce, 0xc084fc), symbol.notice, "Important")
-    AlertWarning -> #(adapt(0xb45309, 0xfbbf24), symbol.warn, "Warning")
-    AlertCaution -> #(adapt(0xb91c1c, 0xf87171), symbol.error, "Caution")
+    AlertNote -> #(
+      adapt(0x1d4ed8, 0x60a5fa),
+      symbol.status(symbol.Unicode, symbol.Info),
+      "Note",
+    )
+    AlertTip -> #(
+      adapt(0x15803d, 0x4ade80),
+      symbol.status(symbol.Unicode, symbol.Success),
+      "Tip",
+    )
+    AlertImportant -> #(
+      adapt(0x7e22ce, 0xc084fc),
+      symbol.status(symbol.Unicode, symbol.Notice),
+      "Important",
+    )
+    AlertWarning -> #(
+      adapt(0xb45309, 0xfbbf24),
+      symbol.status(symbol.Unicode, symbol.Warn),
+      "Warning",
+    )
+    AlertCaution -> #(
+      adapt(0xb91c1c, 0xf87171),
+      symbol.status(symbol.Unicode, symbol.Error),
+      "Caution",
+    )
   }
 }
 

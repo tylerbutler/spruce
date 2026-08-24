@@ -18,7 +18,6 @@ import spruce/list as splist
 import spruce/markdown
 import spruce/message
 import spruce/output
-import spruce/palette
 import spruce/severity
 import spruce/style
 import spruce/symbol
@@ -37,7 +36,7 @@ pub fn main() {
   symbol_section(sp)
   message_section(sp)
   formatter_section(sp)
-  palette_section(sp)
+  hashed_section(sp)
   box_section(sp)
   list_section(sp)
   tree_section(sp)
@@ -98,41 +97,29 @@ fn style_section(sp: spruce.Spruce) -> Nil {
 fn symbol_section(_sp: spruce.Spruce) -> Nil {
   heading("symbol — icons with ASCII fallbacks")
 
-  let icons = [
-    #("info", symbol.info),
-    #("warn", symbol.warn),
-    #("error", symbol.error),
-    #("success", symbol.success),
-    #("start", symbol.start),
-    #("notice", symbol.notice),
-    #("alert", symbol.alert),
-    #("bullet", symbol.bullet),
-    #("arrow", symbol.arrow),
+  let statuses = [
+    #("info", symbol.Info),
+    #("warn", symbol.Warn),
+    #("error", symbol.Error),
+    #("success", symbol.Success),
+    #("start", symbol.Start),
+    #("notice", symbol.Notice),
+    #("alert", symbol.Alert),
+    #("bullet", symbol.Bullet),
+    #("arrow", symbol.Arrow),
   ]
 
-  icons
-  |> list.map(fn(pair) {
-    let #(name, glyph) = pair
-    glyph <> " " <> name
-  })
-  |> string.join("    ")
-  |> fn(line) { io.println("  " <> line) }
+  let row = fn(mode: symbol.Mode) {
+    statuses
+    |> list.map(fn(pair) {
+      let #(name, status) = pair
+      symbol.status(mode, status) <> " " <> name
+    })
+    |> string.join("    ")
+  }
 
-  io.println(
-    "  ascii: "
-    <> string.join(
-      [
-        symbol.info_ascii,
-        symbol.warn_ascii,
-        symbol.error_ascii,
-        symbol.success_ascii,
-        symbol.start_ascii,
-        symbol.arrow_ascii,
-        symbol.bullet_ascii,
-      ],
-      " ",
-    ),
-  )
+  io.println("  unicode: " <> row(symbol.Unicode))
+  io.println("  ascii:   " <> row(symbol.Ascii))
 }
 
 fn message_section(sp: spruce.Spruce) -> Nil {
@@ -191,11 +178,11 @@ fn formatter_section(sp: spruce.Spruce) -> Nil {
   )
 }
 
-fn palette_section(sp: spruce.Spruce) -> Nil {
-  heading("palette — deterministic hash colors")
+fn hashed_section(sp: spruce.Spruce) -> Nil {
+  heading("style.hashed — deterministic hash colors")
 
   ["alice", "bob", "carol", "dave", "spruce", "gleam"]
-  |> list.map(fn(name) { style.render(sp, palette.hash(sp, name), name) })
+  |> list.map(fn(name) { style.render(sp, style.hashed(sp, name), name) })
   |> string.join("  ")
   |> fn(line) { io.println("  " <> line) }
 }

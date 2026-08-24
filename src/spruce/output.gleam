@@ -32,7 +32,6 @@ import gleam/io
 import gleam/list
 import gleam/string
 import spruce.{type Spruce}
-import spruce/palette
 import spruce/style
 import spruce/symbol
 
@@ -108,7 +107,7 @@ pub fn title(sp: Spruce, heading: String) -> String {
   let line = case spruce.supports_color(sp) {
     False -> marker <> " " <> heading
     True ->
-      style.render(sp, palette.hash(sp, heading), marker)
+      style.render(sp, style.hashed(sp, heading), marker)
       <> " "
       <> style.render(sp, style.new() |> style.bold, heading)
   }
