@@ -24,6 +24,7 @@
 ////
 //// Use `spruce.no_color()` in tests to get deterministic, escape-free output.
 
+import gleam/string
 import tty
 
 /// The terminal color support level, re-exported from the `tty` package.
@@ -113,7 +114,13 @@ pub fn depth(sp: Spruce) -> Int {
 }
 
 /// Return a copy of the context with its indent depth increased by one.
-/// `spruce/group` uses this to hand a deeper context to grouped bodies.
+/// `spruce/output.group` uses this to hand a deeper context to grouped bodies.
 pub fn indented(sp: Spruce) -> Spruce {
   Spruce(..sp, depth: sp.depth + 1)
+}
+
+/// The indentation prefix for the context's depth: two spaces per level.
+/// Block-producing renderers prepend this to every line they emit.
+pub fn indent_prefix(sp: Spruce) -> String {
+  string.repeat("  ", sp.depth)
 }

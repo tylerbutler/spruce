@@ -454,9 +454,9 @@ fn main() {
     )
 
   io.println("  dark_theme()")
-  io.println(group.indent(dark, 2))
+  io.println(indent(dark, 2))
   io.println("  light_theme()")
-  io.println(group.indent(light, 2))
+  io.println(indent(light, 2))
 }
 
 fn align_section(sp: spruce.Spruce) -> Nil {
@@ -479,7 +479,7 @@ fn align_section(sp: spruce.Spruce) -> Nil {
     "Spruce keeps width-aware wrapping deterministic across targets.",
     24,
   )
-  |> group.indent(2)
+  |> indent(2)
   |> io.println
 }
 
@@ -507,17 +507,11 @@ fn group_section(sp: spruce.Spruce) -> Nil {
   heading("group — depth-in-context indentation")
 
   use sp <- group.group(sp, "build")
-  io.println(group.indent(message.start(sp, "compiling"), spruce.depth(sp)))
+  io.println(message.start(sp, "compiling"))
 
   use sp <- group.group(sp, "test")
-  io.println(group.indent(
-    message.success(sp, "erlang target green"),
-    spruce.depth(sp),
-  ))
-  io.println(group.indent(
-    message.success(sp, "javascript target green"),
-    spruce.depth(sp),
-  ))
+  io.println(message.success(sp, "erlang target green"))
+  io.println(message.success(sp, "javascript target green"))
 }
 
 fn output_section(sp: spruce.Spruce) -> Nil {
@@ -541,4 +535,14 @@ fn color_level_name(level: spruce.ColorLevel) -> String {
     tty.Ansi256 -> "Ansi256"
     tty.TrueColor -> "TrueColor"
   }
+}
+
+// Prefix every line of `text` with `level` levels of two-space indentation.
+fn indent(text: String, level: Int) -> String {
+  let prefix = string.repeat("  ", level)
+
+  text
+  |> string.split("\n")
+  |> list.map(fn(line) { prefix <> line })
+  |> string.join("\n")
 }

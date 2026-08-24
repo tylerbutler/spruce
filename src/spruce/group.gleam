@@ -1,10 +1,7 @@
 //// Depth-in-context grouped output helpers.
 
 import gleam/io
-import gleam/list
-import gleam/string
 import spruce.{type Spruce}
-import spruce/internal/layout
 import spruce/palette
 import spruce/style
 import spruce/symbol
@@ -24,7 +21,7 @@ pub fn group(sp: Spruce, title: String, body: fn(Spruce) -> result) -> result {
 /// line that `group` prints. Exposed so buffered output (`spruce/output`) can
 /// compose group titles without duplicating the styling.
 pub fn render_title(sp: Spruce, title: String) -> String {
-  layout.indent_prefix(sp) <> title_line(sp, title)
+  spruce.indent_prefix(sp) <> title_line(sp, title)
 }
 
 fn title_line(sp: Spruce, title: String) -> String {
@@ -35,14 +32,4 @@ fn title_line(sp: Spruce, title: String) -> String {
       <> " "
       <> style.render(sp, style.new() |> style.bold, title)
   }
-}
-
-/// Prefix every line in `text` with two spaces for each indent level.
-pub fn indent(text: String, level: Int) -> String {
-  let prefix = string.repeat("  ", level)
-
-  text
-  |> string.split("\n")
-  |> list.map(fn(line) { prefix <> line })
-  |> string.join("\n")
 }

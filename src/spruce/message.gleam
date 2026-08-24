@@ -8,7 +8,6 @@ import gleam/io
 import gleam/option.{type Option, None, Some}
 import spruce.{type Spruce}
 import spruce/details.{type Details}
-import spruce/internal/layout
 import spruce/style
 import spruce/symbol
 
@@ -209,7 +208,7 @@ fn line_options(
   text: String,
   options: Options,
 ) -> String {
-  let prefix = layout.indent_prefix(sp)
+  let prefix = spruce.indent_prefix(sp)
   let rendered_prefix = case options.formatter {
     None -> render_default_prefix(sp, kind, options.symbol_mode)
     Some(formatter) ->

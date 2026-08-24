@@ -90,7 +90,7 @@ pub fn enumerator(list_: List, enumerate: fn(Int, Int) -> String) -> List {
 
 /// Render a list to a string.
 pub fn render(sp: Spruce, list_: List) -> String {
-  let base = string.repeat("  ", spruce.depth(sp))
+  let base = spruce.indent_prefix(sp)
 
   render_items(sp, list_.items, list_.kind, list_.enumerator, base, 1, 1)
   |> string.join("\n")

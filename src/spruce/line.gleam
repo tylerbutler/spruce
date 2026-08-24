@@ -9,7 +9,6 @@ import gleam/option.{type Option, None, Some}
 import gleam/string
 import spruce.{type Spruce}
 import spruce/details.{type Details}
-import spruce/internal/layout
 import spruce/severity as severity_module
 import spruce/style
 
@@ -67,7 +66,7 @@ pub fn details(line: Line, details: Details) -> Line {
 
 /// Render the compact line.
 pub fn render(sp: Spruce, line: Line) -> String {
-  let prefix = layout.indent_prefix(sp)
+  let prefix = spruce.indent_prefix(sp)
   let prefix_parts =
     []
     |> maybe_append(render_timestamp(sp, line.timestamp))

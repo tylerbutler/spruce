@@ -59,7 +59,6 @@ import spruce/align
 import spruce/border
 import spruce/box
 import spruce/highlight
-import spruce/internal/layout
 import spruce/list as ui_list
 import spruce/style
 import spruce/symbol
@@ -272,7 +271,7 @@ fn render_heading(
   let marker = string.repeat("#", int.clamp(level, min: 1, max: 6))
   let line = marker <> " " <> string.trim(text)
 
-  layout.indent_prefix(sp)
+  spruce.indent_prefix(sp)
   <> style.render(sp, heading_style(options.theme, level), line)
 }
 
@@ -283,7 +282,7 @@ fn render_paragraph(
 ) -> String {
   render_inlines(sp, inlines, options)
   |> wrap(options.width)
-  |> prefix_lines(layout.indent_prefix(sp))
+  |> prefix_lines(spruce.indent_prefix(sp))
 }
 
 fn render_code(
@@ -846,13 +845,13 @@ fn render_rule(sp: Spruce, options: Options) -> String {
     _ -> 40
   }
 
-  layout.indent_prefix(sp)
+  spruce.indent_prefix(sp)
   <> style.render(sp, options.theme.rule, string.repeat("─", width))
 }
 
 fn render_html_block(sp: Spruce, raw: String, theme: Theme) -> String {
   style.render(sp, theme.html, raw)
-  |> prefix_lines(layout.indent_prefix(sp))
+  |> prefix_lines(spruce.indent_prefix(sp))
 }
 
 fn render_inlines(

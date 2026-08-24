@@ -38,7 +38,6 @@ import gleam/string
 import spruce.{type Spruce}
 import spruce/align.{type Pos, Start}
 import spruce/border.{type Border, type BorderChars}
-import spruce/internal/layout
 import spruce/style
 
 /// Box rendering options. See the module documentation for the builder.
@@ -245,7 +244,7 @@ pub fn render(sp: Spruce, content: String, box: Box) -> String {
   |> apply_padding(sp, box)
   |> apply_border(sp, box, title)
   |> apply_margin(
-    layout.indent_prefix(sp),
+    spruce.indent_prefix(sp),
     box.margin_top,
     box.margin_right,
     box.margin_bottom,

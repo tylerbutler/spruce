@@ -13,13 +13,3 @@ pub fn group_returns_body_result_test() {
   group.group(spruce.no_color(), "Build", fn(_inner) { 42 })
   |> expect.to_equal(42)
 }
-
-pub fn indent_multiline_test() {
-  group.indent("a\nb", 1)
-  |> expect.to_equal("  a\n  b")
-}
-
-pub fn indent_level_zero_test() {
-  group.indent("a\nb", 0)
-  |> expect.to_equal("a\nb")
-}

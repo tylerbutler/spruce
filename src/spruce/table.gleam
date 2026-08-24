@@ -8,7 +8,6 @@ import gleam/string
 import spruce.{type Spruce}
 import spruce/align
 import spruce/border.{type Border, type BorderChars}
-import spruce/internal/layout
 import spruce/style
 
 /// A table of string cells with an optional header row. Build one with `new`
@@ -136,7 +135,7 @@ pub fn render(sp: Spruce, table: Table) -> String {
         |> list.append([render_bottom(widths, chars)])
 
       lines
-      |> list.map(fn(line) { layout.indent_prefix(sp) <> line })
+      |> list.map(fn(line) { spruce.indent_prefix(sp) <> line })
       |> string.join("\n")
     }
   }
