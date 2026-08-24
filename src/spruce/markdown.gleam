@@ -56,7 +56,7 @@ import mork
 import mork/document as md
 import spruce.{type Spruce}
 import spruce/align
-import spruce/block
+import spruce/border
 import spruce/box
 import spruce/highlight
 import spruce/internal/layout
@@ -301,10 +301,12 @@ fn render_code(
       theme: options.theme.code,
     )
 
-  let options_ =
-    box.options(title: title, color: options.theme.code_border)
+  let code_box =
+    box.new()
+    |> box.title(title)
+    |> box.border_color(options.theme.code_border)
     |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
-  box.render(sp, highlighted, options_)
+  box.render(sp, highlighted, code_box)
 }
 
 fn render_quote(
@@ -330,19 +332,14 @@ fn render_plain_quote(
       render_blocks(sp, blocks, options),
     )
 
-  let quote_block =
-    block.new()
-    |> block.border(box.Thick)
-    |> block.border_sides(top: False, right: False, bottom: False, left: True)
-    |> block.border_colors(
-      top: options.theme.quote_border,
-      right: options.theme.quote_border,
-      bottom: options.theme.quote_border,
-      left: options.theme.quote_border,
-    )
-    |> block.padding(top: 0, right: 0, bottom: 0, left: 1)
+  let quote_box =
+    box.plain()
+    |> box.border(border.Thick)
+    |> box.border_sides(top: False, right: False, bottom: False, left: True)
+    |> box.border_color(options.theme.quote_border)
+    |> box.padding(top: 0, right: 0, bottom: 0, left: 1)
 
-  block.render(sp, content, quote_block)
+  box.render(sp, content, quote_box)
 }
 
 /// A GitHub-style alert / Astro-style aside detected inside a block quote.
@@ -456,14 +453,14 @@ fn render_admonition(sp: Spruce, alert: Alert, options: Options) -> String {
     body_text -> header <> "\n\n" <> body_text
   }
 
-  let admonition_block =
-    block.new()
-    |> block.border(box.Thick)
-    |> block.border_sides(top: False, right: False, bottom: False, left: True)
-    |> block.border_colors(top: color, right: color, bottom: color, left: color)
-    |> block.padding(top: 0, right: 0, bottom: 0, left: 1)
+  let admonition_box =
+    box.plain()
+    |> box.border(border.Thick)
+    |> box.border_sides(top: False, right: False, bottom: False, left: True)
+    |> box.border_color(color)
+    |> box.padding(top: 0, right: 0, bottom: 0, left: 1)
 
-  block.render(sp, content, admonition_block)
+  box.render(sp, content, admonition_box)
 }
 
 fn alert_properties(kind: AlertKind) -> #(style.Color, String, String) {

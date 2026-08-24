@@ -2,7 +2,7 @@ import gleam/list
 import gleam/string
 import spruce
 import spruce/align
-import spruce/box
+import spruce/border
 import spruce/style
 import spruce/table
 import startest/expect
@@ -148,7 +148,7 @@ pub fn table_rounded_border_style_test() {
   table.new()
   |> table.headers(["A", "B"])
   |> table.rows([["x", "y"]])
-  |> table.border(box.Rounded)
+  |> table.border(border.Rounded)
   |> table.render(spruce.no_color(), _)
   |> expect.to_equal(
     "╭───┬───╮\n"
@@ -163,7 +163,7 @@ pub fn table_thick_border_style_test() {
   table.new()
   |> table.headers(["A", "B"])
   |> table.rows([["x", "y"]])
-  |> table.border(box.Thick)
+  |> table.border(border.Thick)
   |> table.render(spruce.no_color(), _)
   |> expect.to_equal(
     "┏━━━┳━━━┓\n"
@@ -178,7 +178,7 @@ pub fn table_double_border_style_test() {
   table.new()
   |> table.headers(["A", "B"])
   |> table.rows([["x", "y"]])
-  |> table.border(box.Double)
+  |> table.border(border.Double)
   |> table.render(spruce.no_color(), _)
   |> expect.to_equal(
     "╔═══╦═══╗\n"

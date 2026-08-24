@@ -51,6 +51,7 @@ label_possible = "off"
 
 # spruce is a library: every public function/constant is part of the API, so
 # "unused by another module" is the expected state for these public modules.
+"src/spruce/border.gleam" = ["unused_exports"]
 "src/spruce/box.gleam" = ["unused_exports"]
 "src/spruce/line.gleam" = ["unused_exports"]
 "src/spruce/message.gleam" = ["unused_exports"]

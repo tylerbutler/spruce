@@ -721,8 +721,7 @@ fn chars_to_string(chars: List(String)) -> String {
   string.join(chars, "")
 }
 
-/// Pad `text` to `width` visual columns, placing it according to `pos`.
-pub fn pad(text: String, width: Int, pos: Pos) -> String {
+fn pad(text: String, width: Int, pos: Pos) -> String {
   case pos {
     Start -> pad_right(text, width)
     Center -> pad_center(text, width)

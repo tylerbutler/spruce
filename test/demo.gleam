@@ -10,6 +10,7 @@ import gleam/list
 import gleam/string
 import spruce
 import spruce/align
+import spruce/border
 import spruce/box
 import spruce/details
 import spruce/group
@@ -242,8 +243,9 @@ fn box_section(sp: spruce.Spruce) -> Nil {
   io.println("")
 
   let opts =
-    box.options(title: "Release", color: style.Green)
-    |> box.border(box.Rounded)
+    box.new()
+    |> box.title("Release")
+    |> box.border_color(style.Green)
     |> box.padding(top: 1, right: 2, bottom: 1, left: 2)
 
   box.render(sp, "spruce 0.1.0\nready to ship", opts)
@@ -252,8 +254,10 @@ fn box_section(sp: spruce.Spruce) -> Nil {
   io.println("")
 
   let double =
-    box.options(title: "Double", color: style.Magenta)
-    |> box.border(box.Double)
+    box.new()
+    |> box.title("Double")
+    |> box.border(border.Double)
+    |> box.border_color(style.Magenta)
     |> box.padding(top: 0, right: 1, bottom: 0, left: 1)
 
   box.render(sp, "thick borders\nfor emphasis", double)
@@ -483,9 +487,17 @@ fn layout_section(sp: spruce.Spruce) -> Nil {
   heading("align — composing blocks")
 
   let left =
-    box.render(sp, "left\nblock", box.options(title: "A", color: style.Blue))
+    box.render(
+      sp,
+      "left\nblock",
+      box.new() |> box.title("A") |> box.border_color(style.Blue),
+    )
   let right =
-    box.render(sp, "right\nblock", box.options(title: "B", color: style.Green))
+    box.render(
+      sp,
+      "right\nblock",
+      box.new() |> box.title("B") |> box.border_color(style.Green),
+    )
 
   align.join_horizontal(align.Center, [left, "   ", right])
   |> io.println
