@@ -5,7 +5,6 @@ import spruce/border
 import spruce/box
 import spruce/style
 import startest/expect
-import tty
 
 pub fn simple_box_no_color_test() {
   spruce.no_color()
@@ -28,7 +27,7 @@ pub fn box_indented_test() {
 }
 
 pub fn box_color_styles_border_test() {
-  let out = box.simple(spruce.with_color_level(tty.TrueColor), "hi")
+  let out = box.simple(spruce.with_color_level(spruce.TrueColor), "hi")
   expect.to_be_true(string.contains(out, "\u{001b}"))
 }
 
@@ -56,7 +55,7 @@ pub fn box_title_newline_stays_on_single_top_border_test() {
 pub fn box_color_leaves_title_unstyled_test() {
   let out =
     box.render(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       "hi",
       box.new() |> box.title("T"),
     )
@@ -161,7 +160,7 @@ pub fn box_per_side_visibility_all_hidden_matches_hidden_shape_test() {
 }
 
 pub fn box_per_side_border_colors_are_applied_test() {
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
   let opts =
     box.new()
     |> box.border_colors(
@@ -261,7 +260,7 @@ pub fn box_content_style_is_color_gated_test() {
   box.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("hi")
 
-  box.render(spruce.with_color_level(tty.TrueColor), "hi", options)
+  box.render(spruce.with_color_level(spruce.TrueColor), "hi", options)
   |> string.contains("\u{001b}")
   |> expect.to_be_true
 }
@@ -272,14 +271,14 @@ pub fn box_background_fills_padding_ring_test() {
     |> box.background(style.Blue)
     |> box.padding(top: 1, right: 1, bottom: 1, left: 1)
 
-  box.render(spruce.with_color_level(tty.TrueColor), "hi", options)
+  box.render(spruce.with_color_level(spruce.TrueColor), "hi", options)
   |> expect.to_equal(
     "\u{001b}[44m    \u{001b}[49m\n\u{001b}[44m hi \u{001b}[49m\n\u{001b}[44m    \u{001b}[49m",
   )
 }
 
 pub fn box_border_color_applies_to_all_sides_test() {
-  let sp = spruce.with_color_level(tty.Basic)
+  let sp = spruce.with_color_level(spruce.Basic)
   let options =
     box.plain() |> box.border(border.Normal) |> box.border_color(style.Red)
   let out = box.render(sp, "hi", options)

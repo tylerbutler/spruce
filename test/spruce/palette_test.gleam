@@ -2,10 +2,9 @@ import spruce
 import spruce/palette
 import spruce/style
 import startest/expect
-import tty
 
 pub fn hash_is_deterministic_test() {
-  let sp = spruce.with_color_level(tty.Ansi256)
+  let sp = spruce.with_color_level(spruce.Ansi256)
   let first = style.render(sp, palette.hash(sp, "database"), "database")
   let second = style.render(sp, palette.hash(sp, "database"), "database")
   first
@@ -13,7 +12,7 @@ pub fn hash_is_deterministic_test() {
 }
 
 pub fn hash_foo_is_deterministic_test() {
-  let sp = spruce.with_color_level(tty.Ansi256)
+  let sp = spruce.with_color_level(spruce.Ansi256)
   let first = style.render(sp, palette.hash(sp, "foo"), "foo")
   let second = style.render(sp, palette.hash(sp, "foo"), "foo")
   first
@@ -21,7 +20,7 @@ pub fn hash_foo_is_deterministic_test() {
 }
 
 pub fn hash_distinguishes_simple_anagrams_test() {
-  let sp = spruce.with_color_level(tty.Ansi256)
+  let sp = spruce.with_color_level(spruce.Ansi256)
   let ab = style.render(sp, palette.hash(sp, "ab"), "sample")
   let ba = style.render(sp, palette.hash(sp, "ba"), "sample")
 
@@ -29,7 +28,7 @@ pub fn hash_distinguishes_simple_anagrams_test() {
 }
 
 pub fn hash_uses_valid_palette_color_test() {
-  let sp = spruce.with_color_level(tty.Ansi256)
+  let sp = spruce.with_color_level(spruce.Ansi256)
   let text = "foo"
   let out = style.render(sp, palette.hash(sp, text), text)
 
@@ -46,12 +45,16 @@ pub fn hash_no_color_is_plain_test() {
 pub fn hash_no_color_style_stays_plain_test() {
   let hashed_style = palette.hash(spruce.no_color(), "database")
 
-  style.render(spruce.with_color_level(tty.Ansi256), hashed_style, "database")
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    hashed_style,
+    "database",
+  )
   |> expect.to_equal("database")
 }
 
 pub fn hash_color_adds_escapes_test() {
-  let sp = spruce.with_color_level(tty.Ansi256)
+  let sp = spruce.with_color_level(spruce.Ansi256)
   let out = style.render(sp, palette.hash(sp, "database"), "database")
   expect.to_be_true(out != "database")
 }

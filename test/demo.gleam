@@ -24,11 +24,10 @@ import spruce/style
 import spruce/symbol
 import spruce/table
 import spruce/tree
-import tty
 
 pub fn main() {
   // Force truecolor so the demo is vivid even when stdout is not a TTY.
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
 
   banner("spruce — a terminal-UI kit for Gleam")
   io.println("color level: " <> color_level_name(spruce.color_level(sp)))
@@ -54,13 +53,13 @@ pub fn main() {
 }
 
 fn banner(title: String) -> Nil {
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
   box.simple(sp, title)
   |> io.println
 }
 
 fn heading(label: String) -> Nil {
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
   let styled =
     style.render(
       sp,
@@ -497,10 +496,10 @@ fn output_section(sp: spruce.Spruce) -> Nil {
 
 fn color_level_name(level: spruce.ColorLevel) -> String {
   case level {
-    tty.NoColor -> "NoColor"
-    tty.Basic -> "Basic"
-    tty.Ansi256 -> "Ansi256"
-    tty.TrueColor -> "TrueColor"
+    spruce.NoColor -> "NoColor"
+    spruce.Basic -> "Basic"
+    spruce.Ansi256 -> "Ansi256"
+    spruce.TrueColor -> "TrueColor"
   }
 }
 

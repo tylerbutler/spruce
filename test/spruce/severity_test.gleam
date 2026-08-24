@@ -4,7 +4,6 @@ import spruce
 import spruce/severity
 import spruce/symbol
 import startest/expect
-import tty
 
 pub fn label_formatter_no_color_test() {
   severity.render(spruce.no_color(), severity.label(), severity.Info)
@@ -50,7 +49,7 @@ pub fn padded_label_formatter_uses_visual_width_test() {
 pub fn color_formatter_emits_escapes_test() {
   let out =
     severity.render(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       severity.label(),
       severity.Err,
     )
@@ -62,7 +61,7 @@ pub fn color_formatter_emits_escapes_test() {
 pub fn notice_label_uses_cyan_test() {
   let out =
     severity.render(
-      spruce.with_color_level(tty.Basic),
+      spruce.with_color_level(spruce.Basic),
       severity.label(),
       severity.Notice,
     )
@@ -74,7 +73,7 @@ pub fn notice_label_uses_cyan_test() {
 pub fn alert_label_uses_bright_red_test() {
   let out =
     severity.render(
-      spruce.with_color_level(tty.Basic),
+      spruce.with_color_level(spruce.Basic),
       severity.label(),
       severity.Alert,
     )
@@ -86,7 +85,7 @@ pub fn alert_label_uses_bright_red_test() {
 pub fn colored_badge_is_bold_test() {
   let out =
     severity.render(
-      spruce.with_color_level(tty.Basic),
+      spruce.with_color_level(spruce.Basic),
       severity.badge(),
       severity.Warn,
     )

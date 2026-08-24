@@ -2,7 +2,6 @@ import gleam/string
 import spruce
 import spruce/message
 import startest/expect
-import tty
 
 pub fn success_no_color_test() {
   spruce.no_color()
@@ -48,13 +47,13 @@ pub fn error_no_color_test() {
 }
 
 pub fn success_color_has_escapes_test() {
-  let out = message.success(spruce.with_color_level(tty.TrueColor), "done")
+  let out = message.success(spruce.with_color_level(spruce.TrueColor), "done")
   expect.to_be_true(string.contains(out, "\u{001b}"))
   expect.to_be_true(string.contains(out, "success"))
 }
 
 pub fn label_is_bold_and_colored_test() {
-  let out = message.warn(spruce.with_color_level(tty.Basic), "careful")
+  let out = message.warn(spruce.with_color_level(spruce.Basic), "careful")
   expect.to_be_true(string.contains(out, "\u{001b}[1m"))
   expect.to_be_true(string.contains(out, "\u{001b}[33m"))
 }

@@ -23,7 +23,6 @@ import gleam/option.{type Option, None, Some}
 import gleam/string
 import gleam_community/ansi
 import spruce.{type Spruce}
-import tty
 
 /// A color usable as a foreground or background.
 ///
@@ -198,7 +197,7 @@ pub fn render(sp: Spruce, style: Style, text: String) -> String {
 
 fn resolve_adaptive_option(
   color: Option(Color),
-  background: tty.Background,
+  background: spruce.Background,
 ) -> Option(Color) {
   case color {
     None -> None
@@ -209,12 +208,12 @@ fn resolve_adaptive_option(
 /// Resolve `Adaptive` colors against the terminal background, treating
 /// `Unknown` as `Dark`. Recurses through `Complete` so adaptive colors may nest
 /// inside complete colors (and vice versa).
-fn resolve_adaptive(color: Color, background: tty.Background) -> Color {
+fn resolve_adaptive(color: Color, background: spruce.Background) -> Color {
   case color {
     Adaptive(light, dark) ->
       case background {
-        tty.Light -> resolve_adaptive(light, background)
-        tty.Dark | tty.Unknown -> resolve_adaptive(dark, background)
+        spruce.Light -> resolve_adaptive(light, background)
+        spruce.Dark | spruce.Unknown -> resolve_adaptive(dark, background)
       }
     Complete(ansi, ansi256, truecolor) ->
       Complete(
@@ -332,9 +331,10 @@ fn render_fg_rgb(
   color_level: spruce.ColorLevel,
 ) -> String {
   case color_level {
-    tty.TrueColor -> ansi.hex(text, rgb_to_hex(rgb))
-    tty.Ansi256 -> render_fg_ansi256_sequence(text, rgb_to_ansi256_index(rgb))
-    tty.Basic | tty.NoColor ->
+    spruce.TrueColor -> ansi.hex(text, rgb_to_hex(rgb))
+    spruce.Ansi256 ->
+      render_fg_ansi256_sequence(text, rgb_to_ansi256_index(rgb))
+    spruce.Basic | spruce.NoColor ->
       render_fg_color(text, nearest_basic_color(rgb), color_level)
   }
 }
@@ -345,9 +345,10 @@ fn render_bg_rgb(
   color_level: spruce.ColorLevel,
 ) -> String {
   case color_level {
-    tty.TrueColor -> ansi.bg_hex(text, rgb_to_hex(rgb))
-    tty.Ansi256 -> render_bg_ansi256_sequence(text, rgb_to_ansi256_index(rgb))
-    tty.Basic | tty.NoColor ->
+    spruce.TrueColor -> ansi.bg_hex(text, rgb_to_hex(rgb))
+    spruce.Ansi256 ->
+      render_bg_ansi256_sequence(text, rgb_to_ansi256_index(rgb))
+    spruce.Basic | spruce.NoColor ->
       render_bg_color(text, nearest_basic_color(rgb), color_level)
   }
 }
@@ -359,9 +360,9 @@ fn render_fg_ansi256(
 ) -> String {
   let rgb = ansi256_to_rgb(index)
   case color_level {
-    tty.TrueColor -> ansi.hex(text, rgb_to_hex(rgb))
-    tty.Ansi256 -> render_fg_ansi256_sequence(text, index)
-    tty.Basic | tty.NoColor ->
+    spruce.TrueColor -> ansi.hex(text, rgb_to_hex(rgb))
+    spruce.Ansi256 -> render_fg_ansi256_sequence(text, index)
+    spruce.Basic | spruce.NoColor ->
       render_fg_color(text, nearest_basic_color(rgb), color_level)
   }
 }
@@ -373,9 +374,9 @@ fn render_bg_ansi256(
 ) -> String {
   let rgb = ansi256_to_rgb(index)
   case color_level {
-    tty.TrueColor -> ansi.bg_hex(text, rgb_to_hex(rgb))
-    tty.Ansi256 -> render_bg_ansi256_sequence(text, index)
-    tty.Basic | tty.NoColor ->
+    spruce.TrueColor -> ansi.bg_hex(text, rgb_to_hex(rgb))
+    spruce.Ansi256 -> render_bg_ansi256_sequence(text, index)
+    spruce.Basic | spruce.NoColor ->
       render_bg_color(text, nearest_basic_color(rgb), color_level)
   }
 }
@@ -401,10 +402,10 @@ fn choose_complete_color(
   color_level: spruce.ColorLevel,
 ) -> Color {
   case color_level {
-    tty.Basic -> ansi
-    tty.Ansi256 -> ansi256
-    tty.TrueColor -> truecolor
-    tty.NoColor -> ansi
+    spruce.Basic -> ansi
+    spruce.Ansi256 -> ansi256
+    spruce.TrueColor -> truecolor
+    spruce.NoColor -> ansi
   }
 }
 

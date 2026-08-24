@@ -2,7 +2,6 @@ import gleam/string
 import spruce
 import spruce/highlight
 import startest/expect
-import tty
 
 pub fn no_color_round_trips_gleam_test() {
   let code = "pub fn main() {}"
@@ -15,7 +14,7 @@ pub fn colored_output_contains_escape_and_source_test() {
   let code = "pub fn main() {}"
   let out =
     highlight.highlight(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       code: code,
       name: "gleam",
     )

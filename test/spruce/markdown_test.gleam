@@ -3,7 +3,6 @@ import spruce
 import spruce/markdown
 import spruce/symbol
 import startest/expect
-import tty
 
 pub fn heading_no_color_test() {
   markdown.render(spruce.no_color(), "# Hello")
@@ -60,7 +59,7 @@ pub fn fenced_code_block_highlight_no_color_stays_plain_test() {
 pub fn fenced_code_block_highlight_color_applies_test() {
   let out =
     markdown.render(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       "```gleam\nlet x = 1\n```",
     )
 
@@ -86,7 +85,8 @@ pub fn blockquote_indented_test() {
 }
 
 pub fn blockquote_text_is_italic_when_colored_test() {
-  let out = markdown.render(spruce.with_color_level(tty.TrueColor), "> quoted")
+  let out =
+    markdown.render(spruce.with_color_level(spruce.TrueColor), "> quoted")
 
   expect.to_be_true(string.contains(out, "\u{001b}[3mquoted\u{001b}[23m"))
 }
@@ -235,7 +235,8 @@ pub fn multi_element_smoke_test() {
 }
 
 pub fn heading_truecolor_is_styled_test() {
-  let out = markdown.render(spruce.with_color_level(tty.TrueColor), "# Hello")
+  let out =
+    markdown.render(spruce.with_color_level(spruce.TrueColor), "# Hello")
 
   expect.to_be_true(string.contains(out, "\u{001b}"))
 }
@@ -254,13 +255,14 @@ pub fn render_with_options_wraps_and_themes_test() {
 pub fn heading_theme_adapts_to_background_test() {
   let dark =
     markdown.render(
-      spruce.with_color_level(tty.TrueColor) |> spruce.with_background(tty.Dark),
+      spruce.with_color_level(spruce.TrueColor)
+        |> spruce.with_background(spruce.Dark),
       "# Hello",
     )
   let light =
     markdown.render(
-      spruce.with_color_level(tty.TrueColor)
-        |> spruce.with_background(tty.Light),
+      spruce.with_color_level(spruce.TrueColor)
+        |> spruce.with_background(spruce.Light),
       "# Hello",
     )
 

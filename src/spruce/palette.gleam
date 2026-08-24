@@ -27,7 +27,6 @@ import gleam/list
 import gleam/string
 import spruce.{type Spruce}
 import spruce/style.{type Style}
-import tty
 
 /// Map a string to a deterministic color style.
 ///
@@ -67,9 +66,9 @@ fn bounded_modulo(value: Int, modulus: Int) -> Int {
   }
 }
 
-fn palette_for(level: tty.ColorLevel) -> List(style.Color) {
-  case tty.color_level_at_least(level, tty.Ansi256) {
-    True -> [
+fn palette_for(level: spruce.ColorLevel) -> List(style.Color) {
+  case level {
+    spruce.Ansi256 | spruce.TrueColor -> [
       style.Red,
       style.Green,
       style.Yellow,
@@ -83,7 +82,7 @@ fn palette_for(level: tty.ColorLevel) -> List(style.Color) {
       style.BrightMagenta,
       style.BrightCyan,
     ]
-    False -> [
+    spruce.Basic | spruce.NoColor -> [
       style.Cyan,
       style.Green,
       style.Yellow,

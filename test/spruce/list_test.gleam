@@ -3,7 +3,6 @@ import gleam/string
 import spruce
 import spruce/list as slist
 import startest/expect
-import tty
 
 pub fn render_no_color_bullets_use_ascii_fallback_test() {
   slist.new()
@@ -17,7 +16,7 @@ pub fn render_color_bullets_use_unicode_marker_test() {
   slist.new()
   |> slist.item("first")
   |> slist.item("second")
-  |> slist.render(spruce.with_color_level(tty.TrueColor), _)
+  |> slist.render(spruce.with_color_level(spruce.TrueColor), _)
   |> expect.to_equal("• first\n• second")
 }
 

@@ -22,32 +22,40 @@
 //// }
 //// ```
 ////
-//// Use `spruce.no_color()` in tests to get deterministic, escape-free output.
+//// Use `spruce.no_color()` in tests to get deterministic, escape-free output,
+//// or `spruce.with_color_level(spruce.TrueColor)` to force a level.
 
 import gleam/string
 import tty
 
-/// The terminal color support level, re-exported from the `tty` package.
-/// One of `NoColor`, `Basic`, `Ansi256`, or `TrueColor`.
-pub type ColorLevel =
-  tty.ColorLevel
+/// The terminal's color support level, in ascending order of capability.
+pub type ColorLevel {
+  NoColor
+  Basic
+  Ansi256
+  TrueColor
+}
 
-/// An output stream, re-exported from the `tty` package.
-/// One of `Stdin`, `Stdout`, or `Stderr`.
-pub type Stream =
-  tty.Stream
+/// An output stream to detect against.
+pub type Stream {
+  Stdin
+  Stdout
+  Stderr
+}
 
-/// The terminal background, re-exported from the `tty` package.
-/// One of `Light`, `Dark`, or `Unknown`. Adaptive colors (see
-/// `spruce/style.Adaptive`) resolve against this, treating `Unknown` as `Dark`.
-pub type Background =
-  tty.Background
+/// The terminal background. Adaptive colors (see `spruce/style.adaptive`)
+/// resolve against this, treating `Unknown` as `Dark`.
+pub type Background {
+  Light
+  Dark
+  Unknown
+}
 
 /// The rendering context. Carries the detected color level, the detected
 /// terminal background, and the current indent depth. Construct it with
 /// `detect`, `with_color_level`, or `no_color`, and deepen it with `indented`.
 pub opaque type Spruce {
-  Spruce(color: tty.ColorLevel, background: tty.Background, depth: Int)
+  Spruce(color: ColorLevel, background: Background, depth: Int)
 }
 
 /// Build a context by auto-detecting the color support of standard output.
@@ -56,18 +64,16 @@ pub opaque type Spruce {
 /// and TTY status (via the `tty` package), falling back to `NoColor` when
 /// uncertain.
 pub fn detect() -> Spruce {
-  Spruce(
-    color: tty.detect_color_level(tty.Stdout),
-    background: tty.detect_background(tty.Stdout),
-    depth: 0,
-  )
+  detect_stream(Stdout)
 }
 
 /// Build a context by auto-detecting the color support of a specific stream.
 pub fn detect_stream(stream: Stream) -> Spruce {
+  let stream = to_tty_stream(stream)
+
   Spruce(
-    color: tty.detect_color_level(stream),
-    background: tty.detect_background(stream),
+    color: from_tty_color_level(tty.detect_color_level(stream)),
+    background: from_tty_background(tty.detect_background(stream)),
     depth: 0,
   )
 }
@@ -77,13 +83,13 @@ pub fn detect_stream(stream: Stream) -> Spruce {
 /// The background defaults to `Unknown` (treated as `Dark` by adaptive colors);
 /// override it with `with_background`.
 pub fn with_color_level(level: ColorLevel) -> Spruce {
-  Spruce(color: level, background: tty.Unknown, depth: 0)
+  Spruce(color: level, background: Unknown, depth: 0)
 }
 
 /// Build a context that never emits color. All output is plain text.
 /// This is the recommended context for deterministic tests.
 pub fn no_color() -> Spruce {
-  Spruce(color: tty.NoColor, background: tty.Unknown, depth: 0)
+  Spruce(color: NoColor, background: Unknown, depth: 0)
 }
 
 /// Get the color level of a context.
@@ -93,7 +99,7 @@ pub fn color_level(sp: Spruce) -> ColorLevel {
 
 /// Whether the context will emit any color (i.e. its level is not `NoColor`).
 pub fn supports_color(sp: Spruce) -> Bool {
-  sp.color != tty.NoColor
+  sp.color != NoColor
 }
 
 /// Get the detected terminal background of a context.
@@ -123,4 +129,29 @@ pub fn indented(sp: Spruce) -> Spruce {
 /// Block-producing renderers prepend this to every line they emit.
 pub fn indent_prefix(sp: Spruce) -> String {
   string.repeat("  ", sp.depth)
+}
+
+fn to_tty_stream(stream: Stream) -> tty.Stream {
+  case stream {
+    Stdin -> tty.Stdin
+    Stdout -> tty.Stdout
+    Stderr -> tty.Stderr
+  }
+}
+
+fn from_tty_color_level(level: tty.ColorLevel) -> ColorLevel {
+  case level {
+    tty.NoColor -> NoColor
+    tty.Basic -> Basic
+    tty.Ansi256 -> Ansi256
+    tty.TrueColor -> TrueColor
+  }
+}
+
+fn from_tty_background(background: tty.Background) -> Background {
+  case background {
+    tty.Light -> Light
+    tty.Dark -> Dark
+    tty.Unknown -> Unknown
+  }
 }

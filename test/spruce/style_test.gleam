@@ -2,7 +2,6 @@ import gleam/string
 import spruce
 import spruce/style
 import startest/expect
-import tty
 
 pub fn render_no_color_is_plain_test() {
   style.new()
@@ -15,7 +14,7 @@ pub fn render_no_color_is_plain_test() {
 pub fn render_color_wraps_text_test() {
   let out =
     style.render(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       style.new() |> style.fg(style.Red),
       "x",
     )
@@ -24,7 +23,7 @@ pub fn render_color_wraps_text_test() {
 }
 
 pub fn render_empty_style_is_plain_test() {
-  style.render(spruce.with_color_level(tty.TrueColor), style.new(), "x")
+  style.render(spruce.with_color_level(spruce.TrueColor), style.new(), "x")
   |> expect.to_equal("x")
 }
 
@@ -40,7 +39,7 @@ pub fn render_no_color_strips_style_parity_attributes_test() {
 pub fn render_color_wraps_style_parity_attributes_test() {
   let out =
     style.render(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       style.new()
         |> style.strikethrough
         |> style.reverse
@@ -63,7 +62,7 @@ pub fn render_inline_collapses_newlines_without_color_test() {
 pub fn render_inline_collapses_newlines_with_color_test() {
   let out =
     style.render(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       style.new() |> style.inline |> style.bold,
       "a\nb",
     )
@@ -74,7 +73,7 @@ pub fn render_inline_collapses_newlines_with_color_test() {
 pub fn render_complete_fg_chooses_basic_color_test() {
   let out =
     style.render(
-      spruce.with_color_level(tty.Basic),
+      spruce.with_color_level(spruce.Basic),
       style.new()
         |> style.fg(style.complete(
           ansi: style.Red,
@@ -90,7 +89,7 @@ pub fn render_complete_fg_chooses_basic_color_test() {
 pub fn render_complete_fg_chooses_ansi256_color_test() {
   let out =
     style.render(
-      spruce.with_color_level(tty.Ansi256),
+      spruce.with_color_level(spruce.Ansi256),
       style.new()
         |> style.fg(style.complete(
           ansi: style.Red,
@@ -106,7 +105,7 @@ pub fn render_complete_fg_chooses_ansi256_color_test() {
 pub fn render_complete_fg_chooses_truecolor_color_test() {
   let out =
     style.render(
-      spruce.with_color_level(tty.TrueColor),
+      spruce.with_color_level(spruce.TrueColor),
       style.new()
         |> style.fg(style.complete(
           ansi: style.Red,
@@ -122,7 +121,7 @@ pub fn render_complete_fg_chooses_truecolor_color_test() {
 pub fn render_complete_bg_chooses_color_level_test() {
   let out =
     style.render(
-      spruce.with_color_level(tty.Ansi256),
+      spruce.with_color_level(spruce.Ansi256),
       style.new()
         |> style.bg(style.complete(
           ansi: style.Red,
@@ -156,7 +155,7 @@ pub fn render_no_color_strips_arbitrary_colors_test() {
 
 pub fn render_truecolor_rgb_uses_24_bit_sequence_test() {
   style.render(
-    spruce.with_color_level(tty.TrueColor),
+    spruce.with_color_level(spruce.TrueColor),
     style.new() |> style.fg(style.Rgb(135, 75, 253)),
     "x",
   )
@@ -165,7 +164,7 @@ pub fn render_truecolor_rgb_uses_24_bit_sequence_test() {
 
 pub fn render_truecolor_hex_uses_24_bit_sequence_test() {
   style.render(
-    spruce.with_color_level(tty.TrueColor),
+    spruce.with_color_level(spruce.TrueColor),
     style.new() |> style.bg(style.Hex(0x874BFD)),
     "x",
   )
@@ -175,7 +174,7 @@ pub fn render_truecolor_hex_uses_24_bit_sequence_test() {
 pub fn render_basic_downgrades_rgb_to_nearest_basic_color_test() {
   let out =
     style.render(
-      spruce.with_color_level(tty.Basic),
+      spruce.with_color_level(spruce.Basic),
       style.new() |> style.fg(style.Rgb(128, 0, 0)),
       "x",
     )
@@ -185,7 +184,7 @@ pub fn render_basic_downgrades_rgb_to_nearest_basic_color_test() {
 
 pub fn render_ansi256_fg_uses_256_color_sequence_test() {
   style.render(
-    spruce.with_color_level(tty.Ansi256),
+    spruce.with_color_level(spruce.Ansi256),
     style.new() |> style.fg(style.Ansi256(200)),
     "x",
   )
@@ -194,7 +193,7 @@ pub fn render_ansi256_fg_uses_256_color_sequence_test() {
 
 pub fn render_ansi256_fg_clamps_low_index_test() {
   style.render(
-    spruce.with_color_level(tty.Ansi256),
+    spruce.with_color_level(spruce.Ansi256),
     style.new() |> style.fg(style.Ansi256(-9)),
     "x",
   )
@@ -203,7 +202,7 @@ pub fn render_ansi256_fg_clamps_low_index_test() {
 
 pub fn render_ansi256_rgb_uses_nearest_256_color_sequence_test() {
   style.render(
-    spruce.with_color_level(tty.Ansi256),
+    spruce.with_color_level(spruce.Ansi256),
     style.new() |> style.fg(style.Rgb(135, 75, 253)),
     "x",
   )
@@ -212,7 +211,7 @@ pub fn render_ansi256_rgb_uses_nearest_256_color_sequence_test() {
 
 pub fn render_ansi256_hex_uses_nearest_256_color_sequence_test() {
   style.render(
-    spruce.with_color_level(tty.Ansi256),
+    spruce.with_color_level(spruce.Ansi256),
     style.new() |> style.fg(style.Hex(0x874BFD)),
     "x",
   )
@@ -221,7 +220,7 @@ pub fn render_ansi256_hex_uses_nearest_256_color_sequence_test() {
 
 pub fn render_ansi256_fg_and_bg_keep_separate_resets_test() {
   style.render(
-    spruce.with_color_level(tty.Ansi256),
+    spruce.with_color_level(spruce.Ansi256),
     style.new()
       |> style.fg(style.Ansi256(200))
       |> style.bg(style.Ansi256(21)),
@@ -234,7 +233,7 @@ pub fn render_ansi256_fg_and_bg_keep_separate_resets_test() {
 
 pub fn render_ansi256_bg_clamps_high_index_test() {
   style.render(
-    spruce.with_color_level(tty.Ansi256),
+    spruce.with_color_level(spruce.Ansi256),
     style.new() |> style.bg(style.Ansi256(999)),
     "x",
   )
@@ -242,7 +241,7 @@ pub fn render_ansi256_bg_clamps_high_index_test() {
 }
 
 pub fn render_hex_and_rgb_match_for_same_color_test() {
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
   let rgb =
     style.render(sp, style.new() |> style.fg(style.Rgb(135, 75, 253)), "x")
   let hex = style.render(sp, style.new() |> style.fg(style.Hex(0x874BFD)), "x")
@@ -252,8 +251,8 @@ pub fn render_hex_and_rgb_match_for_same_color_test() {
 
 pub fn adaptive_picks_dark_on_dark_background_test() {
   let sp =
-    spruce.with_color_level(tty.TrueColor)
-    |> spruce.with_background(tty.Dark)
+    spruce.with_color_level(spruce.TrueColor)
+    |> spruce.with_background(spruce.Dark)
   let adaptive =
     style.render(
       sp,
@@ -272,8 +271,8 @@ pub fn adaptive_picks_dark_on_dark_background_test() {
 
 pub fn adaptive_picks_light_on_light_background_test() {
   let sp =
-    spruce.with_color_level(tty.TrueColor)
-    |> spruce.with_background(tty.Light)
+    spruce.with_color_level(spruce.TrueColor)
+    |> spruce.with_background(spruce.Light)
   let adaptive =
     style.render(
       sp,
@@ -291,7 +290,7 @@ pub fn adaptive_picks_light_on_light_background_test() {
 }
 
 pub fn adaptive_defaults_to_dark_on_unknown_background_test() {
-  let sp = spruce.with_color_level(tty.TrueColor)
+  let sp = spruce.with_color_level(spruce.TrueColor)
   let adaptive =
     style.render(
       sp,
