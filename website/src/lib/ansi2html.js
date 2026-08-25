@@ -55,6 +55,9 @@ const BG_BASIC = {
   107: PAL[97],
 };
 
+const DEFAULT_TERMINAL_FG = "var(--terminal-body)";
+const DEFAULT_TERMINAL_BG = "var(--term-bg)";
+
 export function escapeHtml(value) {
   return value
     .replace(/&/g, "&amp;")
@@ -108,7 +111,11 @@ export function convertAnsiToHtml(text) {
 
   let lastIndex = 0;
   const pattern = /\x1b\[([0-9;]*)m/g;
-  for (let match = pattern.exec(text); match !== null; match = pattern.exec(text)) {
+  for (
+    let match = pattern.exec(text);
+    match !== null;
+    match = pattern.exec(text)
+  ) {
     emit(text.slice(lastIndex, match.index));
     applyCodes(state, match[1]);
     lastIndex = match.index + match[0].length;
@@ -183,9 +190,7 @@ function applyCodes(state, rawCodes) {
 
 function buildStyle(state) {
   const parts = [];
-  const hasColor = state.fg || state.bg;
-  const fg = state.reverse ? state.bg : state.fg;
-  const bg = state.reverse ? state.fg : state.bg;
+  const { fg, bg } = resolveEffectiveColors(state);
   if (fg) parts.push(`color:${fg}`);
   if (bg) parts.push(`background-color:${bg}`);
   if (state.bold) parts.push("font-weight:700");
@@ -197,8 +202,18 @@ function buildStyle(state) {
   if (decorations.length) {
     parts.push(`text-decoration-line:${decorations.join(" ")}`);
   }
-  if (state.reverse && !hasColor) parts.push("filter:invert(100%)");
   return parts.join(";");
+}
+
+function resolveEffectiveColors(state) {
+  if (!state.reverse) {
+    return { fg: state.fg, bg: state.bg };
+  }
+
+  return {
+    fg: state.bg ?? DEFAULT_TERMINAL_BG,
+    bg: state.fg ?? DEFAULT_TERMINAL_FG,
+  };
 }
 
 function clamp(value, min, max) {

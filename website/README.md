@@ -24,7 +24,8 @@ them automatically.
 
 Every terminal panel on the page is **genuine spruce output**, not a mockup. The
 strings in `src/data/terminalBlocks.ts` are captured from a live `gleam run` at
-each advertised color level and converted span-for-span to HTML.
+each advertised color level and converted span-for-span to HTML by the shared
+module in `src/lib/ansi2html.js`.
 
 To regenerate after changing spruce:
 
@@ -34,7 +35,7 @@ To regenerate after changing spruce:
    FORCE_COLOR=3 gleam run -m spruce_landing_demo --target erlang > /tmp/spruce_erlang.ansi
    FORCE_COLOR=3 gleam run -m spruce_landing_demo --target javascript > /tmp/spruce_javascript.ansi
    diff /tmp/spruce_erlang.ansi /tmp/spruce_javascript.ansi
-   node website/tools/ansi2html.cjs /tmp/spruce_erlang.ansi > /tmp/spruce_blocks.json
+   node website/tools/ansi2html.cjs /tmp/spruce_erlang.ansi > website/spruce_blocks.json
    ```
 3. Rebuild `src/data/terminalBlocks.ts` from that JSON, then delete the demo
    module from `src/` (it must not ship in the published package).

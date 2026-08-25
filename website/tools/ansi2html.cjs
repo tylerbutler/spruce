@@ -4,7 +4,7 @@ const { pathToFileURL } = require("node:url");
 
 (async () => {
   const { convertCapturedBlocks } = await import(
-    pathToFileURL(path.join(__dirname, "ansi2html.js")).href
+    pathToFileURL(path.join(__dirname, "../src/lib/ansi2html.js")).href
   );
 
   const raw = fs.readFileSync(process.argv[2] ?? 0, "utf8");
