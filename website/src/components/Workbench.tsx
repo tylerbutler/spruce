@@ -100,6 +100,9 @@ export function Workbench({
     status: "loading",
   });
   const loadRequest = useRef(0);
+  const sourceRef = useRef<HTMLPreElement>(null);
+  const sourceHintId = useId();
+  const [sourceHasOverflow, setSourceHasOverflow] = useState(false);
 
   const loadAdapter = useCallback(() => {
     const request = ++loadRequest.current;
@@ -132,6 +135,22 @@ export function Workbench({
   const example = withCapability(examples[kind], capability);
   const Icon = kindIcons[kind];
   const source = renderWorkbenchSource(example);
+
+  useEffect(() => {
+    const sourceElement = sourceRef.current;
+    if (!sourceElement) return;
+
+    const updateOverflow = () => {
+      setSourceHasOverflow(
+        sourceElement.scrollWidth > sourceElement.clientWidth + 1,
+      );
+    };
+    updateOverflow();
+
+    const observer = new ResizeObserver(updateOverflow);
+    observer.observe(sourceElement);
+    return () => observer.disconnect();
+  }, [source]);
 
   let renderedHtml: string | null = null;
   let renderError: string | null = null;
@@ -226,7 +245,11 @@ export function Workbench({
                   />
                 </fieldset>
                 <div className="workbench-results">
-                  <div className="workbench-output" aria-live="polite">
+                  <div
+                    className="workbench-output"
+                    aria-busy={adapterState.status === "loading"}
+                    aria-live="polite"
+                  >
                     {adapterState.status === "loading" && (
                       <div className="workbench-loading">
                         <p role="status">Loading the Gleam renderer…</p>
@@ -241,7 +264,7 @@ export function Workbench({
                         title="The renderer did not load."
                         message={adapterState.message}
                         actionLabel="Try loading again"
-                        onAction={loadAdapter}
+                        onAction={() => window.location.reload()}
                       />
                     )}
                     {renderError && (
@@ -266,9 +289,29 @@ export function Workbench({
                         <CopyTextButton text={source} label="Copy source" />
                       }
                     />
-                    <pre tabIndex={0}>
-                      <code>{source}</code>
-                    </pre>
+                    <div className="term-content">
+                      <pre
+                        ref={sourceRef}
+                        tabIndex={sourceHasOverflow ? 0 : undefined}
+                        role="region"
+                        aria-label="Gleam source code"
+                        aria-describedby={
+                          sourceHasOverflow ? sourceHintId : undefined
+                        }
+                      >
+                        <code>{source}</code>
+                      </pre>
+                      {sourceHasOverflow && (
+                        <>
+                          <span className="term-scroll-cue" aria-hidden="true">
+                            Scroll →
+                          </span>
+                          <span className="sr-only" id={sourceHintId}>
+                            This source code scrolls horizontally.
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -245,7 +245,13 @@ export function CopyButton({ text }: { text: string }) {
         type="button"
         className={"copy" + (copied ? " copied" : "") + (failed ? " failed" : "")}
         onClick={onCopy}
-        aria-label={`Copy: ${text}`}
+        aria-label={
+          copied
+            ? `Copied: ${text}`
+            : failed
+              ? `Copy failed: ${text}`
+              : `Copy: ${text}`
+        }
       >
         <span>
           <span className="prompt">$</span> {text}
@@ -312,6 +318,7 @@ export function ThemeToggle() {
 
   return (
     <button
+      type="button"
       className="icon-btn"
       onClick={toggle}
       aria-label={light ? "Switch to dark theme" : "Switch to light theme"}
