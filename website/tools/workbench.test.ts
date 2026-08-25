@@ -7,6 +7,11 @@ import { getWorkbenchPreset } from "../src/workbench/index.ts";
 import { workbenchPresets } from "../src/workbench/registry.ts";
 import { loadWorkbenchAdapter } from "../src/workbench/loadAdapter.ts";
 import { renderWorkbenchSource } from "../src/workbench/source.ts";
+import {
+  detectSourceOverflow,
+  sourceOverflowCue,
+  sourceOverflowHint,
+} from "../src/components/sourceOverflow.ts";
 
 test("workbench presets stay mapped to source and rendered output", async () => {
   const adapter = await loadWorkbenchAdapter();
@@ -119,6 +124,34 @@ test("box alignment stays synchronized across preset, source, and runtime", asyn
   );
   assert.doesNotMatch(source, /box\.(plain|height|border_color)/);
   assert.match(stripAnsi(result.ansi), /│\s+ready\s+│/);
+});
+
+test("source overflow announces the active scroll axis", () => {
+  assert.deepEqual(
+    detectSourceOverflow({
+      scrollWidth: 100,
+      clientWidth: 100,
+      scrollHeight: 120,
+      clientHeight: 100,
+    } as HTMLElement),
+    { horizontal: false, vertical: true },
+  );
+  assert.equal(
+    sourceOverflowCue({ horizontal: false, vertical: true }),
+    "Scroll ↓",
+  );
+  assert.equal(
+    sourceOverflowHint({ horizontal: false, vertical: true }),
+    "This source code scrolls vertically.",
+  );
+  assert.equal(
+    sourceOverflowCue({ horizontal: true, vertical: true }),
+    "Scroll ↘",
+  );
+  assert.equal(
+    sourceOverflowHint({ horizontal: true, vertical: false }),
+    "This source code scrolls horizontally.",
+  );
 });
 
 function stripAnsi(value: string): string {

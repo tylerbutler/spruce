@@ -16,6 +16,11 @@ import {
 } from "../icons";
 import { terminalBlocks } from "../data/terminalBlocks";
 import {
+  detectSourceOverflow,
+  sourceOverflowCue,
+  sourceOverflowHint,
+} from "./sourceOverflow";
+import {
   getWorkbenchPreset,
   loadWorkbenchAdapter,
   renderWorkbenchSource,
@@ -102,7 +107,10 @@ export function Workbench({
   const loadRequest = useRef(0);
   const sourceRef = useRef<HTMLPreElement>(null);
   const sourceHintId = useId();
-  const [sourceHasOverflow, setSourceHasOverflow] = useState(false);
+  const [sourceOverflow, setSourceOverflow] = useState({
+    horizontal: false,
+    vertical: false,
+  });
 
   const loadAdapter = useCallback(() => {
     const request = ++loadRequest.current;
@@ -135,14 +143,22 @@ export function Workbench({
   const example = withCapability(examples[kind], capability);
   const Icon = kindIcons[kind];
   const source = renderWorkbenchSource(example);
+  const sourceHasOverflow =
+    sourceOverflow.horizontal || sourceOverflow.vertical;
+  const sourceCue = sourceOverflowCue(sourceOverflow);
+  const sourceHint = sourceOverflowHint(sourceOverflow);
 
   useEffect(() => {
     const sourceElement = sourceRef.current;
     if (!sourceElement) return;
 
     const updateOverflow = () => {
-      setSourceHasOverflow(
-        sourceElement.scrollWidth > sourceElement.clientWidth + 1,
+      const nextOverflow = detectSourceOverflow(sourceElement);
+      setSourceOverflow((current) =>
+        current.horizontal === nextOverflow.horizontal &&
+        current.vertical === nextOverflow.vertical
+          ? current
+          : nextOverflow,
       );
     };
     updateOverflow();
@@ -304,10 +320,10 @@ export function Workbench({
                       {sourceHasOverflow && (
                         <>
                           <span className="term-scroll-cue" aria-hidden="true">
-                            Scroll →
+                            {sourceCue}
                           </span>
                           <span className="sr-only" id={sourceHintId}>
-                            This source code scrolls horizontally.
+                            {sourceHint}
                           </span>
                         </>
                       )}
