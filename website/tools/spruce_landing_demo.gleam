@@ -5,8 +5,8 @@ import gleam/io
 import spruce
 import spruce/border
 import spruce/box
-import spruce/details
-import spruce/items
+import spruce/detail
+import spruce/item
 import spruce/line
 import spruce/message
 import spruce/output
@@ -20,23 +20,23 @@ fn mark(name: String) -> Nil {
 }
 
 pub fn main() {
-  let sp = spruce.with_color_level(spruce.TrueColor)
+  let context = spruce.with_color_level(spruce.TrueColor)
 
   mark("hero")
-  box.print(sp, "spruce")
-  output.stream_group(sp, "Build", fn(sp) {
-    io.println(message.start(sp, "compiling 14 modules"))
-    io.println(message.success(sp, "compiled in 312ms"))
-    io.println(message.info(sp, "target: javascript"))
-    io.println(message.warn(sp, "2 deprecation notices"))
+  box.print(context, "spruce")
+  output.stream_group(context, "Build", fn(context) {
+    io.println(message.start(context, "compiling 14 modules"))
+    io.println(message.success(context, "compiled in 312ms"))
+    io.println(message.info(context, "target: javascript"))
+    io.println(message.warn(context, "2 deprecation notices"))
   })
 
   mark("messages")
-  let badge = fn(sev: severity.Severity, text: String) {
+  let badge = fn(severity_value: severity.Severity, text: String) {
     line.new(text)
-    |> line.severity(sev)
+    |> line.severity(severity_value)
     |> line.severity_formatter(severity.badge())
-    |> line.render(sp, _)
+    |> line.render(context, _)
   }
   io.println(badge(severity.Info, "Deploy complete"))
   io.println(badge(severity.Err, "Connection refused"))
@@ -53,7 +53,7 @@ pub fn main() {
       ["spruce/markdown", "erlang", "4.1ms"],
     ])
     |> table.border(border.Rounded)
-    |> table.render(sp, _),
+    |> table.render(context, _),
   )
 
   mark("tree")
@@ -71,39 +71,39 @@ pub fn main() {
       |> tree.child(child: tree.root("table"))
       |> tree.child(child: tree.root("tree")),
     )
-    |> tree.render(sp, _),
+    |> tree.render(context, _),
   )
 
   mark("list")
   io.println(
-    items.new()
-    |> items.item("Auto-detects color support")
-    |> items.nested(
+    item.new()
+    |> item.item("Auto-detects color support")
+    |> item.nested(
       "Renders on both runtimes",
-      items.new()
-        |> items.item("Erlang / BEAM")
-        |> items.item("JavaScript / Node"),
+      item.new()
+        |> item.item("Erlang / BEAM")
+        |> item.item("JavaScript / Node"),
     )
-    |> items.item("Pure, testable string builders")
-    |> items.render(sp, _),
+    |> item.item("Pure, testable string builders")
+    |> item.render(context, _),
   )
 
   mark("line")
   let meta =
-    details.new()
-    |> details.add(key: "duration", value: "42ms")
-    |> details.add(key: "target", value: "javascript")
+    detail.new()
+    |> detail.add(key: "duration", value: "42ms")
+    |> detail.add(key: "target", value: "javascript")
   io.println(
     line.new("Request handled")
     |> line.severity(severity.Info)
     |> line.scope("http")
     |> line.details(meta)
-    |> line.render(sp, _),
+    |> line.render(context, _),
   )
 
   mark("example")
-  box.print(sp, "spruce")
-  io.println(message.success(sp, "ready"))
+  box.print(context, "spruce")
+  io.println(message.success(context, "ready"))
 
   mark("hero_plain")
   let np = spruce.no_color()
@@ -120,13 +120,13 @@ pub fn main() {
     style.new()
     |> style.fg(style.Hex(0xec6a82))
     |> style.bold()
-    |> style.render(sp, _, "rose"),
+    |> style.render(context, _, "rose"),
   )
   io.println(
     style.new()
     |> style.fg(style.Hex(0x2f6f54))
     |> style.bold()
-    |> style.render(sp, _, "spruce"),
+    |> style.render(context, _, "spruce"),
   )
   mark("end")
 }

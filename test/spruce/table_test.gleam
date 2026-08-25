@@ -44,7 +44,7 @@ pub fn table_pads_short_rows_and_uses_ansi_aware_widths_test() {
 }
 
 pub fn table_style_fn_applies_to_headers_with_negative_row_test() {
-  let out =
+  let rendered =
     table.new()
     |> table.headers(["H"])
     |> table.rows([["x"]])
@@ -56,16 +56,16 @@ pub fn table_style_fn_applies_to_headers_with_negative_row_test() {
     })
     |> table.render(spruce.with_color_level(spruce.TrueColor), _)
 
-  expect.to_be_true(string.contains(out, "\u{001b}[1mH"))
-  expect.to_be_true(string.contains(out, "\u{001b}[32mx"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[1mH"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[32mx"))
 }
 
 pub fn table_style_fn_wraps_each_line_independently_test() {
   table.new()
   |> table.rows([["alpha beta", "z"]])
   |> table.column_widths([5, 1])
-  |> table.style_fn(fn(_row, col) {
-    case col {
+  |> table.style_fn(fn(_row, column) {
+    case column {
       0 -> style.new() |> style.fg(style.Red)
       _ -> style.new()
     }

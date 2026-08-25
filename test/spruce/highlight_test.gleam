@@ -12,15 +12,15 @@ pub fn no_color_round_trips_gleam_test() {
 
 pub fn colored_output_contains_escape_and_source_test() {
   let code = "pub fn main() {}"
-  let out =
+  let rendered =
     highlight.highlight(
       spruce.with_color_level(spruce.TrueColor),
       code: code,
       name: "gleam",
     )
 
-  expect.to_be_true(string.contains(out, "\u{001b}"))
-  expect.to_be_true(string.contains(out, "main"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}"))
+  expect.to_be_true(string.contains(rendered, "main"))
 }
 
 pub fn unknown_language_falls_back_to_plain_code_test() {

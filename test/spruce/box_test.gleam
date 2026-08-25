@@ -27,8 +27,8 @@ pub fn box_indented_test() {
 }
 
 pub fn box_color_styles_border_test() {
-  let out = box.simple(spruce.with_color_level(spruce.TrueColor), "hi")
-  expect.to_be_true(string.contains(out, "\u{001b}"))
+  let rendered = box.simple(spruce.with_color_level(spruce.TrueColor), "hi")
+  expect.to_be_true(string.contains(rendered, "\u{001b}"))
 }
 
 pub fn titled_box_keeps_equal_visual_widths_test() {
@@ -53,20 +53,20 @@ pub fn box_title_newline_stays_on_single_top_border_test() {
 }
 
 pub fn box_color_leaves_title_unstyled_test() {
-  let out =
+  let rendered =
     box.render(
       spruce.with_color_level(spruce.TrueColor),
       "hi",
       box.new() |> box.title("T"),
     )
 
-  expect.to_be_true(string.contains(out, " T \u{001b}"))
+  expect.to_be_true(string.contains(rendered, " T \u{001b}"))
 }
 
 pub fn box_border_catalog_test() {
-  let opts = box.new() |> box.border(border.Double)
+  let options = box.new() |> box.border(border.Double)
 
-  box.render(spruce.no_color(), "hi", opts)
+  box.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("╔════╗\n║ hi ║\n╚════╝")
 }
 
@@ -83,32 +83,32 @@ pub fn box_custom_border_test() {
       left: "|",
     )
 
-  let opts = box.new() |> box.border(border.Custom(chars))
+  let options = box.new() |> box.border(border.Custom(chars))
 
-  box.render(spruce.no_color(), "hi", opts)
+  box.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("+----+\n| hi |\n+----+")
 }
 
 pub fn box_padding_adds_inner_rows_and_columns_test() {
-  let opts = box.new() |> box.padding(top: 1, right: 2, bottom: 1, left: 2)
+  let options = box.new() |> box.padding(top: 1, right: 2, bottom: 1, left: 2)
 
-  box.render(spruce.no_color(), "hi", opts)
+  box.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("╭──────╮\n│      │\n│  hi  │\n│      │\n╰──────╯")
 }
 
 pub fn box_margin_adds_outer_space_after_indent_test() {
-  let opts = box.new() |> box.margin(top: 1, right: 2, bottom: 1, left: 2)
+  let options = box.new() |> box.margin(top: 1, right: 2, bottom: 1, left: 2)
 
-  box.render(spruce.no_color(), "hi", opts)
+  box.render(spruce.no_color(), "hi", options)
   |> expect.to_equal(
     "          \n  ╭────╮  \n  │ hi │  \n  ╰────╯  \n          ",
   )
 }
 
 pub fn box_width_wraps_content_to_stable_visual_width_test() {
-  let opts = box.new() |> box.width(5)
+  let options = box.new() |> box.width(5)
   let lines =
-    box.render(spruce.no_color(), "hello world", opts)
+    box.render(spruce.no_color(), "hello world", options)
     |> string.split("\n")
 
   let assert [top, first, second, bottom] = lines
@@ -121,9 +121,9 @@ pub fn box_width_wraps_content_to_stable_visual_width_test() {
 }
 
 pub fn box_hidden_border_reserves_no_visible_border_test() {
-  let opts = box.new() |> box.border(border.Hidden)
+  let options = box.new() |> box.border(border.Hidden)
 
-  box.render(spruce.no_color(), "hi", opts)
+  box.render(spruce.no_color(), "hi", options)
   |> expect.to_equal(" hi ")
 }
 
@@ -133,35 +133,35 @@ pub fn box_default_rendering_unchanged_after_per_side_options_test() {
 }
 
 pub fn box_per_side_visibility_omits_hidden_columns_and_rows_test() {
-  let opts =
+  let options =
     box.new()
     |> box.border_sides(top: True, right: False, bottom: True, left: True)
 
-  box.render(spruce.no_color(), "hi", opts)
+  box.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("╭────\n│ hi \n╰────")
 }
 
 pub fn box_per_side_visibility_omits_corner_without_adjoining_side_test() {
-  let opts =
+  let options =
     box.new()
     |> box.border_sides(top: True, right: True, bottom: True, left: False)
 
-  box.render(spruce.no_color(), "hi", opts)
+  box.render(spruce.no_color(), "hi", options)
   |> expect.to_equal("────╮\n hi │\n────╯")
 }
 
 pub fn box_per_side_visibility_all_hidden_matches_hidden_shape_test() {
-  let opts =
+  let options =
     box.new()
     |> box.border_sides(top: False, right: False, bottom: False, left: False)
 
-  box.render(spruce.no_color(), "hi", opts)
+  box.render(spruce.no_color(), "hi", options)
   |> expect.to_equal(" hi ")
 }
 
 pub fn box_per_side_border_colors_are_applied_test() {
-  let sp = spruce.with_color_level(spruce.TrueColor)
-  let opts =
+  let context = spruce.with_color_level(spruce.TrueColor)
+  let options =
     box.new()
     |> box.border_colors(
       top: style.Red,
@@ -169,12 +169,12 @@ pub fn box_per_side_border_colors_are_applied_test() {
       bottom: style.Blue,
       left: style.Yellow,
     )
-  let out = box.render(sp, "hi", opts)
+  let rendered = box.render(context, "hi", options)
 
-  expect.to_be_true(string.contains(out, "\u{001b}[31m"))
-  expect.to_be_true(string.contains(out, "\u{001b}[32m"))
-  expect.to_be_true(string.contains(out, "\u{001b}[34m"))
-  expect.to_be_true(string.contains(out, "\u{001b}[33m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[31m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[32m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[34m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[33m"))
 }
 
 pub fn plain_box_no_color_is_bare_content_test() {
@@ -278,13 +278,13 @@ pub fn box_background_fills_padding_ring_test() {
 }
 
 pub fn box_border_color_applies_to_all_sides_test() {
-  let sp = spruce.with_color_level(spruce.Basic)
+  let context = spruce.with_color_level(spruce.Basic)
   let options =
     box.plain() |> box.border(border.Normal) |> box.border_color(style.Red)
-  let out = box.render(sp, "hi", options)
+  let rendered = box.render(context, "hi", options)
 
-  expect.to_be_true(string.contains(out, "\u{001b}[31m"))
-  expect.to_be_false(string.contains(out, "\u{001b}[36m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[31m"))
+  expect.to_be_false(string.contains(rendered, "\u{001b}[36m"))
 }
 
 pub fn plain_box_margin_adds_outer_space_after_indent_test() {

@@ -47,7 +47,7 @@ each border style.
 `internal/layout.gleam` is a six-line module exposing `indent_prefix`. Seven
 modules import it, and `block` has to alias it as `internal_layout` because
 the public `layout` module is also in scope. Meanwhile `list` and `tree`
-inline `string.repeat("  ", spruce.depth(sp))` instead of using it, and
+inline `string.repeat("  ", spruce.depth(context))` instead of using it, and
 `group.indent` reimplements the same thing for arbitrary levels.
 
 ### 3. `message`, `severity`, `line`, and `symbol` are three overlapping status systems
@@ -91,7 +91,7 @@ is otherwise "more ANSI-aware geometry" of the kind `align` already owns
   parameter cannot be typed (`list.gleam:53`).
 - **`tty` re-exports do not achieve independence.** `spruce.ColorLevel`,
   `Stream`, and `Background` (`spruce.gleam:31-43`) are type aliases, and
-  aliases do not re-export constructors — `test/demo.gleam:28` still has to
+  aliases do not re-export constructors — `dev/demo.gleam:28` still has to
   `import tty` to write `tty.TrueColor`.
 - **`highlight` and `markdown`** make `smalto` (40 grammar modules) and `mork`
   hard dependencies for every consumer, including those who only want `style`
@@ -103,17 +103,17 @@ Reshape the package to 16 modules for 2.0:
 
 | Module | Change |
 |---|---|
-| `spruce` | Gains `indent_prefix(sp)`. Replaces `tty` type aliases with spruce-owned enums (or drops the aliases and documents `tty` as the API). |
-| `spruce/style` | Absorbs `palette`: `palette.hash(sp, text)` becomes `style.hashed(sp, text)`. |
+| `spruce` | Gains `indent_prefix(context)`. Replaces `tty` type aliases with spruce-owned enums (or drops the aliases and documents `tty` as the API). |
+| `spruce/style` | Absorbs `palette`: `palette.hash(context, text)` becomes `style.hashed(context, text)`. |
 | `spruce/symbol` | Drops the `pub const` glyphs and `resolve`; `Mode`, `Status`, and `status` remain. |
 | `spruce/align` | Absorbs `layout`: `Pos`, `join_vertical`, `join_horizontal`, `place`. |
 | `spruce/border` | **New leaf.** `Border`, `BorderChars`, and `chars(Border) -> BorderChars`, shared by `box` and `table`. |
 | `spruce/box` | Absorbs `block`: one builder (`new |> padding |> margin |> width |> height |> align |> border |> title |> render`). Uses `align.place` and `border.chars` instead of private copies. |
 | `spruce/table` | Uses `spruce/border`; derives grid glyphs from `border.chars` where possible. |
-| `spruce/items` | Renamed from `spruce/list`; opaque type renamed `List` → `Items`. |
+| `spruce/item` | Renamed from `spruce/list`; opaque type renamed `List` → `Items`. |
 | `spruce/tree` | Unchanged. |
 | `spruce/severity` | Owns the single `Formatter` type used by both `line` and `message`. |
-| `spruce/details` | Unchanged. |
+| `spruce/detail` | Unchanged. |
 | `spruce/line` | Unchanged API; uses `severity.Formatter`. |
 | `spruce/message` | Thin sugar over `line`: seven one-liners (`success`, `fail`, `start`, `ready`, `info`, `warn`, `error`). The `_with` and `print_*` variants are removed — use `line` for options and `io.println` for IO. |
 | `spruce/output` | Absorbs `group`: `render_title` → `output.title`; eager grouping becomes `output.stream_group` (or is dropped — it is two lines at the call site). |
@@ -134,10 +134,10 @@ is independent of everything above and can be decided separately.
   positioning and indentation helpers.
 - One builder for boxes, one `Formatter` for status prefixes, one place for
   indentation, one "compose and emit" module.
-- All public import paths except `spruce/tree`, `spruce/details`,
+- All public import paths except `spruce/tree`, `spruce/detail`,
   `spruce/highlight`, and `spruce/markdown` change in some way; every consumer
   needs a migration pass. README, `AGENTS.md`, the hexdocs, the website module
-  groups (`website/src/App.tsx`), and `test/demo.gleam` must be updated.
+  groups (`website/src/App.tsx`), and `dev/demo.gleam` must be updated.
 - `align` grows to roughly 900 lines. Acceptable given it is one cohesive
   concern (ANSI-aware text geometry), but worth re-checking after the merge.
 

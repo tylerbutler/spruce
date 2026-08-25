@@ -26,21 +26,21 @@ pub fn hide_internal(details: Details) -> Details {
 }
 
 /// Render details as space-separated `key=value` pairs.
-pub fn render(sp: Spruce, details: Details) -> String {
+pub fn render(context: Spruce, details: Details) -> String {
   details.items
   |> list.reverse
   |> list.filter(fn(pair) {
     let #(key, _) = pair
     details.show_internal || !string.starts_with(key, "_")
   })
-  |> list.map(render_pair(sp, _))
+  |> list.map(render_pair(context, _))
   |> string.join(" ")
 }
 
-fn render_pair(sp: Spruce, pair: #(String, String)) -> String {
+fn render_pair(context: Spruce, pair: #(String, String)) -> String {
   let #(key, value) = pair
   let text = key <> "=" <> escape_value(value)
-  style.render(sp, style.hashed(sp, key), text)
+  style.render(context, style.hashed(context, key), text)
 }
 
 fn escape_value(value: String) -> String {
@@ -69,5 +69,5 @@ fn escape_value(value: String) -> String {
 fn contains_ascii_control(value: String) -> Bool {
   value
   |> string.to_utf_codepoints
-  |> list.any(fn(cp) { string.utf_codepoint_to_int(cp) < 32 })
+  |> list.any(fn(codepoint) { string.utf_codepoint_to_int(codepoint) < 32 })
 }

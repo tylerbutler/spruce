@@ -55,7 +55,7 @@ const moduleGroups: Array<{
       ["spruce/border", "Border styles and glyphs shared by boxes and tables."],
       ["spruce/box", "Titles, padding, margin, sizing, alignment, borders."],
       ["spruce/table", "Widths, borders, separators, and cell wrapping."],
-      ["spruce/items", "Bulleted and ordered lists with arbitrary nesting."],
+      ["spruce/item", "Bulleted and ordered lists with arbitrary nesting."],
       ["spruce/tree", "Tree-structured output with Unicode or ASCII."],
     ],
   },
@@ -64,8 +64,8 @@ const moduleGroups: Array<{
     summary: "Turn raw strings into meaningful developer-facing lines.",
     modules: [
       ["spruce/message", "Semantic one-liners: success, fail, start, and more."],
-      ["spruce/line", "Compact severity, scope, and key/value details."],
-      ["spruce/details", "Key and value detail rendering."],
+      ["spruce/line", "Compact severity, scope, and key/value detail."],
+      ["spruce/detail", "Key and value detail rendering."],
       ["spruce/highlight", "Syntax highlighting for fenced code blocks."],
       ["spruce/markdown", "Markdown to ANSI, in the style of Glamour."],
     ],
@@ -310,16 +310,16 @@ function Example() {
               <span className="k">pub fn</span> <span className="f">main</span>
               () {"{"}
               {"\n  "}
-              <span className="k">let</span> sp ={" "}
+              <span className="k">let</span> context ={" "}
               <span className="m">spruce</span>.
               <span className="f">detect</span>()
               {"\n  "}
-              <span className="m">box</span>.<span className="f">print</span>(sp,{" "}
+              <span className="m">box</span>.<span className="f">print</span>(context,{" "}
               <span className="s">"spruce"</span>)
               {"\n  "}
               <span className="m">io</span>.<span className="f">println</span>(
               <span className="m">message</span>.
-              <span className="f">success</span>(sp,{" "}
+              <span className="f">success</span>(context,{" "}
               <span className="s">"ready"</span>))
               {"\n"}
               {"}"}

@@ -56,7 +56,8 @@ fn count_visible(chars: List(String), state: EscapeState, count: Int) -> Int {
               count_visible(rest, step_escape_state(NormalText, char), count)
             _ -> count_visible(rest, NormalText, count + display_width(char))
           }
-        _ -> count_visible(rest, step_escape_state(state, char), count)
+        EscapeStart | CsiEscape | OscEscape | OscEscapeAfterEsc ->
+          count_visible(rest, step_escape_state(state, char), count)
       }
   }
 }
@@ -392,7 +393,7 @@ fn split_pieces_loop(
             "\u{001b}" -> {
               let kind = case kind {
                 NoPiece -> WordPiece
-                _ -> kind
+                WordPiece | SpacePiece -> kind
               }
 
               split_pieces_loop(
@@ -419,7 +420,7 @@ fn split_pieces_loop(
             }
           }
 
-        _ ->
+        EscapeStart | CsiEscape | OscEscape | OscEscapeAfterEsc ->
           split_pieces_loop(
             rest,
             step_escape_state(state, char),
@@ -440,10 +441,18 @@ fn add_piece_grapheme(
   pieces: List(Piece),
 ) -> #(String, PieceKind, List(Piece)) {
   case kind, char_kind {
-    NoPiece, _ -> #(char, char_kind, pieces)
+    NoPiece, NoPiece | NoPiece, WordPiece | NoPiece, SpacePiece -> #(
+      char,
+      char_kind,
+      pieces,
+    )
     SpacePiece, SpacePiece -> #(current <> char, kind, pieces)
     WordPiece, WordPiece -> #(current <> char, kind, pieces)
-    _, _ -> #(char, char_kind, push_piece(kind, current, pieces))
+    SpacePiece, WordPiece
+    | WordPiece, SpacePiece
+    | WordPiece, NoPiece
+    | SpacePiece, NoPiece
+    -> #(char, char_kind, push_piece(kind, current, pieces))
   }
 }
 
@@ -457,7 +466,7 @@ fn push_piece(
     _ ->
       case kind {
         SpacePiece -> [Spaces(current), ..pieces]
-        _ -> [Word(current), ..pieces]
+        NoPiece | WordPiece -> [Word(current), ..pieces]
       }
   }
 }
@@ -612,7 +621,8 @@ fn first_positive_width_loop(chars: List(String), state: EscapeState) -> Int {
             }
           }
 
-        _ -> first_positive_width_loop(rest, step_escape_state(state, char))
+        EscapeStart | CsiEscape | OscEscape | OscEscapeAfterEsc ->
+          first_positive_width_loop(rest, step_escape_state(state, char))
       }
     }
   }
@@ -659,7 +669,7 @@ fn take_visible_loop(
             }
           }
 
-        _ ->
+        EscapeStart | CsiEscape | OscEscape | OscEscapeAfterEsc ->
           take_visible_loop(rest, remaining, step_escape_state(state, char), [
             char,
             ..acc
@@ -711,7 +721,8 @@ fn drop_visible_loop(
               }
           }
 
-        _ -> drop_visible_loop(rest, remaining, step_escape_state(state, char))
+        EscapeStart | CsiEscape | OscEscape | OscEscapeAfterEsc ->
+          drop_visible_loop(rest, remaining, step_escape_state(state, char))
       }
     }
   }

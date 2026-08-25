@@ -6,11 +6,11 @@
 //// one at each nesting depth.
 ////
 //// ```gleam
-//// items.new()
-//// |> items.kind(items.Ordered)
-//// |> items.item("setup")
-//// |> items.nested("build", items.new() |> items.item("erlang"))
-//// |> items.render(sp, _)
+//// item.new()
+//// |> item.kind(item.Ordered)
+//// |> item.item("setup")
+//// |> item.nested("build", item.new() |> item.item("erlang"))
+//// |> item.render(context, _)
 //// ```
 
 import gleam/bool
@@ -98,15 +98,23 @@ pub fn enumerator(items: Items, enumerate: fn(Int, Int) -> String) -> Items {
 }
 
 /// Render a list to a string.
-pub fn render(sp: Spruce, items: Items) -> String {
-  let base = spruce.indent_prefix(sp)
+pub fn render(context: Spruce, items: Items) -> String {
+  let base = spruce.indent_prefix(context)
 
-  render_entries(sp, items.entries, items.kind, items.enumerator, base, 1, 1)
+  render_entries(
+    context,
+    items.entries,
+    items.kind,
+    items.enumerator,
+    base,
+    1,
+    1,
+  )
   |> string.join("\n")
 }
 
 fn render_entries(
-  sp: Spruce,
+  context: Spruce,
   entries: Entries,
   kind: Kind,
   enumerator: Enumerator,
@@ -117,9 +125,9 @@ fn render_entries(
   case entries {
     Empty -> []
     Cons(first, rest) ->
-      render_entry(sp, first, kind, enumerator, base, depth, index)
+      render_entry(context, first, kind, enumerator, base, depth, index)
       |> list.append(render_entries(
-        sp,
+        context,
         rest,
         kind,
         enumerator,
@@ -131,7 +139,7 @@ fn render_entries(
 }
 
 fn render_entry(
-  sp: Spruce,
+  context: Spruce,
   entry: Entry,
   kind: Kind,
   enumerator: Enumerator,
@@ -142,12 +150,12 @@ fn render_entry(
   let prefix =
     base
     <> string.repeat("  ", depth - 1)
-    <> marker(sp, kind, enumerator, index, depth)
+    <> marker(context, kind, enumerator, index, depth)
   let follow = string.repeat(" ", align.visual_length(prefix))
 
   render_label(prefix, follow, entry.label)
   |> list.append(render_entries(
-    sp,
+    context,
     entry.children,
     kind,
     enumerator,
@@ -183,7 +191,7 @@ fn labels_to_entries(labels: List(String)) -> Entries {
 }
 
 fn marker(
-  sp: Spruce,
+  context: Spruce,
   kind: Kind,
   enumerator: Enumerator,
   index: Int,
@@ -193,13 +201,13 @@ fn marker(
     Custom(enumerate) -> enumerate(index, depth)
     Auto ->
       case kind {
-        Bullet -> bullet_marker(sp)
+        Bullet -> bullet_marker(context)
         Ordered -> int.to_string(index) <> ". "
       }
   }
 }
 
-fn bullet_marker(sp: Spruce) -> String {
-  use <- bool.guard(when: !spruce.supports_color(sp), return: "- ")
+fn bullet_marker(context: Spruce) -> String {
+  use <- bool.guard(when: !spruce.supports_color(context), return: "- ")
   "• "
 }

@@ -12,8 +12,8 @@ import spruce
 import spruce/align
 import spruce/border
 import spruce/box
-import spruce/details
-import spruce/items
+import spruce/detail
+import spruce/item
 import spruce/line
 import spruce/markdown
 import spruce/message
@@ -26,42 +26,42 @@ import spruce/tree
 
 pub fn main() {
   // Force truecolor so the demo is vivid even when stdout is not a TTY.
-  let sp = spruce.with_color_level(spruce.TrueColor)
+  let context = spruce.with_color_level(spruce.TrueColor)
 
   banner("spruce — a terminal-UI kit for Gleam")
-  io.println("color level: " <> color_level_name(spruce.color_level(sp)))
+  io.println("color level: " <> color_level_name(spruce.color_level(context)))
   io.println("")
 
-  style_section(sp)
-  symbol_section(sp)
-  message_section(sp)
-  formatter_section(sp)
-  hashed_section(sp)
-  box_section(sp)
-  list_section(sp)
-  tree_section(sp)
-  table_section(sp)
-  markdown_section(sp)
-  align_section(sp)
-  layout_section(sp)
-  group_section(sp)
-  output_section(sp)
+  style_section(context)
+  symbol_section(context)
+  message_section(context)
+  formatter_section(context)
+  hashed_section(context)
+  box_section(context)
+  list_section(context)
+  tree_section(context)
+  table_section(context)
+  markdown_section(context)
+  align_section(context)
+  layout_section(context)
+  group_section(context)
+  output_section(context)
 
   io.println("")
-  io.println(message.success(sp, "Demo complete."))
+  io.println(message.success(context, "Demo complete."))
 }
 
 fn banner(title: String) -> Nil {
-  let sp = spruce.with_color_level(spruce.TrueColor)
-  box.simple(sp, title)
+  let context = spruce.with_color_level(spruce.TrueColor)
+  box.simple(context, title)
   |> io.println
 }
 
 fn heading(label: String) -> Nil {
-  let sp = spruce.with_color_level(spruce.TrueColor)
+  let context = spruce.with_color_level(spruce.TrueColor)
   let styled =
     style.render(
-      sp,
+      context,
       style.new() |> style.bold |> style.fg(style.BrightCyan),
       "▌ " <> label,
     )
@@ -70,7 +70,7 @@ fn heading(label: String) -> Nil {
   io.println("")
 }
 
-fn style_section(sp: spruce.Spruce) -> Nil {
+fn style_section(context: spruce.Spruce) -> Nil {
   heading("style — composable ANSI styling")
 
   let samples = [
@@ -89,8 +89,8 @@ fn style_section(sp: spruce.Spruce) -> Nil {
   ]
 
   list.each(samples, fn(pair) {
-    let #(label, st) = pair
-    io.println("  " <> style.render(sp, st, label))
+    let #(label, text_style) = pair
+    io.println("  " <> style.render(context, text_style, label))
   })
 }
 
@@ -122,86 +122,88 @@ fn symbol_section(_sp: spruce.Spruce) -> Nil {
   io.println("  ascii:   " <> row(symbol.Ascii))
 }
 
-fn message_section(sp: spruce.Spruce) -> Nil {
+fn message_section(context: spruce.Spruce) -> Nil {
   heading("message — semantic one-liners")
 
-  io.println("  " <> message.start(sp, "Building project…"))
-  io.println("  " <> message.info(sp, "Resolving 12 dependencies"))
-  io.println("  " <> message.warn(sp, "Deprecated option in config"))
-  io.println("  " <> message.success(sp, "Compiled in 0.42s"))
-  io.println("  " <> message.fail(sp, "1 test failed"))
-  io.println("  " <> message.error(sp, "Could not reach registry"))
-  io.println("  " <> message.ready(sp, "Server listening on :8080"))
+  io.println("  " <> message.start(context, "Building project…"))
+  io.println("  " <> message.info(context, "Resolving 12 dependencies"))
+  io.println("  " <> message.warn(context, "Deprecated option in config"))
+  io.println("  " <> message.success(context, "Compiled in 0.42s"))
+  io.println("  " <> message.fail(context, "1 test failed"))
+  io.println("  " <> message.error(context, "Could not reach registry"))
+  io.println("  " <> message.ready(context, "Server listening on :8080"))
 
   io.println("")
   io.println(style.render(
-    sp,
+    context,
     style.new() |> style.dim,
     "  for badges, details, timestamps, and scopes, compose a spruce/line:",
   ))
 
   let deprecation =
-    details.new()
-    |> details.add(key: "option", value: "legacy_mode")
-    |> details.add(key: "since", value: "0.4.0")
+    detail.new()
+    |> detail.add(key: "option", value: "legacy_mode")
+    |> detail.add(key: "since", value: "0.4.0")
 
   line.new("Deprecated option in config")
   |> line.severity(severity.Warn)
   |> line.severity_formatter(severity.badge())
   |> line.details(deprecation)
-  |> line.render(sp, _)
+  |> line.render(context, _)
   |> fn(rendered) { io.println("  " <> rendered) }
 }
 
-fn formatter_section(sp: spruce.Spruce) -> Nil {
+fn formatter_section(context: spruce.Spruce) -> Nil {
   heading("severity/details/line — compact status lines")
 
   let request =
-    details.new()
-    |> details.add(key: "method", value: "GET")
-    |> details.add(key: "path", value: "/api/users")
-    |> details.add(key: "duration", value: "42ms")
+    detail.new()
+    |> detail.add(key: "method", value: "GET")
+    |> detail.add(key: "path", value: "/api/users")
+    |> detail.add(key: "duration", value: "42ms")
 
   line.new("Request complete")
   |> line.timestamp("2026-06-05T20:00:00Z")
   |> line.scope("api.http")
   |> line.severity(severity.Info)
   |> line.details(request)
-  |> line.render(sp, _)
+  |> line.render(context, _)
   |> fn(rendered) { io.println("  " <> rendered) }
 
   io.println(
     "  "
-    <> severity.render(sp, severity.badge(), severity.Warn)
+    <> severity.render(context, severity.badge(), severity.Warn)
     <> " "
     <> "Configuration uses deprecated option",
   )
 }
 
-fn hashed_section(sp: spruce.Spruce) -> Nil {
+fn hashed_section(context: spruce.Spruce) -> Nil {
   heading("style.hashed — deterministic hash colors")
 
   ["alice", "bob", "carol", "dave", "spruce", "gleam"]
-  |> list.map(fn(name) { style.render(sp, style.hashed(sp, name), name) })
+  |> list.map(fn(name) {
+    style.render(context, style.hashed(context, name), name)
+  })
   |> string.join("  ")
   |> fn(line) { io.println("  " <> line) }
 }
 
-fn box_section(sp: spruce.Spruce) -> Nil {
+fn box_section(context: spruce.Spruce) -> Nil {
   heading("box — bordered output")
 
-  box.simple(sp, "A simple default box")
+  box.simple(context, "A simple default box")
   |> io.println
 
   io.println("")
 
-  let opts =
+  let options =
     box.new()
     |> box.title("Release")
     |> box.border_color(style.Green)
     |> box.padding(top: 1, right: 2, bottom: 1, left: 2)
 
-  box.render(sp, "spruce 0.1.0\nready to ship", opts)
+  box.render(context, "spruce 0.1.0\nready to ship", options)
   |> io.println
 
   io.println("")
@@ -213,36 +215,36 @@ fn box_section(sp: spruce.Spruce) -> Nil {
     |> box.border_color(style.Magenta)
     |> box.padding(top: 0, right: 1, bottom: 0, left: 1)
 
-  box.render(sp, "thick borders\nfor emphasis", double)
+  box.render(context, "thick borders\nfor emphasis", double)
   |> io.println
 }
 
-fn list_section(sp: spruce.Spruce) -> Nil {
+fn list_section(context: spruce.Spruce) -> Nil {
   heading("items — bullet and ordered lists")
 
-  items.new()
-  |> items.item("Fetch dependencies")
-  |> items.child("Compile sources", [
+  item.new()
+  |> item.item("Fetch dependencies")
+  |> item.child("Compile sources", [
     "spruce.gleam",
     "style.gleam",
     "box.gleam",
   ])
-  |> items.item("Run tests")
-  |> items.render(sp, _)
+  |> item.item("Run tests")
+  |> item.render(context, _)
   |> io.println
 
   io.println("")
 
-  items.new()
-  |> items.kind(items.Ordered)
-  |> items.item("Plan the work")
-  |> items.item("Do the work")
-  |> items.item("Ship the work")
-  |> items.render(sp, _)
+  item.new()
+  |> item.kind(item.Ordered)
+  |> item.item("Plan the work")
+  |> item.item("Do the work")
+  |> item.item("Ship the work")
+  |> item.render(context, _)
   |> io.println
 }
 
-fn tree_section(sp: spruce.Spruce) -> Nil {
+fn tree_section(context: spruce.Spruce) -> Nil {
   heading("tree — nested structure")
 
   tree.root("spruce")
@@ -260,11 +262,11 @@ fn tree_section(sp: spruce.Spruce) -> Nil {
     child: tree.root("test")
     |> tree.child(child: tree.root("spruce_test.gleam")),
   )
-  |> tree.render(sp, _)
+  |> tree.render(context, _)
   |> io.println
 }
 
-fn table_section(sp: spruce.Spruce) -> Nil {
+fn table_section(context: spruce.Spruce) -> Nil {
   heading("table — bordered data grid")
 
   table.new()
@@ -281,14 +283,14 @@ fn table_section(sp: spruce.Spruce) -> Nil {
       _ -> style.new()
     }
   })
-  |> table.render(sp, _)
+  |> table.render(context, _)
   |> io.println
 }
 
-fn markdown_section(sp: spruce.Spruce) -> Nil {
+fn markdown_section(context: spruce.Spruce) -> Nil {
   heading("markdown — rendered Markdown with syntax highlighting")
 
-  let doc =
+  let markdown_document =
     "# Spruce Markdown
 
 Spruce can render **Markdown** straight to the terminal, with *emphasis*,
@@ -311,15 +313,15 @@ Both `> [!TYPE]` alerts and Astro `:::` directives are supported.
 2. Numbered automatically"
 
   markdown.render_with(
-    sp,
-    doc,
+    context,
+    markdown_document,
     markdown.default_options() |> markdown.with_width(64),
   )
   |> io.println
 
   io.println("")
   io.println(style.render(
-    sp,
+    context,
     style.new() |> style.bold,
     "Fenced code blocks are highlighted for many languages:",
   ))
@@ -363,19 +365,19 @@ gleam run -m demo --target javascript
 ```"
 
   markdown.render_with(
-    sp,
+    context,
     code_doc,
     markdown.default_options() |> markdown.with_width(64),
   )
   |> io.println
 
-  markdown_themes_section(sp)
+  markdown_themes_section(context)
 }
 
-fn markdown_themes_section(sp: spruce.Spruce) -> Nil {
+fn markdown_themes_section(context: spruce.Spruce) -> Nil {
   io.println("")
   io.println(style.render(
-    sp,
+    context,
     style.new() |> style.bold,
     "The same snippet rendered with the dark and light themes:",
   ))
@@ -391,7 +393,7 @@ fn main() {
 
   let dark =
     markdown.render_with(
-      sp,
+      context,
       snippet,
       markdown.default_options()
         |> markdown.with_width(40)
@@ -399,7 +401,7 @@ fn main() {
     )
   let light =
     markdown.render_with(
-      sp,
+      context,
       snippet,
       markdown.default_options()
         |> markdown.with_width(40)
@@ -412,10 +414,11 @@ fn main() {
   io.println(indent(light, 2))
 }
 
-fn align_section(sp: spruce.Spruce) -> Nil {
+fn align_section(context: spruce.Spruce) -> Nil {
   heading("align — ANSI-aware padding and truncation")
 
-  let styled = style.render(sp, style.new() |> style.fg(style.Cyan), "colored")
+  let styled =
+    style.render(context, style.new() |> style.fg(style.Cyan), "colored")
   io.println(
     "  visual_length(\"colored\") = "
     <> int.to_string(align.visual_length(styled)),
@@ -436,18 +439,18 @@ fn align_section(sp: spruce.Spruce) -> Nil {
   |> io.println
 }
 
-fn layout_section(sp: spruce.Spruce) -> Nil {
+fn layout_section(context: spruce.Spruce) -> Nil {
   heading("align — composing blocks")
 
   let left =
     box.render(
-      sp,
+      context,
       "left\nblock",
       box.new() |> box.title("A") |> box.border_color(style.Blue),
     )
   let right =
     box.render(
-      sp,
+      context,
       "right\nblock",
       box.new() |> box.title("B") |> box.border_color(style.Green),
     )
@@ -456,24 +459,24 @@ fn layout_section(sp: spruce.Spruce) -> Nil {
   |> io.println
 }
 
-fn group_section(sp: spruce.Spruce) -> Nil {
+fn group_section(context: spruce.Spruce) -> Nil {
   heading("output — eager, streaming groups")
 
-  use sp <- output.stream_group(sp, "build")
-  io.println(message.start(sp, "compiling"))
+  use context <- output.stream_group(context, "build")
+  io.println(message.start(context, "compiling"))
 
-  use sp <- output.stream_group(sp, "test")
-  io.println(message.success(sp, "erlang target green"))
-  io.println(message.success(sp, "javascript target green"))
+  use context <- output.stream_group(context, "test")
+  io.println(message.success(context, "erlang target green"))
+  io.println(message.success(context, "javascript target green"))
 }
 
-fn output_section(sp: spruce.Spruce) -> Nil {
+fn output_section(context: spruce.Spruce) -> Nil {
   heading("output — pipeable, buffered composition")
 
-  output.new(sp)
+  output.new(context)
   |> output.append(message.start(_, "compiling"))
-  |> output.group("test", fn(o) {
-    o
+  |> output.group("test", fn(buffer) {
+    buffer
     |> output.append(message.success(_, "erlang target green"))
     |> output.append(message.success(_, "javascript target green"))
   })

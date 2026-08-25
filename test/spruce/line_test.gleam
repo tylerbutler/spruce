@@ -1,6 +1,6 @@
 import gleam/string
 import spruce
-import spruce/details
+import spruce/detail
 import spruce/line
 import spruce/severity
 import startest/expect
@@ -28,9 +28,9 @@ pub fn line_with_timestamp_and_scope_test() {
 
 pub fn line_with_details_test() {
   let details =
-    details.new()
-    |> details.add(key: "status", value: "200")
-    |> details.add(key: "duration", value: "10ms")
+    detail.new()
+    |> detail.add(key: "status", value: "200")
+    |> detail.add(key: "duration", value: "10ms")
 
   line.new("Request complete")
   |> line.details(details)
@@ -46,14 +46,14 @@ pub fn line_uses_context_indent_test() {
 }
 
 pub fn colored_line_dims_timestamp_scope_and_details_test() {
-  let out =
+  let rendered =
     line.new("Request complete")
     |> line.timestamp("now")
     |> line.scope("api")
-    |> line.details(details.new() |> details.add(key: "status", value: "200"))
+    |> line.details(detail.new() |> detail.add(key: "status", value: "200"))
     |> line.render(spruce.with_color_level(spruce.TrueColor), _)
 
-  expect.to_be_true(string.contains(out, "\u{001b}"))
-  expect.to_be_true(string.contains(out, "[api]"))
-  expect.to_be_true(string.contains(out, "status=200"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}"))
+  expect.to_be_true(string.contains(rendered, "[api]"))
+  expect.to_be_true(string.contains(rendered, "status=200"))
 }

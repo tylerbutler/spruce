@@ -53,13 +53,13 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import mork
-import mork/document as md
+import mork/document
 import spruce.{type Spruce}
 import spruce/align
 import spruce/border
 import spruce/box
 import spruce/highlight
-import spruce/items
+import spruce/item
 import spruce/style
 import spruce/symbol
 import spruce/table
@@ -192,13 +192,17 @@ pub fn with_width(options: Options, width: Int) -> Options {
 }
 
 /// Render Markdown to styled terminal text using the default options.
-pub fn render(sp: Spruce, markdown: String) -> String {
-  render_with(sp, markdown, default_options())
+pub fn render(context: Spruce, markdown: String) -> String {
+  render_with(context, markdown, default_options())
 }
 
 /// Render Markdown to styled terminal text with explicit options.
-pub fn render_with(sp: Spruce, markdown: String, options: Options) -> String {
-  let md.Document(_, blocks, _, _) =
+pub fn render_with(
+  context: Spruce,
+  markdown: String,
+  options: Options,
+) -> String {
+  let document.Document(_, blocks, _, _) =
     mork.configure()
     |> mork.tables(True)
     |> mork.tasklists(True)
@@ -206,96 +210,102 @@ pub fn render_with(sp: Spruce, markdown: String, options: Options) -> String {
     |> mork.heading_ids(True)
     |> mork.parse_with_options(expand_directives(markdown))
 
-  render_blocks(sp, blocks, options)
+  render_blocks(context, blocks, options)
 }
 
 /// Render Markdown with the default options and print it to stdout.
-pub fn print(sp: Spruce, markdown: String) -> Nil {
-  io.println(render(sp, markdown))
+pub fn print(context: Spruce, markdown: String) -> Nil {
+  io.println(render(context, markdown))
 }
 
 fn render_blocks(
-  sp: Spruce,
-  blocks: List(md.Block),
+  context: Spruce,
+  blocks: List(document.Block),
   options: Options,
 ) -> String {
   blocks
-  |> render_block_list(sp, options)
+  |> render_block_list(context, options)
   |> remove_empty
   |> string.join("\n\n")
 }
 
 fn render_block_list(
-  blocks: List(md.Block),
-  sp: Spruce,
+  blocks: List(document.Block),
+  context: Spruce,
   options: Options,
 ) -> List(String) {
   case blocks {
     [] -> []
     [first, ..rest] -> [
-      render_block(sp, first, options),
-      ..render_block_list(rest, sp, options)
+      render_block(context, first, options),
+      ..render_block_list(rest, context, options)
     ]
   }
 }
 
-fn render_block(sp: Spruce, block_: md.Block, options: Options) -> String {
+fn render_block(
+  context: Spruce,
+  block_: document.Block,
+  options: Options,
+) -> String {
   case block_ {
-    md.BlockQuote(blocks) -> render_quote(sp, blocks, options)
-    md.BulletList(pack, entries) ->
-      render_list(sp, pack, entries, None, options)
-    md.Code(lang, text) -> render_code(sp, lang, text, options)
-    md.Empty -> ""
-    md.Heading(level, _, raw, inlines) ->
-      render_heading(sp, level, raw, inlines, options)
-    md.HtmlBlock(raw) -> render_html_block(sp, raw, options.theme)
-    md.Newline -> ""
-    md.OrderedList(pack, entries, start) ->
-      render_list(sp, pack, entries, start, options)
-    md.Paragraph(_, inlines) -> render_paragraph(sp, inlines, options)
-    md.Table(header, rows) -> render_table(sp, header, rows, options)
-    md.ThematicBreak -> render_rule(sp, options)
+    document.BlockQuote(blocks) -> render_quote(context, blocks, options)
+    document.BulletList(pack, entries) ->
+      render_list(context, pack, entries, None, options)
+    document.Code(language, text) ->
+      render_code(context, language, text, options)
+    document.Empty -> ""
+    document.Heading(level, _, raw, inlines) ->
+      render_heading(context, level, raw, inlines, options)
+    document.HtmlBlock(raw) -> render_html_block(context, raw, options.theme)
+    document.Newline -> ""
+    document.OrderedList(pack, entries, start) ->
+      render_list(context, pack, entries, start, options)
+    document.Paragraph(_, inlines) ->
+      render_paragraph(context, inlines, options)
+    document.Table(header, rows) -> render_table(context, header, rows, options)
+    document.ThematicBreak -> render_rule(context, options)
   }
 }
 
 fn render_heading(
-  sp: Spruce,
+  context: Spruce,
   level: Int,
   raw: String,
-  inlines: List(md.Inline),
+  inlines: List(document.Inline),
   options: Options,
 ) -> String {
-  let text = case render_inlines(sp, inlines, options) {
+  let text = case render_inlines(context, inlines, options) {
     "" -> raw
     text -> text
   }
   let marker = string.repeat("#", int.clamp(level, min: 1, max: 6))
   let line = marker <> " " <> string.trim(text)
 
-  spruce.indent_prefix(sp)
-  <> style.render(sp, heading_style(options.theme, level), line)
+  spruce.indent_prefix(context)
+  <> style.render(context, heading_style(options.theme, level), line)
 }
 
 fn render_paragraph(
-  sp: Spruce,
-  inlines: List(md.Inline),
+  context: Spruce,
+  inlines: List(document.Inline),
   options: Options,
 ) -> String {
-  render_inlines(sp, inlines, options)
+  render_inlines(context, inlines, options)
   |> wrap(options.width)
-  |> prefix_lines(spruce.indent_prefix(sp))
+  |> prefix_lines(spruce.indent_prefix(context))
 }
 
 fn render_code(
-  sp: Spruce,
-  lang: Option(String),
+  context: Spruce,
+  language: Option(String),
   text: String,
   options: Options,
 ) -> String {
-  let title = option_string(lang)
+  let title = option_string(language)
   let highlighted =
     highlight.highlight_named_with(
-      sp,
+      context,
       code: text,
       name: title,
       theme: options.theme.code,
@@ -306,30 +316,30 @@ fn render_code(
     |> box.title(title)
     |> box.border_color(options.theme.code_border)
     |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
-  box.render(sp, highlighted, code_box)
+  box.render(context, highlighted, code_box)
 }
 
 fn render_quote(
-  sp: Spruce,
-  blocks: List(md.Block),
+  context: Spruce,
+  blocks: List(document.Block),
   options: Options,
 ) -> String {
   case detect_alert(blocks) {
-    Some(alert) -> render_admonition(sp, alert, options)
-    None -> render_plain_quote(sp, blocks, options)
+    Some(alert) -> render_admonition(context, alert, options)
+    None -> render_plain_quote(context, blocks, options)
   }
 }
 
 fn render_plain_quote(
-  sp: Spruce,
-  blocks: List(md.Block),
+  context: Spruce,
+  blocks: List(document.Block),
   options: Options,
 ) -> String {
   let content =
     style.render(
-      sp,
+      context,
       style.new() |> style.italic,
-      render_blocks(sp, blocks, options),
+      render_blocks(context, blocks, options),
     )
 
   let quote_box =
@@ -339,12 +349,16 @@ fn render_plain_quote(
     |> box.border_color(options.theme.quote_border)
     |> box.padding(top: 0, right: 0, bottom: 0, left: 1)
 
-  box.render(sp, content, quote_box)
+  box.render(context, content, quote_box)
 }
 
 /// A GitHub-style alert / Astro-style aside detected inside a block quote.
 type Alert {
-  Alert(kind: AlertKind, title: Option(List(md.Inline)), body: List(md.Block))
+  Alert(
+    kind: AlertKind,
+    title: Option(List(document.Inline)),
+    body: List(document.Block),
+  )
 }
 
 type AlertKind {
@@ -356,18 +370,18 @@ type AlertKind {
 }
 
 /// Detect a `> [!TYPE] optional title` alert at the head of a block quote and
-/// split out its (optional) custom title and remaining body blocks.
-fn detect_alert(blocks: List(md.Block)) -> Option(Alert) {
+/// split rendered its (optional) custom title and remaining body blocks.
+fn detect_alert(blocks: List(document.Block)) -> Option(Alert) {
   case blocks {
-    [md.Paragraph(_, inlines), ..rest] ->
+    [document.Paragraph(_, inlines), ..rest] ->
       case inlines {
-        [md.Text("["), md.Text(tag), md.Text("]"), ..tail] ->
+        [document.Text("["), document.Text(tag), document.Text("]"), ..tail] ->
           case alert_kind_from_tag(tag) {
             Ok(kind) -> {
               let #(title, body_inlines) = split_alert_first_line(tail)
               let body = case body_inlines {
                 [] -> rest
-                _ -> [md.Paragraph("", body_inlines), ..rest]
+                _ -> [document.Paragraph("", body_inlines), ..rest]
               }
               Some(Alert(kind:, title:, body:))
             }
@@ -401,8 +415,8 @@ fn alert_kind_from_name(name: String) -> Result(AlertKind, Nil) {
 /// Split inlines that follow `[!TYPE]` into an optional same-line title (the
 /// inlines before the first line break) and the remaining body inlines.
 fn split_alert_first_line(
-  inlines: List(md.Inline),
-) -> #(Option(List(md.Inline)), List(md.Inline)) {
+  inlines: List(document.Inline),
+) -> #(Option(List(document.Inline)), List(document.Inline)) {
   let #(before, after) = take_until_break(inlines, [])
   let title = case before {
     [] -> None
@@ -412,43 +426,47 @@ fn split_alert_first_line(
 }
 
 fn take_until_break(
-  inlines: List(md.Inline),
-  acc: List(md.Inline),
-) -> #(List(md.Inline), List(md.Inline)) {
+  inlines: List(document.Inline),
+  accumulator: List(document.Inline),
+) -> #(List(document.Inline), List(document.Inline)) {
   case inlines {
-    [] -> #(list.reverse(acc), [])
-    [md.SoftBreak, ..rest] -> #(list.reverse(acc), rest)
-    [md.HardBreak, ..rest] -> #(list.reverse(acc), rest)
-    [first, ..rest] -> take_until_break(rest, [first, ..acc])
+    [] -> #(list.reverse(accumulator), [])
+    [document.SoftBreak, ..rest] -> #(list.reverse(accumulator), rest)
+    [document.HardBreak, ..rest] -> #(list.reverse(accumulator), rest)
+    [first, ..rest] -> take_until_break(rest, [first, ..accumulator])
   }
 }
 
-fn render_admonition(sp: Spruce, alert: Alert, options: Options) -> String {
+fn render_admonition(
+  context: Spruce,
+  alert: Alert,
+  options: Options,
+) -> String {
   let Alert(kind:, title:, body:) = alert
   let #(color, icon, default_title) = alert_properties(kind)
 
   let title_text = case title {
     Some(inlines) ->
-      case string.trim(render_inlines(sp, inlines, options)) {
+      case string.trim(render_inlines(context, inlines, options)) {
         "" -> default_title
         text -> text
       }
     None -> default_title
   }
 
-  let header = case spruce.supports_color(sp) {
+  let header = case spruce.supports_color(context) {
     True ->
-      style.render(sp, style.new() |> style.fg(color), icon)
+      style.render(context, style.new() |> style.fg(color), icon)
       <> " "
       <> style.render(
-        sp,
+        context,
         style.new() |> style.bold |> style.fg(color),
         title_text,
       )
     False -> icon <> " " <> title_text
   }
 
-  let content = case render_blocks(sp, body, options) {
+  let content = case render_blocks(context, body, options) {
     "" -> header
     body_text -> header <> "\n\n" <> body_text
   }
@@ -460,7 +478,7 @@ fn render_admonition(sp: Spruce, alert: Alert, options: Options) -> String {
     |> box.border_color(color)
     |> box.padding(top: 0, right: 0, bottom: 0, left: 1)
 
-  box.render(sp, content, admonition_box)
+  box.render(context, content, admonition_box)
 }
 
 fn alert_properties(kind: AlertKind) -> #(style.Color, String, String) {
@@ -548,8 +566,8 @@ fn expand_line_outside_directive(
         True -> [line, ..expand_lines(rest, False, None)]
         False ->
           case parse_fence_open(line) {
-            Some(fence) -> [line, ..expand_lines(rest, False, Some(fence))]
-            None ->
+            Ok(fence) -> [line, ..expand_lines(rest, False, Some(fence))]
+            Error(Nil) ->
               case parse_directive_open(line) {
                 Ok(opener) -> [opener, ..expand_lines(rest, True, None)]
                 // nolint: thrown_away_error -- not a directive, keep line as-is
@@ -564,7 +582,7 @@ fn is_indented_code_line(line: String) -> Bool {
   string.starts_with(line, "    ") || string.starts_with(line, "\t")
 }
 
-fn parse_fence_open(line: String) -> Option(Fence) {
+fn parse_fence_open(line: String) -> Result(Fence, Nil) {
   let trimmed = string.trim(line)
   case string.pop_grapheme(trimmed) {
     Ok(#(marker, _)) ->
@@ -572,36 +590,37 @@ fn parse_fence_open(line: String) -> Option(Fence) {
         "`" | "~" -> {
           let length = count_prefix(trimmed, marker, 0)
           case length >= 3 {
-            True -> Some(Fence(marker:, length:))
-            False -> None
+            True -> Ok(Fence(marker:, length:))
+            False -> Error(Nil)
           }
         }
-        _ -> None
+        _ -> Error(Nil)
       }
-    // nolint: thrown_away_error -- empty input means no fence
-    Error(_) -> None
+    Error(_) -> Error(Nil)
   }
 }
 
 fn closes_fence(line: String, fence: Fence) -> Bool {
   let Fence(marker:, length:) = fence
   case trim_fence_close_candidate(line, 0) {
-    Some(candidate) -> count_prefix(candidate, marker, 0) >= length
-    None -> False
+    Ok(candidate) -> count_prefix(candidate, marker, 0) >= length
+    Error(Nil) -> False
   }
 }
 
-fn trim_fence_close_candidate(line: String, spaces: Int) -> Option(String) {
+fn trim_fence_close_candidate(
+  line: String,
+  spaces: Int,
+) -> Result(String, Nil) {
   case string.pop_grapheme(line) {
     Ok(#(" ", rest)) ->
       case spaces < 3 {
         True -> trim_fence_close_candidate(rest, spaces + 1)
-        False -> None
+        False -> Error(Nil)
       }
-    Ok(#("\t", _)) -> None
-    Ok(_) -> Some(string.trim(line))
-    // nolint: thrown_away_error -- empty input cannot close a fence
-    Error(_) -> None
+    Ok(#("\t", _)) -> Error(Nil)
+    Ok(_) -> Ok(string.trim(line))
+    Error(_) -> Error(Nil)
   }
 }
 
@@ -737,74 +756,74 @@ fn is_name_char(char: String) -> Bool {
 }
 
 fn render_list(
-  sp: Spruce,
-  pack: md.ListPack,
-  entries: List(md.ListItem),
+  context: Spruce,
+  pack: document.ListPack,
+  entries: List(document.ListItem),
   start: Option(Int),
   options: Options,
 ) -> String {
-  let labels = render_list_labels(entries, pack, sp, options)
+  let labels = render_list_labels(entries, pack, context, options)
   let list_ =
     labels
-    |> list.fold(items.new(), fn(list_, label) { items.item(list_, label) })
+    |> list.fold(item.new(), fn(list_, label) { item.item(list_, label) })
 
   case start {
-    None -> items.render(sp, list_)
+    None -> item.render(context, list_)
     Some(start) -> {
       let list_ =
         list_
-        |> items.kind(items.Ordered)
-        |> items.enumerator(fn(index, _depth) {
+        |> item.kind(item.Ordered)
+        |> item.enumerator(fn(index, _depth) {
           int.to_string(start + index - 1) <> ". "
         })
 
-      items.render(sp, list_)
+      item.render(context, list_)
     }
   }
 }
 
 fn render_list_labels(
-  entries: List(md.ListItem),
-  pack: md.ListPack,
-  sp: Spruce,
+  entries: List(document.ListItem),
+  pack: document.ListPack,
+  context: Spruce,
   options: Options,
 ) -> List(String) {
   case entries {
     [] -> []
-    [md.ListItem(blocks, _, _), ..rest] -> [
-      render_list_item_blocks(blocks, pack, sp, options),
-      ..render_list_labels(rest, pack, sp, options)
+    [document.ListItem(blocks, _, _), ..rest] -> [
+      render_list_item_blocks(blocks, pack, context, options),
+      ..render_list_labels(rest, pack, context, options)
     ]
   }
 }
 
 fn render_list_item_blocks(
-  blocks: List(md.Block),
-  pack: md.ListPack,
-  sp: Spruce,
+  blocks: List(document.Block),
+  pack: document.ListPack,
+  context: Spruce,
   options: Options,
 ) -> String {
   let separator = case pack {
-    md.Tight -> "\n"
-    md.Loose -> "\n\n"
+    document.Tight -> "\n"
+    document.Loose -> "\n\n"
   }
 
   blocks
-  |> render_block_list(sp, options)
+  |> render_block_list(context, options)
   |> remove_empty
   |> string.join(separator)
 }
 
 fn render_table(
-  sp: Spruce,
-  headers: List(md.THead),
-  rows: List(List(md.Cell)),
+  context: Spruce,
+  headers: List(document.THead),
+  rows: List(List(document.Cell)),
   options: Options,
 ) -> String {
   let table_ =
     table.new()
-    |> table.headers(render_table_headers(sp, headers, options))
-    |> table.rows(render_table_rows(sp, rows, options))
+    |> table.headers(render_table_headers(context, headers, options))
+    |> table.rows(render_table_rows(context, rows, options))
     |> table.style_fn(fn(row, _column) {
       case row {
         -1 -> options.theme.table_header
@@ -813,180 +832,186 @@ fn render_table(
     })
 
   case options.width {
-    Some(width) if width > 0 -> table.render(sp, table.width(table_, width))
-    _ -> table.render(sp, table_)
+    Some(width) if width > 0 ->
+      table.render(context, table.width(table_, width))
+    Some(_) | None -> table.render(context, table_)
   }
 }
 
 fn render_table_headers(
-  sp: Spruce,
-  headers: List(md.THead),
+  context: Spruce,
+  headers: List(document.THead),
   options: Options,
 ) -> List(String) {
   case headers {
     [] -> []
-    [md.THead(_, raw, inlines), ..rest] -> [
-      fallback_inline(sp, raw, inlines, options) |> string.trim,
-      ..render_table_headers(sp, rest, options)
+    [document.THead(_, raw, inlines), ..rest] -> [
+      fallback_inline(context, raw, inlines, options) |> string.trim,
+      ..render_table_headers(context, rest, options)
     ]
   }
 }
 
 fn render_table_rows(
-  sp: Spruce,
-  rows: List(List(md.Cell)),
+  context: Spruce,
+  rows: List(List(document.Cell)),
   options: Options,
 ) -> List(List(String)) {
   case rows {
     [] -> []
     [row, ..rest] -> [
-      render_table_cells(sp, row, options),
-      ..render_table_rows(sp, rest, options)
+      render_table_cells(context, row, options),
+      ..render_table_rows(context, rest, options)
     ]
   }
 }
 
 fn render_table_cells(
-  sp: Spruce,
-  cells: List(md.Cell),
+  context: Spruce,
+  cells: List(document.Cell),
   options: Options,
 ) -> List(String) {
   case cells {
     [] -> []
-    [md.Cell(raw, inlines), ..rest] -> [
-      fallback_inline(sp, raw, inlines, options) |> string.trim,
-      ..render_table_cells(sp, rest, options)
+    [document.Cell(raw, inlines), ..rest] -> [
+      fallback_inline(context, raw, inlines, options) |> string.trim,
+      ..render_table_cells(context, rest, options)
     ]
   }
 }
 
-fn render_rule(sp: Spruce, options: Options) -> String {
+fn render_rule(context: Spruce, options: Options) -> String {
   let width = case options.width {
     Some(width) if width > 0 -> width
-    _ -> 40
+    Some(_) | None -> 40
   }
 
-  spruce.indent_prefix(sp)
-  <> style.render(sp, options.theme.rule, string.repeat("─", width))
+  spruce.indent_prefix(context)
+  <> style.render(context, options.theme.rule, string.repeat("─", width))
 }
 
-fn render_html_block(sp: Spruce, raw: String, theme: Theme) -> String {
-  style.render(sp, theme.html, raw)
-  |> prefix_lines(spruce.indent_prefix(sp))
+fn render_html_block(context: Spruce, raw: String, theme: Theme) -> String {
+  style.render(context, theme.html, raw)
+  |> prefix_lines(spruce.indent_prefix(context))
 }
 
 fn render_inlines(
-  sp: Spruce,
-  inlines: List(md.Inline),
+  context: Spruce,
+  inlines: List(document.Inline),
   options: Options,
 ) -> String {
   inlines
-  |> render_inline_list(sp, options)
+  |> render_inline_list(context, options)
   |> string.join("")
 }
 
 fn render_inline_list(
-  inlines: List(md.Inline),
-  sp: Spruce,
+  inlines: List(document.Inline),
+  context: Spruce,
   options: Options,
 ) -> List(String) {
   case inlines {
     [] -> []
     [first, ..rest] -> [
-      render_inline(sp, first, options),
-      ..render_inline_list(rest, sp, options)
+      render_inline(context, first, options),
+      ..render_inline_list(rest, context, options)
     ]
   }
 }
 
-fn render_inline(sp: Spruce, inline: md.Inline, options: Options) -> String {
+fn render_inline(
+  context: Spruce,
+  inline: document.Inline,
+  options: Options,
+) -> String {
   case inline {
-    md.Autolink(uri, text) -> {
+    document.Autolink(uri, text) -> {
       let label = case text {
         Some(text) -> text
         None -> uri
       }
-      render_link(sp, label, uri, options.theme)
+      render_link(context, label, uri, options.theme)
     }
-    md.CodeSpan(text) ->
-      style.render(sp, options.theme.code_span, "`" <> text <> "`")
-    md.EmailAutolink(mail) ->
-      render_link(sp, mail, "mailto:" <> mail, options.theme)
-    md.Emphasis(children) ->
+    document.CodeSpan(text) ->
+      style.render(context, options.theme.code_span, "`" <> text <> "`")
+    document.EmailAutolink(mail) ->
+      render_link(context, mail, "mailto:" <> mail, options.theme)
+    document.Emphasis(children) ->
       style.render(
-        sp,
+        context,
         options.theme.emphasis,
-        render_inlines(sp, children, options),
+        render_inlines(context, children, options),
       )
-    md.Footnote(num, _) -> "[^" <> int.to_string(num) <> "]"
-    md.FullImage(text, data) ->
-      render_image(sp, text, destination_string(data.dest), options)
-    md.FullLink(text, data) ->
+    document.Footnote(number, _) -> "[^" <> int.to_string(number) <> "]"
+    document.FullImage(text, data) ->
+      render_image(context, text, destination_string(data.dest), options)
+    document.FullLink(text, data) ->
       render_link(
-        sp,
-        render_inlines(sp, text, options),
+        context,
+        render_inlines(context, text, options),
         destination_string(data.dest),
         options.theme,
       )
-    md.HardBreak -> "\n"
-    md.Highlight(children) ->
+    document.HardBreak -> "\n"
+    document.Highlight(children) ->
       style.render(
-        sp,
+        context,
         options.theme.highlight,
-        render_inlines(sp, children, options),
+        render_inlines(context, children, options),
       )
-    md.InlineFootnote(num, _) -> "[^" <> int.to_string(num) <> "]"
-    md.InlineHtml(tag, _, children) -> {
+    document.InlineFootnote(number, _) -> "[^" <> int.to_string(number) <> "]"
+    document.InlineHtml(tag, _, children) -> {
       case children {
-        [] -> style.render(sp, options.theme.html, "<" <> tag <> ">")
-        _ -> render_inlines(sp, children, options)
+        [] -> style.render(context, options.theme.html, "<" <> tag <> ">")
+        _ -> render_inlines(context, children, options)
       }
     }
-    md.RawHtml(raw) -> style.render(sp, options.theme.html, raw)
-    md.RefImage(text, label) -> render_image(sp, text, label, options)
-    md.RefLink(text, _) -> render_inlines(sp, text, options)
-    md.SoftBreak -> " "
-    md.Strikethrough(children) ->
+    document.RawHtml(raw) -> style.render(context, options.theme.html, raw)
+    document.RefImage(text, label) ->
+      render_image(context, text, label, options)
+    document.RefLink(text, _) -> render_inlines(context, text, options)
+    document.SoftBreak -> " "
+    document.Strikethrough(children) ->
       style.render(
-        sp,
+        context,
         options.theme.strikethrough,
-        render_inlines(sp, children, options),
+        render_inlines(context, children, options),
       )
-    md.Strong(children) ->
+    document.Strong(children) ->
       style.render(
-        sp,
+        context,
         options.theme.strong,
-        render_inlines(sp, children, options),
+        render_inlines(context, children, options),
       )
-    md.Text(text) -> text
-    md.Checkbox(True) -> "[x]"
-    md.Checkbox(False) -> "[ ]"
-    md.Delim(delimiter, len, _, _) -> string.repeat(delimiter, len)
+    document.Text(text) -> text
+    document.Checkbox(True) -> "[x]"
+    document.Checkbox(False) -> "[ ]"
+    document.Delim(delimiter, length, _, _) -> string.repeat(delimiter, length)
   }
 }
 
 fn render_link(
-  sp: Spruce,
+  context: Spruce,
   label: String,
   target: String,
   theme: Theme,
 ) -> String {
-  let visible = style.render(sp, theme.link, label)
+  let visible = style.render(context, theme.link, label)
 
   case target == "" || target == label {
     True -> visible
     False ->
-      visible <> style.render(sp, theme.link_target, " (" <> target <> ")")
+      visible <> style.render(context, theme.link_target, " (" <> target <> ")")
   }
 }
 
 fn render_image(
-  sp: Spruce,
-  text: List(md.Inline),
+  context: Spruce,
+  text: List(document.Inline),
   target: String,
   options: Options,
 ) -> String {
-  let label = render_inlines(sp, text, options)
+  let label = render_inlines(context, text, options)
 
   case label {
     "" -> target
@@ -995,12 +1020,12 @@ fn render_image(
 }
 
 fn fallback_inline(
-  sp: Spruce,
+  context: Spruce,
   raw: String,
-  inlines: List(md.Inline),
+  inlines: List(document.Inline),
   options: Options,
 ) -> String {
-  case render_inlines(sp, inlines, options) {
+  case render_inlines(context, inlines, options) {
     "" -> raw
     text -> text
   }
@@ -1017,11 +1042,11 @@ fn heading_style(theme: Theme, level: Int) -> style.Style {
   }
 }
 
-fn destination_string(destination: md.Destination) -> String {
+fn destination_string(destination: document.Destination) -> String {
   case destination {
-    md.Absolute(uri) -> uri
-    md.Relative(uri) -> uri
-    md.Anchor(id) -> "#" <> id
+    document.Absolute(uri) -> uri
+    document.Relative(uri) -> uri
+    document.Anchor(id) -> "#" <> id
   }
 }
 
@@ -1035,7 +1060,7 @@ fn option_string(value: Option(String)) -> String {
 fn wrap(text: String, width: Option(Int)) -> String {
   case width {
     Some(width) if width > 0 -> align.wrap(text, width)
-    _ -> text
+    Some(_) | None -> text
   }
 }
 

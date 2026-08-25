@@ -16,9 +16,9 @@
 //// import spruce
 ////
 //// pub fn main() {
-////   let sp = spruce.detect()
-////   // pass `sp` to render functions in spruce/style, spruce/box, etc.
-////   echo spruce.supports_color(sp)
+////   let context = spruce.detect()
+////   // pass `context` to render functions in spruce/style, spruce/box, etc.
+////   echo spruce.supports_color(context)
 //// }
 //// ```
 ////
@@ -72,8 +72,8 @@ pub fn detect_stream(stream: Stream) -> Spruce {
   let stream = to_tty_stream(stream)
 
   Spruce(
-    color: from_tty_color_level(tty.detect_color_level(stream)),
-    background: from_tty_background(tty.detect_background(stream)),
+    color: tty_color_level_to_color_level(tty.detect_color_level(stream)),
+    background: tty_background_to_background(tty.detect_background(stream)),
     depth: 0,
   )
 }
@@ -93,42 +93,42 @@ pub fn no_color() -> Spruce {
 }
 
 /// Get the color level of a context.
-pub fn color_level(sp: Spruce) -> ColorLevel {
-  sp.color
+pub fn color_level(context: Spruce) -> ColorLevel {
+  context.color
 }
 
 /// Whether the context will emit any color (i.e. its level is not `NoColor`).
-pub fn supports_color(sp: Spruce) -> Bool {
-  sp.color != NoColor
+pub fn supports_color(context: Spruce) -> Bool {
+  context.color != NoColor
 }
 
 /// Get the detected terminal background of a context.
-pub fn background(sp: Spruce) -> Background {
-  sp.background
+pub fn background(context: Spruce) -> Background {
+  context.background
 }
 
 /// Return a copy of the context with an explicit terminal background, bypassing
 /// detection. Useful for forcing light/dark adaptive colors in tests or honoring
 /// a user `--background` flag.
-pub fn with_background(sp: Spruce, background: Background) -> Spruce {
-  Spruce(..sp, background:)
+pub fn with_background(context: Spruce, background: Background) -> Spruce {
+  Spruce(..context, background:)
 }
 
 /// Get the current indent depth of a context (0 at the top level).
-pub fn depth(sp: Spruce) -> Int {
-  sp.depth
+pub fn depth(context: Spruce) -> Int {
+  context.depth
 }
 
 /// Return a copy of the context with its indent depth increased by one.
 /// `spruce/output.group` uses this to hand a deeper context to grouped bodies.
-pub fn indented(sp: Spruce) -> Spruce {
-  Spruce(..sp, depth: sp.depth + 1)
+pub fn indented(context: Spruce) -> Spruce {
+  Spruce(..context, depth: context.depth + 1)
 }
 
 /// The indentation prefix for the context's depth: two spaces per level.
 /// Block-producing renderers prepend this to every line they emit.
-pub fn indent_prefix(sp: Spruce) -> String {
-  string.repeat("  ", sp.depth)
+pub fn indent_prefix(context: Spruce) -> String {
+  string.repeat("  ", context.depth)
 }
 
 fn to_tty_stream(stream: Stream) -> tty.Stream {
@@ -139,7 +139,7 @@ fn to_tty_stream(stream: Stream) -> tty.Stream {
   }
 }
 
-fn from_tty_color_level(level: tty.ColorLevel) -> ColorLevel {
+fn tty_color_level_to_color_level(level: tty.ColorLevel) -> ColorLevel {
   case level {
     tty.NoColor -> NoColor
     tty.Basic -> Basic
@@ -148,7 +148,7 @@ fn from_tty_color_level(level: tty.ColorLevel) -> ColorLevel {
   }
 }
 
-fn from_tty_background(background: tty.Background) -> Background {
+fn tty_background_to_background(background: tty.Background) -> Background {
   case background {
     tty.Light -> Light
     tty.Dark -> Dark

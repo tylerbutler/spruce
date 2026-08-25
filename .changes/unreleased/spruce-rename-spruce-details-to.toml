@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Major Release"
+body = "Rename spruce/details to spruce/detail. Import spruce/detail instead; the Details type and functions are unchanged."
