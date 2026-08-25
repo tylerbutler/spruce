@@ -5,6 +5,8 @@ React, TypeScript, and Tailwind v4.
 
 ```sh
 npm install
+npm run build:gleam  # compile the nested Gleam workbench facade
+npm run check:gleam  # smoke-test the generated JavaScript facade
 npm test         # ANSI and workbench adapter checks
 npm run dev      # local dev server
 npm run build    # static build to dist/
@@ -29,12 +31,18 @@ Gleam 1.16.0 when needed and runs the normal `npm run build` command.
 
 ## Interactive workbench
 
-The homepage workbench lazy-loads a generated Gleam adapter from
-`src/workbench/`. Its native controls update real ANSI output and runnable
-public Gleam source from the same typed state.
+The homepage workbench is driven by the nested Gleam package in
+`website/workbench/`. `npm run build:gleam` compiles that facade to the
+generated JavaScript checked into the untracked `workbench/build/` boundary,
+which Vite and TypeScript consume from `src/workbench/runtime.ts`.
 
-`npm test` and `npm run build` compile the browser facade in `workbench/`
-before running their website checks.
+The React workbench UI lazy-loads separately from the landing-page shell, and
+its generated Gleam runtime remains a second lazy chunk behind that boundary.
+Its native controls update real ANSI output and runnable public Gleam source
+from the same typed state.
+
+`npm run dev`, `npm test`, and `npm run build` all compile the browser facade in
+`workbench/` before running their website checks.
 
 ## Real terminal output
 
@@ -55,3 +63,6 @@ To regenerate after changing spruce:
    ```
 3. Rebuild `src/data/terminalBlocks.ts` from that JSON, then delete the demo
    module from `src/` (it must not ship in the published package).
+
+After regenerating fixtures, rerun `npm test` to verify the ANSI converter and
+workbench adapter still agree with the captured output.

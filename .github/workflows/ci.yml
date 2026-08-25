@@ -41,6 +41,12 @@ jobs:
       - name: Install website dependencies
         run: npm ci --prefix website
 
+      - name: Build workbench facade
+        run: npm run build:gleam --prefix website
+
+      - name: Check workbench facade
+        run: npm run check:gleam --prefix website
+
       - name: Test website
         run: npm test --prefix website
 

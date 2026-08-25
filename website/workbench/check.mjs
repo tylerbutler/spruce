@@ -48,7 +48,7 @@ assert.equal(
     workbench.Capability$NoColor(),
     "hi",
     workbench.box_border(
-      workbench.box_padding(workbench.plain_box(), 0, 1, 0, 1),
+      workbench.box_padding(workbench.new_box(), 0, 1, 0, 1),
       workbench.BorderStyle$Rounded(),
     ),
   ),

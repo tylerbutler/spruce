@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Workbench } from "./components/Workbench";
+import { lazy, Suspense, useState } from "react";
 import {
   Reveal,
   Terminal,
@@ -10,6 +9,11 @@ import {
 import { GitHubIcon, ArrowIcon, BookIcon } from "./icons";
 import { terminalBlocks as T } from "./data/terminalBlocks";
 import type { WorkbenchColorCapability } from "./workbench";
+
+const Workbench = lazy(async () => {
+  const module = await import("./components/Workbench");
+  return { default: module.Workbench };
+});
 
 const REPO = "https://github.com/tylerbutler/spruce";
 const CI = `${REPO}/actions`;
@@ -297,10 +301,12 @@ export default function App() {
           onCapabilityChange={setCapability}
         />
         <Runtimes />
-        <Workbench
-          capability={capability}
-          onCapabilityChange={setCapability}
-        />
+        <Suspense fallback={null}>
+          <Workbench
+            capability={capability}
+            onCapabilityChange={setCapability}
+          />
+        </Suspense>
         <Modules />
         <Cta />
       </main>
