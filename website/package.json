@@ -6,10 +6,13 @@
   "description": "Marketing site for the spruce terminal-UI kit.",
   "scripts": {
     "generate:code": "node tools/generate-code-samples.mjs",
-    "predev": "npm run generate:code",
+    "build:gleam": "cd workbench && gleam build --target javascript",
+    "predev": "npm run generate:code && npm run build:gleam",
     "dev": "vite",
-    "prebuild": "npm run generate:code",
+    "prebuild": "npm run generate:code && npm run build:gleam",
     "build": "tsc -b && vite build",
+    "test": "tsc -b",
+    "pretest": "npm run build:gleam",
     "preview": "vite preview"
   },
   "dependencies": {

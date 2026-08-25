@@ -1,0 +1,10 @@
+name = "spruce_workbench"
+version = "0.1.0"
+description = "Browser workbench for spruce's generated JavaScript"
+gleam = ">= 1.16.0"
+
+[javascript]
+typescript_declarations = true
+
+[dependencies]
+spruce = { path = "../.." }
