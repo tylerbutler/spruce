@@ -34,7 +34,7 @@ type FormatKind {
   Custom(render: fn(Severity, Spruce) -> String)
 }
 
-/// Render an icon plus lowercase severity label, e.g. `ℹ info`.
+/// Render an icon plus lowercase severity label, e.g. `ℹ︎ info`.
 pub fn label() -> Formatter {
   Formatter(kind: Label, icons: True, mode: symbol.Unicode, target_width: 10)
 }

@@ -15,7 +15,7 @@ pub fn line_with_severity_test() {
   line.new("Cache warmed")
   |> line.severity(severity.Info)
   |> line.render(spruce.no_color(), _)
-  |> expect.to_equal("ℹ info     Cache warmed")
+  |> expect.to_equal("ℹ︎ info     Cache warmed")
 }
 
 pub fn line_with_timestamp_and_scope_test() {

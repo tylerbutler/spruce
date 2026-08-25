@@ -1,5 +1,5 @@
-//// Temporary demo used to generate real spruce output for the landing page.
-//// Not part of the public API — safe to delete.
+//// Generates real spruce output for the website terminal panels.
+//// This development module is not part of the public API.
 
 import gleam/io
 import spruce
