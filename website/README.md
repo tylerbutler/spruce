@@ -21,13 +21,19 @@ Code and Shiki's bundled Gleam grammar. `npm run generate:code` writes static
 HTML and CSS under `src/data/`; `npm run dev` and `npm run build` regenerate
 them automatically.
 
+## Netlify
+
+The root `netlify.toml` builds from `website/` and publishes `website/dist/`.
+Netlify installs npm dependencies, then `scripts/netlify-build.sh` provides
+Gleam 1.16.0 when needed and runs the normal `npm run build` command.
+
 ## Interactive workbench
 
 The homepage workbench lazy-loads a generated Gleam adapter from
 `src/workbench/`. Its native controls update real ANSI output and runnable
 public Gleam source from the same typed state.
+
 `npm test` and `npm run build` compile the browser facade in `workbench/`
-before running their website checks.
 before running their website checks.
 
 ## Real terminal output
