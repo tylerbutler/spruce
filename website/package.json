@@ -13,7 +13,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "pretest": "npm run build:gleam",
-    "test": "node --test"
+    "test": "node --test tools/ansi2html.test.js && node --experimental-strip-types --test tools/workbench.test.ts"
   },
   "dependencies": {
     "react": "^18.3.1",
