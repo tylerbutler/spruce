@@ -2,11 +2,12 @@ import { lazy, Suspense, useState } from "react";
 import {
   Reveal,
   Terminal,
+  TermBar,
   Tabs,
   CopyButton,
   ThemeToggle,
 } from "./components/ui";
-import { GitHubIcon, ArrowIcon, BookIcon } from "./icons";
+import { GitHubIcon, ArrowIcon, BookIcon, MessageIcon } from "./icons";
 import { terminalBlocks as T } from "./data/terminalBlocks";
 import type { WorkbenchColorCapability } from "./workbench";
 
@@ -20,6 +21,14 @@ const CI = `${REPO}/actions`;
 const DOCS = "https://hexdocs.pm/spruce/";
 const HEX = "https://hex.pm/packages/spruce";
 const INSTALL = "gleam add spruce";
+const WORKBENCH_FALLBACK_SOURCE = `import gleam/io
+import spruce
+import spruce/message
+
+pub fn main() {
+  let context = spruce.with_color_level(spruce.TrueColor)
+  io.println(message.success(context, "Deploy complete"))
+}`;
 
 const heroModes = [
   { id: "truecolor", label: "TrueColor", block: "hero" },
@@ -199,6 +208,113 @@ function Runtimes() {
   );
 }
 
+function WorkbenchFallback() {
+  return (
+    <section
+      className="section workbench-fallback"
+      id="workbench"
+      aria-busy="true"
+    >
+      <div className="wrap">
+        <div className="section-head">
+          <h2>Shape the output, then take the code.</h2>
+          <p className="lead">
+            Choose one focused spruce capability. Every control updates real
+            Gleam-rendered ANSI output and the public source beside it.
+          </p>
+        </div>
+        <div className="workbench">
+          <div className="workbench-kind-tabs" aria-hidden="true">
+            <button className="active" type="button" disabled>
+              Semantic messages
+            </button>
+            <button type="button" disabled>
+              Styled text
+            </button>
+            <button type="button" disabled>
+              Boxed blocks
+            </button>
+            <button type="button" disabled>
+              Tables
+            </button>
+          </div>
+          <div className="workbench-stage">
+            <div className="workbench-stage-head">
+              <div className="workbench-title">
+                <span className="workbench-icon">
+                  <MessageIcon />
+                </span>
+                <div>
+                  <h3>Semantic messages</h3>
+                  <p>
+                    Render one semantic line with the bounded message
+                    constructors.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p className="sr-only" role="status">
+              Loading the interactive workbench.
+            </p>
+            <div
+              className="color-tabs workbench-color-tabs"
+              aria-hidden="true"
+            >
+              <button type="button" disabled>
+                No color
+              </button>
+              <button type="button" disabled>
+                Basic ANSI
+              </button>
+              <button type="button" disabled>
+                ANSI 256
+              </button>
+              <button className="active" type="button" disabled>
+                Truecolor
+              </button>
+            </div>
+            <div className="workbench-grid">
+              <fieldset
+                className="workbench-controls"
+                disabled
+                aria-hidden="true"
+              >
+                <legend>Adjust semantic messages</legend>
+                <label className="control-field">
+                  <span>Message kind</span>
+                  <select defaultValue="success">
+                    <option value="success">Success</option>
+                  </select>
+                </label>
+                <label className="control-field">
+                  <span>Text</span>
+                  <input type="text" defaultValue="Deploy complete" />
+                </label>
+              </fieldset>
+              <div className="workbench-results">
+                <div className="workbench-output">
+                  <Terminal
+                    title="Real output preview"
+                    html={T.messages}
+                  />
+                </div>
+                <div className="code source-panel" aria-hidden="true">
+                  <TermBar title="main.gleam" />
+                  <div className="term-content">
+                    <pre>
+                      <code>{WORKBENCH_FALLBACK_SOURCE}</code>
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Modules() {
   return (
     <section className="section" id="modules" style={{ paddingTop: 0 }}>
@@ -301,7 +417,7 @@ export default function App() {
           onCapabilityChange={setCapability}
         />
         <Runtimes />
-        <Suspense fallback={null}>
+        <Suspense fallback={<WorkbenchFallback />}>
           <Workbench
             capability={capability}
             onCapabilityChange={setCapability}

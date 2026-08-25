@@ -640,6 +640,10 @@ section {
   border: 1px solid var(--border);
   border-radius: var(--r);
 }
+.workbench-fallback button:disabled {
+  cursor: wait;
+  opacity: 1;
+}
 .workbench-kind-tabs {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

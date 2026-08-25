@@ -5,15 +5,12 @@ import gleam/io
 import spruce
 import spruce/border
 import spruce/box
-import spruce/detail
-import spruce/item
 import spruce/line
 import spruce/message
 import spruce/output
 import spruce/severity
 import spruce/style
 import spruce/table
-import spruce/tree
 
 fn mark(name: String) -> Nil {
   io.println("\u{0001}" <> name)
@@ -70,51 +67,6 @@ pub fn main() {
     ])
     |> table.border(border.Rounded)
     |> table.render(context, _),
-  )
-
-  mark("tree")
-  io.println(
-    tree.root("spruce")
-    |> tree.child(
-      child: tree.root("style")
-      |> tree.child(child: tree.root("named"))
-      |> tree.child(child: tree.root("rgb / hex / 256"))
-      |> tree.child(child: tree.root("adaptive")),
-    )
-    |> tree.child(
-      child: tree.root("layout")
-      |> tree.child(child: tree.root("box"))
-      |> tree.child(child: tree.root("table"))
-      |> tree.child(child: tree.root("tree")),
-    )
-    |> tree.render(context, _),
-  )
-
-  mark("list")
-  io.println(
-    item.new()
-    |> item.item("Auto-detects color support")
-    |> item.nested(
-      "Renders on both runtimes",
-      item.new()
-        |> item.item("Erlang / BEAM")
-        |> item.item("JavaScript / Node"),
-    )
-    |> item.item("Pure, testable string builders")
-    |> item.render(context, _),
-  )
-
-  mark("line")
-  let meta =
-    detail.new()
-    |> detail.add(key: "duration", value: "42ms")
-    |> detail.add(key: "target", value: "javascript")
-  io.println(
-    line.new("Request handled")
-    |> line.severity(severity.Info)
-    |> line.scope("http")
-    |> line.details(meta)
-    |> line.render(context, _),
   )
 
   mark("example")

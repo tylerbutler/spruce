@@ -264,7 +264,6 @@ export function Workbench({
                   <div
                     className="workbench-output"
                     aria-busy={adapterState.status === "loading"}
-                    aria-live="polite"
                   >
                     {adapterState.status === "loading" && (
                       <div className="workbench-loading">

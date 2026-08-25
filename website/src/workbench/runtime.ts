@@ -11,7 +11,6 @@ import type {
   WorkbenchExample,
   WorkbenchHorizontalAlignment,
   WorkbenchMessageKind,
-  WorkbenchRenderResult,
 } from "./domain.ts";
 
 export function createWorkbenchAdapter(): WorkbenchAdapter {
@@ -235,10 +234,4 @@ function toList<T>(values: readonly T[]) {
 
 function toRowList(values: readonly (readonly string[])[]) {
   return toList(values.map((row) => toList(row)));
-}
-
-export function renderWorkbenchExample(
-  example: WorkbenchExample,
-): WorkbenchRenderResult {
-  return createWorkbenchAdapter().render(example);
 }

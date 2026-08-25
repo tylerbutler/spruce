@@ -1,40 +1,15 @@
 export { loadWorkbenchAdapter } from "./loadAdapter.ts";
 export { getWorkbenchPreset, workbenchPresets } from "./registry.ts";
 export { renderWorkbenchSource } from "./source.ts";
-export {
-  WORKBENCH_DOCS_ROOT,
-  borderStyles,
-  colorCapabilities,
-  horizontalAlignments,
-  messageKinds,
-  namedColors,
-  workbenchKinds,
-} from "./domain.ts";
 export type {
   BoxWorkbenchExample,
-  BoxControlMetadata,
   MessageWorkbenchExample,
-  MessageControlMetadata,
   StyleWorkbenchExample,
-  StyleControlMetadata,
   TableWorkbenchExample,
-  TableControlMetadata,
   WorkbenchAdapter,
-  WorkbenchBorderStyle,
   WorkbenchColor,
   WorkbenchColorCapability,
-  WorkbenchChoiceControlMetadata,
-  WorkbenchControl,
-  WorkbenchControlMetadataByKind,
-  WorkbenchControlOption,
   WorkbenchExample,
-  WorkbenchFallbackBlock,
-  WorkbenchHorizontalAlignment,
   WorkbenchKind,
-  WorkbenchMessageKind,
   WorkbenchNumberControlMetadata,
-  WorkbenchPaddingControlMetadata,
-  WorkbenchPreset,
-  WorkbenchRenderResult,
-  WorkbenchTableWidthControlMetadata,
 } from "./domain.ts";
