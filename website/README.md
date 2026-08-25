@@ -1,10 +1,11 @@
 # spruce website
 
-Marketing site for [spruce](https://hex.pm/packages/spruce), built with Vite +
-React + TypeScript, Tailwind v4, and Motion.
+Marketing site for [spruce](https://hex.pm/packages/spruce), built with Vite,
+React, TypeScript, and Tailwind v4.
 
 ```sh
 npm install
+npm test         # ANSI and workbench adapter checks
 npm run dev      # local dev server
 npm run build    # static build to dist/
 npm run preview  # serve the built site
@@ -19,6 +20,15 @@ Source samples in `code-samples/` are rendered at build time with Expressive
 Code and Shiki's bundled Gleam grammar. `npm run generate:code` writes static
 HTML and CSS under `src/data/`; `npm run dev` and `npm run build` regenerate
 them automatically.
+
+## Interactive workbench
+
+The homepage workbench lazy-loads a generated Gleam adapter from
+`src/workbench/`. Its native controls update real ANSI output and runnable
+public Gleam source from the same typed state.
+`npm test` and `npm run build` compile the browser facade in `workbench/`
+before running their website checks.
+before running their website checks.
 
 ## Real terminal output
 
