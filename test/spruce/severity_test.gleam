@@ -7,7 +7,7 @@ import startest/expect
 
 pub fn label_formatter_no_color_test() {
   severity.render(spruce.no_color(), severity.label(), severity.Info)
-  |> expect.to_equal("ℹ info")
+  |> expect.to_equal("ℹ︎ info")
 }
 
 pub fn label_formatter_ascii_no_color_test() {
@@ -43,7 +43,7 @@ pub fn simple_formatter_no_color_test() {
 
 pub fn padded_label_formatter_uses_visual_width_test() {
   severity.render_padded(spruce.no_color(), severity.label(), severity.Info)
-  |> expect.to_equal("ℹ info    ")
+  |> expect.to_equal("ℹ︎ info    ")
 }
 
 pub fn color_formatter_emits_escapes_test() {

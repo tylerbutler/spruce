@@ -32,7 +32,7 @@ pub type Status {
 /// Resolve a named status glyph according to the requested mode.
 pub fn status(mode: Mode, status: Status) -> String {
   case status, mode {
-    Info, Unicode -> "ℹ"
+    Info, Unicode -> "ℹ︎"
     Info, Ascii -> "i"
     Warn, Unicode -> "⚠"
     Warn, Ascii -> "!"
