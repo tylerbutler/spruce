@@ -1,13 +1,11 @@
+import { useRef, useState, type KeyboardEvent } from "react";
 import { Reveal, Terminal, TermBar, CopyButton, ThemeToggle } from "./components/ui";
 import {
   GitHubIcon,
   ArrowIcon,
   BookIcon,
   MessageIcon,
-  PaletteIcon,
-  TerminalIcon,
   TableIcon,
-  TreeIcon,
   ShieldIcon,
 } from "./icons";
 import { terminalBlocks as T } from "./data/terminalBlocks";
@@ -17,13 +15,12 @@ const DOCS = "https://hexdocs.pm/spruce/";
 const HEX = "https://hex.pm/packages/spruce";
 const INSTALL = "gleam add spruce";
 
-const runtimes = ["gleam", "erlang", "javascript", "nodedotjs"];
-const runtimeAlt: Record<string, string> = {
-  gleam: "Gleam",
-  erlang: "Erlang",
-  javascript: "JavaScript",
-  nodedotjs: "Node.js",
-};
+const heroModes = [
+  { id: "truecolor", label: "TrueColor", block: "hero" },
+  { id: "ansi256", label: "256 color", block: "hero_ansi256" },
+  { id: "basic", label: "Basic", block: "hero_basic" },
+  { id: "plain", label: "No color", block: "hero_plain" },
+] as const;
 
 const moduleGroups: Array<{
   title: string;
@@ -102,17 +99,41 @@ function Nav() {
 }
 
 function Hero() {
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [mode, setMode] = useState<(typeof heroModes)[number]["id"]>(
+    "truecolor",
+  );
+  const activeMode = heroModes.find((item) => item.id === mode) ?? heroModes[0];
+
+  function onModeKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    let nextIndex: number | undefined;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % heroModes.length;
+    if (event.key === "ArrowLeft") {
+      nextIndex = (index - 1 + heroModes.length) % heroModes.length;
+    }
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = heroModes.length - 1;
+    if (nextIndex === undefined) return;
+
+    event.preventDefault();
+    setMode(heroModes[nextIndex].id);
+    tabRefs.current[nextIndex]?.focus();
+  }
+
   return (
     <section className="hero" id="top">
       <div className="wrap hero-grid">
         <div>
-          <p className="eyebrow">Terminal UI kit for Gleam</p>
           <h1>
-            Make the terminal <span className="solid-emphasis">look good.</span>
+            One render path.{" "}
+            <span className="solid-emphasis">Every terminal.</span>
           </h1>
           <p className="lead">
-            spruce renders styled text, boxes, tables, and semantic messages
-            that adapt to whatever color the terminal supports.
+            spruce gives Gleam apps pure, testable terminal UI that adapts from
+            TrueColor to plain text without branches in your code.
           </p>
           <div className="hero-cta">
             <CopyButton text={INSTALL} />
@@ -121,8 +142,46 @@ function Hero() {
             </a>
           </div>
         </div>
-        <div>
-          <Terminal title="$ gleam run" html={T.hero} caret />
+        <div className="hero-demo">
+          <div
+            className="color-tabs"
+            role="tablist"
+            aria-label="Terminal color support"
+          >
+            {heroModes.map((item, index) => (
+              <button
+                key={item.id}
+                id={`hero-tab-${item.id}`}
+                type="button"
+                role="tab"
+                aria-selected={mode === item.id}
+                aria-controls="hero-output"
+                tabIndex={mode === item.id ? 0 : -1}
+                className={mode === item.id ? "active" : ""}
+                onClick={() => setMode(item.id)}
+                onKeyDown={(event) => onModeKeyDown(event, index)}
+                ref={(element) => {
+                  tabRefs.current[index] = element;
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div
+            id="hero-output"
+            role="tabpanel"
+            aria-labelledby={`hero-tab-${activeMode.id}`}
+          >
+            <Terminal
+              title={`$ gleam run · ${activeMode.label}`}
+              html={T[activeMode.block]}
+              caret
+            />
+          </div>
+          <p className="hero-proof">
+            Same Gleam code. The nearest supported color, automatically.
+          </p>
         </div>
       </div>
     </section>
@@ -133,24 +192,10 @@ function Runtimes() {
   return (
     <section className="runtimes">
       <div className="wrap runtimes-inner">
-        <p>Compiles to Erlang and JavaScript. No native extensions required.</p>
-        <div className="logos">
-          {runtimes.map((slug) => (
-            <span key={slug}>
-              <img
-                className="only-dark"
-                src={`https://cdn.simpleicons.org/${slug}/b8c2bc`}
-                alt={runtimeAlt[slug]}
-                height={26}
-              />
-              <img
-                className="only-light"
-                src={`https://cdn.simpleicons.org/${slug}/4a574f`}
-                alt={runtimeAlt[slug]}
-                height={26}
-              />
-            </span>
-          ))}
+        <p>Two targets. No native extensions.</p>
+        <div className="runtime-targets" aria-label="Supported targets">
+          <span>Erlang / BEAM</span>
+          <span>JavaScript / Node</span>
         </div>
       </div>
     </section>
@@ -162,14 +207,14 @@ function Features() {
     <section className="section" id="features">
       <div className="wrap">
         <Reveal className="section-head">
-          <h2>Everything you print, composed.</h2>
+          <h2>Build the whole output surface.</h2>
           <p className="lead">
-            One set of pure string builders for the whole surface of your CLI.
-            Compose them, test them, then print them.
+            Compose messages, structured layouts, and runtime-safe output with
+            one small set of pure string builders.
           </p>
         </Reveal>
-        <div className="bento">
-          <Reveal className="cell c-4">
+        <Reveal className="bento">
+          <article className="cell">
             <div className="cell-head">
               <span className="cell-ico">
                 <MessageIcon />
@@ -181,99 +226,32 @@ function Features() {
               label, badge, or simple prefixes.
             </p>
             <Terminal title="messages" html={T.messages} />
-          </Reveal>
+          </article>
 
-          <Reveal className="cell c-2" delay={0.05}>
-            <div className="cell-head">
-              <span className="cell-ico">
-                <PaletteIcon />
-              </span>
-              <h3>Adaptive color</h3>
-            </div>
-            <p>Named, RGB, hex, 256, and light or dark adaptive colors.</p>
-            <Terminal title="style" html={T.style} />
-          </Reveal>
-
-          <Reveal className="cell c-2">
+          <article className="cell">
             <div className="cell-head">
               <span className="cell-ico">
                 <TableIcon />
               </span>
-              <h3>Tables that align</h3>
+              <h3>Structured layouts</h3>
             </div>
-            <p>
-              ANSI-aware column widths, per-column sizing, borders, separators,
-              and wrapping.
-            </p>
+            <p>ANSI-aware boxes, tables, trees, lists, wrapping, and alignment.</p>
             <Terminal title="table" html={T.table} />
-          </Reveal>
+          </article>
 
-          <Reveal className="cell c-4" delay={0.05}>
-            <div className="cell-head">
-              <span className="cell-ico">
-                <TerminalIcon />
-              </span>
-              <h3>Compact lines</h3>
-            </div>
-            <p>Severity, scope, and key/value details on one tidy line.</p>
-            <Terminal title="line" html={T.line} />
-          </Reveal>
-
-          <Reveal className="cell c-3">
-            <div className="cell-head">
-              <span className="cell-ico">
-                <TreeIcon />
-              </span>
-              <h3>Trees and lists</h3>
-            </div>
-            <p>Nest structure with Unicode branches or ASCII fallbacks.</p>
-            <Terminal title="tree" html={T.tree} />
-          </Reveal>
-
-          <Reveal className="cell c-3" delay={0.05}>
+          <article className="cell">
             <div className="cell-head">
               <span className="cell-ico">
                 <ShieldIcon />
               </span>
-              <h3>Built for both runtimes</h3>
+              <h3>Target-safe by default</h3>
             </div>
             <p>
-              Pure string builders that behave identically on Erlang and
-              JavaScript.
+              The same pure builders run on Erlang and JavaScript with no
+              spruce FFI.
             </p>
             <Terminal title="list" html={T.list} />
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ColorAware() {
-  return (
-    <section className="section" style={{ paddingTop: 0 }}>
-      <div className="wrap">
-        <Reveal className="section-head">
-          <h2>One render path. Every terminal.</h2>
-          <p className="lead">
-            spruce detects the color level once. TrueColor, 256, basic, or none.
-            The same code downgrades to the nearest representable color, all the
-            way down to clean plain text.
-          </p>
-        </Reveal>
-        <div className="compare">
-          <Reveal>
-            <Terminal title="TrueColor" html={T.hero} />
-          </Reveal>
-          <Reveal delay={0.05}>
-            <Terminal title="NO_COLOR=1" html={T.hero_plain} />
-          </Reveal>
-        </div>
-        <Reveal>
-          <p className="compare-note">
-            No branching in your code. Pipe the same output to a file or a CI
-            log and it stays readable.
-          </p>
+          </article>
         </Reveal>
       </div>
     </section>
@@ -287,9 +265,8 @@ function Example() {
         <Reveal className="section-head">
           <h2>A few lines in, styled output out.</h2>
           <p className="lead">
-            Detect the context once, thread it through, and every render
-            function stays a plain, testable function from <code>Spruce</code>{" "}
-            to <code>String</code>.
+            Build and test the complete string first. IO stays at the final
+            boundary.
           </p>
         </Reveal>
         <div className="example-grid">
@@ -306,6 +283,9 @@ function Example() {
               {"\n"}
               <span className="k">import</span>{" "}
               <span className="m">spruce/message</span>
+              {"\n"}
+              <span className="k">import</span>{" "}
+              <span className="m">spruce/output</span>
               {"\n\n"}
               <span className="k">pub fn</span> <span className="f">main</span>
               () {"{"}
@@ -314,18 +294,27 @@ function Example() {
               <span className="m">spruce</span>.
               <span className="f">detect</span>()
               {"\n  "}
-              <span className="m">box</span>.<span className="f">print</span>(context,{" "}
-              <span className="s">"spruce"</span>)
-              {"\n  "}
-              <span className="m">io</span>.<span className="f">println</span>(
+              <span className="k">let</span> rendered ={"\n    "}
+              <span className="m">output</span>.<span className="f">new</span>(context)
+              {"\n    |> "}
+              <span className="m">output</span>.<span className="f">append</span>(
+              <span className="m">box</span>.<span className="f">simple</span>(_,{" "}
+              <span className="s">"spruce"</span>))
+              {"\n    |> "}
+              <span className="m">output</span>.<span className="f">append</span>(
               <span className="m">message</span>.
-              <span className="f">success</span>(context,{" "}
+              <span className="f">success</span>(_,{" "}
               <span className="s">"ready"</span>))
+              {"\n    |> "}
+              <span className="m">output</span>.<span className="f">to_string</span>
+              {"\n\n  "}
+              <span className="m">io</span>.<span className="f">println</span>(
+              rendered)
               {"\n"}
               {"}"}
             </pre>
           </Reveal>
-          <Reveal delay={0.05}>
+          <Reveal>
             <Terminal title="$ gleam run" html={T.example} />
           </Reveal>
         </div>
@@ -346,11 +335,10 @@ function Modules() {
           </p>
         </Reveal>
         <div className="mods">
-          {moduleGroups.map((group, groupIndex) => (
+          {moduleGroups.map((group) => (
             <Reveal
               className="module-group"
               key={group.title}
-              delay={groupIndex * 0.04}
             >
               <div className="module-group-head">
                 <h3>{group.title}</h3>
@@ -358,10 +346,15 @@ function Modules() {
               </div>
               <div className="module-list">
                 {group.modules.map(([name, desc]) => (
-                  <div className="mod" key={name}>
+                  <a
+                    className="mod"
+                    href={`${DOCS}${name}.html`}
+                    key={name}
+                  >
                     <code>{name}</code>
                     <span>{desc}</span>
-                  </div>
+                    <ArrowIcon />
+                  </a>
                 ))}
               </div>
             </Reveal>
@@ -426,7 +419,6 @@ export default function App() {
         <Hero />
         <Runtimes />
         <Features />
-        <ColorAware />
         <Example />
         <Modules />
         <Cta />

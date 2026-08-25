@@ -17,7 +17,7 @@ host. `base` is relative, so it works from a subpath.
 
 Every terminal panel on the page is **genuine spruce output**, not a mockup. The
 strings in `src/data/terminalBlocks.ts` are captured from a live `gleam run` at
-TrueColor and converted span-for-span to HTML.
+each advertised color level and converted span-for-span to HTML.
 
 To regenerate after changing spruce:
 

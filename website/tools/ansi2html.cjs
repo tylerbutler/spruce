@@ -6,12 +6,29 @@ const raw = fs.readFileSync(process.argv[2] ?? 0, "utf8");
 const PAL = {
   30: "#3b403b", 31: "#ff7a7a", 32: "#58c98c", 33: "#e6c46a",
   34: "#6aa9e9", 35: "#ec6a82", 36: "#56b3a4", 37: "#d7dcd7",
-  90: "#6b726b", 91: "#ff9a9a", 92: "#7fdca7", 93: "#f0d489",
+  90: "#7c857d", 91: "#ff9a9a", 92: "#7fdca7", 93: "#f0d489",
   94: "#90c2f2", 95: "#f59ab0", 96: "#7fccc0", 97: "#f2f5f2",
 };
 
 function esc(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function ansi256(index) {
+  if (index < 16) {
+    const code = index < 8 ? 30 + index : 82 + index;
+    return PAL[code] ?? "#cccccc";
+  }
+  if (index < 232) {
+    const value = index - 16;
+    const levels = [0, 95, 135, 175, 215, 255];
+    const r = levels[Math.floor(value / 36)];
+    const g = levels[Math.floor((value % 36) / 6)];
+    const b = levels[value % 6];
+    return `rgb(${r},${g},${b})`;
+  }
+  const gray = 8 + (index - 232) * 10;
+  return `rgb(${gray},${gray},${gray})`;
 }
 
 function convert(text) {
@@ -58,7 +75,7 @@ function convert(text) {
           else if (code === 38 && codes[k + 1] === 2) {
             st.fg = `rgb(${codes[k + 2]},${codes[k + 3]},${codes[k + 4]})`; k += 4;
           } else if (code === 38 && codes[k + 1] === 5) {
-            st.fg = "#cccccc"; k += 2;
+            st.fg = ansi256(codes[k + 2]); k += 2;
           } else if (PAL[code]) st.fg = PAL[code];
         }
         i += m[0].length;
