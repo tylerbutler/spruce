@@ -189,32 +189,36 @@ pub fn language(name: String) -> Result(Language, Nil) {
 
 /// Highlight code with the default adaptive theme, or return code unchanged for
 /// unknown languages.
-pub fn highlight(sp: Spruce, code code: String, name name: String) -> String {
-  highlight_named_with(sp, code:, name:, theme: adaptive_theme())
+pub fn highlight(
+  context: Spruce,
+  code code: String,
+  name name: String,
+) -> String {
+  highlight_named_with(context, code:, name:, theme: adaptive_theme())
 }
 
 /// Highlight code with a string language name and explicit theme.
 pub fn highlight_named_with(
-  sp: Spruce,
+  context: Spruce,
   code code: String,
   name name: String,
   theme theme: Theme,
 ) -> String {
   case language(name) {
-    Ok(language) -> highlight_with(sp, code, language, theme)
+    Ok(language) -> highlight_with(context, code, language, theme)
     Error(Nil) -> code
   }
 }
 
 /// Highlight code with a resolved language and explicit theme.
 pub fn highlight_with(
-  sp: Spruce,
+  context: Spruce,
   code: String,
   language: Language,
   theme: Theme,
 ) -> String {
   smalto.to_tokens(code, language.grammar)
-  |> list.map(render_token(sp, _, theme))
+  |> list.map(render_token(context, _, theme))
   |> string.join("")
 }
 
@@ -222,25 +226,25 @@ fn ok(name: String, grammar: Grammar) -> Result(Language, Nil) {
   Ok(Language(name:, grammar:))
 }
 
-fn render_token(sp: Spruce, token: Token, theme: Theme) -> String {
+fn render_token(context: Spruce, token: Token, theme: Theme) -> String {
   case token {
-    token.Keyword(value) -> style.render(sp, theme.keyword, value)
-    token.String(value) -> style.render(sp, theme.string, value)
-    token.Number(value) -> style.render(sp, theme.number, value)
-    token.Comment(value) -> style.render(sp, theme.comment, value)
-    token.Function(value) -> style.render(sp, theme.function, value)
-    token.Operator(value) -> style.render(sp, theme.operator, value)
-    token.Punctuation(value) -> style.render(sp, theme.punctuation, value)
-    token.Type(value) -> style.render(sp, theme.type_, value)
-    token.Module(value) -> style.render(sp, theme.module_, value)
-    token.Variable(value) -> style.render(sp, theme.variable, value)
-    token.Constant(value) -> style.render(sp, theme.constant, value)
-    token.Builtin(value) -> style.render(sp, theme.builtin, value)
-    token.Tag(value) -> style.render(sp, theme.tag, value)
-    token.Attribute(value) -> style.render(sp, theme.attribute, value)
-    token.Selector(value) -> style.render(sp, theme.selector, value)
-    token.Property(value) -> style.render(sp, theme.property, value)
-    token.Regex(value) -> style.render(sp, theme.regex, value)
+    token.Keyword(value) -> style.render(context, theme.keyword, value)
+    token.String(value) -> style.render(context, theme.string, value)
+    token.Number(value) -> style.render(context, theme.number, value)
+    token.Comment(value) -> style.render(context, theme.comment, value)
+    token.Function(value) -> style.render(context, theme.function, value)
+    token.Operator(value) -> style.render(context, theme.operator, value)
+    token.Punctuation(value) -> style.render(context, theme.punctuation, value)
+    token.Type(value) -> style.render(context, theme.type_, value)
+    token.Module(value) -> style.render(context, theme.module_, value)
+    token.Variable(value) -> style.render(context, theme.variable, value)
+    token.Constant(value) -> style.render(context, theme.constant, value)
+    token.Builtin(value) -> style.render(context, theme.builtin, value)
+    token.Tag(value) -> style.render(context, theme.tag, value)
+    token.Attribute(value) -> style.render(context, theme.attribute, value)
+    token.Selector(value) -> style.render(context, theme.selector, value)
+    token.Property(value) -> style.render(context, theme.property, value)
+    token.Regex(value) -> style.render(context, theme.regex, value)
     token.Whitespace(value) | token.Other(value) | token.Custom(_, value) ->
       value
   }

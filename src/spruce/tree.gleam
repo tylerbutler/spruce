@@ -71,8 +71,8 @@ pub fn branches(tree: Tree, chars: BranchChars) -> Tree {
 }
 
 /// Render a tree to a string.
-pub fn render(sp: Spruce, tree: Tree) -> String {
-  render_with(sp, tree, fn(label, _prefix_width, _depth, _last) { label })
+pub fn render(context: Spruce, tree: Tree) -> String {
+  render_with(context, tree, fn(label, _prefix_width, _depth, _last) { label })
 }
 
 /// Render a tree with a function that can transform each label.
@@ -81,11 +81,11 @@ pub fn render(sp: Spruce, tree: Tree) -> String {
 /// depth, and whether it is the last child. The root has depth zero and is
 /// always marked as last.
 pub fn render_with(
-  sp: Spruce,
+  context: Spruce,
   tree: Tree,
   render_label: fn(String, Int, Int, Bool) -> String,
 ) -> String {
-  let base = spruce.indent_prefix(sp)
+  let base = spruce.indent_prefix(context)
   let lines =
     render_label(tree.label, align.visual_length(base), 0, True)
     |> label_lines(base, base, _)
@@ -105,8 +105,8 @@ pub fn render_with(
 ///
 /// The tree label is the first column. Cell widths are ANSI-aware, and
 /// multi-line labels and cells preserve the tree's continuation guides.
-pub fn render_table(sp: Spruce, tree: Tree) -> String {
-  let base = spruce.indent_prefix(sp)
+pub fn render_table(context: Spruce, tree: Tree) -> String {
+  let base = spruce.indent_prefix(context)
   let rows = [
     TableRow(
       prefix: base,
@@ -122,7 +122,7 @@ pub fn render_table(sp: Spruce, tree: Tree) -> String {
     |> list.fold(0, int.max)
 
   case column_count {
-    0 -> render(sp, tree)
+    0 -> render(context, tree)
     _ -> {
       let first_width = first_column_width(rows)
       let widths = table_column_widths(rows, column_count, 0)

@@ -15,14 +15,14 @@
 //// import spruce/style
 ////
 //// pub fn main() {
-////   let sp = spruce.detect()
+////   let context = spruce.detect()
 ////
 ////   box.new()
 ////   |> box.title("Release")
 ////   |> box.border(border.Double)
 ////   |> box.border_color(style.Green)
 ////   |> box.padding(top: 1, right: 2, bottom: 1, left: 2)
-////   |> box.render(sp, "spruce 2.0.0\nready to ship", _)
+////   |> box.render(context, "spruce 2.0.0\nready to ship", _)
 ////   |> echo
 //// }
 //// ```
@@ -227,24 +227,24 @@ pub fn border_sides(
 }
 
 /// Render `content` in a default box (`new`).
-pub fn simple(sp: Spruce, content: String) -> String {
-  render(sp, content, new())
+pub fn simple(context: Spruce, content: String) -> String {
+  render(context, content, new())
 }
 
 /// Render a default box and print it to stdout.
-pub fn print(sp: Spruce, content: String) -> Nil {
-  io.println(simple(sp, content))
+pub fn print(context: Spruce, content: String) -> Nil {
+  io.println(simple(context, content))
 }
 
 /// Render `content` with the given box.
-pub fn render(sp: Spruce, content: String, box: Box) -> String {
+pub fn render(context: Spruce, content: String, box: Box) -> String {
   let title = sanitize_title(box.title)
 
-  content_region(sp, content, box, title)
-  |> apply_padding(sp, box)
-  |> apply_border(sp, box, title)
+  content_region(context, content, box, title)
+  |> apply_padding(context, box)
+  |> apply_border(context, box, title)
   |> apply_margin(
-    spruce.indent_prefix(sp),
+    spruce.indent_prefix(context),
     box.margin_top,
     box.margin_right,
     box.margin_bottom,
@@ -256,14 +256,14 @@ pub fn render(sp: Spruce, content: String, box: Box) -> String {
 // Wrap, size, align, and color the content lines. The title can widen the
 // region so it always fits in the top border.
 fn content_region(
-  sp: Spruce,
+  context: Spruce,
   content: String,
   box: Box,
   title: String,
 ) -> List(String) {
   let wrapped = case box.width {
     Some(width) if width > 0 -> align.wrap(content, width)
-    _ -> content
+    Some(_) | None -> content
   }
   let lines = string.split(wrapped, "\n")
   let lines = case box.height {
@@ -292,7 +292,7 @@ fn content_region(
   }
 
   list.map(placed, fn(line) {
-    style.render(sp, color_style(box.foreground), line)
+    style.render(context, color_style(box.foreground), line)
   })
 }
 
@@ -317,7 +317,11 @@ fn background_style(box: Box) -> style.Style {
   }
 }
 
-fn apply_padding(lines: List(String), sp: Spruce, box: Box) -> List(String) {
+fn apply_padding(
+  lines: List(String),
+  context: Spruce,
+  box: Box,
+) -> List(String) {
   let content_width = find_max_width(lines)
   let padded_width = content_width + box.padding_left + box.padding_right
   let blank = string.repeat(" ", padded_width)
@@ -331,12 +335,12 @@ fn apply_padding(lines: List(String), sp: Spruce, box: Box) -> List(String) {
   list.repeat(blank, box.padding_top)
   |> list.append(body)
   |> list.append(list.repeat(blank, box.padding_bottom))
-  |> list.map(fn(line) { style.render(sp, background_style(box), line) })
+  |> list.map(fn(line) { style.render(context, background_style(box), line) })
 }
 
 fn apply_border(
   lines: List(String),
-  sp: Spruce,
+  context: Spruce,
   box: Box,
   title: String,
 ) -> List(String) {
@@ -351,10 +355,10 @@ fn apply_border(
     )
   let chars = border.chars(box.border)
   let inner_width = find_max_width(lines)
-  let paint_top = border_painter(sp, box.border_top_color)
-  let paint_right = border_painter(sp, box.border_right_color)
-  let paint_bottom = border_painter(sp, box.border_bottom_color)
-  let paint_left = border_painter(sp, box.border_left_color)
+  let paint_top = border_painter(context, box.border_top_color)
+  let paint_right = border_painter(context, box.border_right_color)
+  let paint_bottom = border_painter(context, box.border_bottom_color)
+  let paint_left = border_painter(context, box.border_left_color)
 
   lines
   |> list.map(fn(line) {
@@ -439,10 +443,10 @@ fn side_right(
   paint_right(chars.right)
 }
 
-fn border_painter(sp: Spruce, color: style.Color) -> fn(String) -> String {
+fn border_painter(context: Spruce, color: style.Color) -> fn(String) -> String {
   let border_style = style.new() |> style.fg(color)
 
-  fn(text: String) -> String { style.render(sp, border_style, text) }
+  fn(text: String) -> String { style.render(context, border_style, text) }
 }
 
 fn apply_margin(

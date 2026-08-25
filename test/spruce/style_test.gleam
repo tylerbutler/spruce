@@ -12,14 +12,14 @@ pub fn render_no_color_is_plain_test() {
 }
 
 pub fn render_color_wraps_text_test() {
-  let out =
+  let rendered =
     style.render(
       spruce.with_color_level(spruce.TrueColor),
       style.new() |> style.fg(style.Red),
       "x",
     )
-  expect.to_be_true(string.contains(out, "\u{001b}"))
-  expect.to_be_true(string.contains(out, "31m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}"))
+  expect.to_be_true(string.contains(rendered, "31m"))
 }
 
 pub fn render_empty_style_is_plain_test() {
@@ -37,7 +37,7 @@ pub fn render_no_color_strips_style_parity_attributes_test() {
 }
 
 pub fn render_color_wraps_style_parity_attributes_test() {
-  let out =
+  let rendered =
     style.render(
       spruce.with_color_level(spruce.TrueColor),
       style.new()
@@ -47,9 +47,9 @@ pub fn render_color_wraps_style_parity_attributes_test() {
       "x",
     )
 
-  expect.to_be_true(string.contains(out, "\u{001b}[9m"))
-  expect.to_be_true(string.contains(out, "\u{001b}[7m"))
-  expect.to_be_true(string.contains(out, "\u{001b}[2m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[9m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[7m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[2m"))
 }
 
 pub fn render_inline_collapses_newlines_without_color_test() {
@@ -60,18 +60,18 @@ pub fn render_inline_collapses_newlines_without_color_test() {
 }
 
 pub fn render_inline_collapses_newlines_with_color_test() {
-  let out =
+  let rendered =
     style.render(
       spruce.with_color_level(spruce.TrueColor),
       style.new() |> style.inline |> style.bold,
       "a\nb",
     )
 
-  expect.to_be_true(string.contains(out, "a b"))
+  expect.to_be_true(string.contains(rendered, "a b"))
 }
 
 pub fn render_complete_fg_chooses_basic_color_test() {
-  let out =
+  let rendered =
     style.render(
       spruce.with_color_level(spruce.Basic),
       style.new()
@@ -83,11 +83,11 @@ pub fn render_complete_fg_chooses_basic_color_test() {
       "x",
     )
 
-  expect.to_be_true(string.contains(out, "\u{001b}[31m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[31m"))
 }
 
 pub fn render_complete_fg_chooses_ansi256_color_test() {
-  let out =
+  let rendered =
     style.render(
       spruce.with_color_level(spruce.Ansi256),
       style.new()
@@ -99,11 +99,11 @@ pub fn render_complete_fg_chooses_ansi256_color_test() {
       "x",
     )
 
-  expect.to_be_true(string.contains(out, "\u{001b}[94m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[94m"))
 }
 
 pub fn render_complete_fg_chooses_truecolor_color_test() {
-  let out =
+  let rendered =
     style.render(
       spruce.with_color_level(spruce.TrueColor),
       style.new()
@@ -115,11 +115,11 @@ pub fn render_complete_fg_chooses_truecolor_color_test() {
       "x",
     )
 
-  expect.to_be_true(string.contains(out, "\u{001b}[92m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[92m"))
 }
 
 pub fn render_complete_bg_chooses_color_level_test() {
-  let out =
+  let rendered =
     style.render(
       spruce.with_color_level(spruce.Ansi256),
       style.new()
@@ -131,7 +131,7 @@ pub fn render_complete_bg_chooses_color_level_test() {
       "x",
     )
 
-  expect.to_be_true(string.contains(out, "\u{001b}[104m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[104m"))
 }
 
 pub fn render_complete_no_color_is_plain_test() {
@@ -172,14 +172,14 @@ pub fn render_truecolor_hex_uses_24_bit_sequence_test() {
 }
 
 pub fn render_basic_downgrades_rgb_to_nearest_basic_color_test() {
-  let out =
+  let rendered =
     style.render(
       spruce.with_color_level(spruce.Basic),
       style.new() |> style.fg(style.Rgb(128, 0, 0)),
       "x",
     )
 
-  expect.to_be_true(string.contains(out, "\u{001b}[31m"))
+  expect.to_be_true(string.contains(rendered, "\u{001b}[31m"))
 }
 
 pub fn render_ansi256_fg_uses_256_color_sequence_test() {
@@ -241,21 +241,22 @@ pub fn render_ansi256_bg_clamps_high_index_test() {
 }
 
 pub fn render_hex_and_rgb_match_for_same_color_test() {
-  let sp = spruce.with_color_level(spruce.TrueColor)
+  let context = spruce.with_color_level(spruce.TrueColor)
   let rgb =
-    style.render(sp, style.new() |> style.fg(style.Rgb(135, 75, 253)), "x")
-  let hex = style.render(sp, style.new() |> style.fg(style.Hex(0x874BFD)), "x")
+    style.render(context, style.new() |> style.fg(style.Rgb(135, 75, 253)), "x")
+  let hex =
+    style.render(context, style.new() |> style.fg(style.Hex(0x874BFD)), "x")
 
   expect.to_equal(hex, rgb)
 }
 
 pub fn adaptive_picks_dark_on_dark_background_test() {
-  let sp =
+  let context =
     spruce.with_color_level(spruce.TrueColor)
     |> spruce.with_background(spruce.Dark)
   let adaptive =
     style.render(
-      sp,
+      context,
       style.new()
         |> style.fg(style.adaptive(
           light: style.Hex(0x000000),
@@ -264,18 +265,18 @@ pub fn adaptive_picks_dark_on_dark_background_test() {
       "x",
     )
   let direct =
-    style.render(sp, style.new() |> style.fg(style.Hex(0xffffff)), "x")
+    style.render(context, style.new() |> style.fg(style.Hex(0xffffff)), "x")
 
   expect.to_equal(adaptive, direct)
 }
 
 pub fn adaptive_picks_light_on_light_background_test() {
-  let sp =
+  let context =
     spruce.with_color_level(spruce.TrueColor)
     |> spruce.with_background(spruce.Light)
   let adaptive =
     style.render(
-      sp,
+      context,
       style.new()
         |> style.fg(style.adaptive(
           light: style.Hex(0x000000),
@@ -284,16 +285,16 @@ pub fn adaptive_picks_light_on_light_background_test() {
       "x",
     )
   let direct =
-    style.render(sp, style.new() |> style.fg(style.Hex(0x000000)), "x")
+    style.render(context, style.new() |> style.fg(style.Hex(0x000000)), "x")
 
   expect.to_equal(adaptive, direct)
 }
 
 pub fn adaptive_defaults_to_dark_on_unknown_background_test() {
-  let sp = spruce.with_color_level(spruce.TrueColor)
+  let context = spruce.with_color_level(spruce.TrueColor)
   let adaptive =
     style.render(
-      sp,
+      context,
       style.new()
         |> style.fg(style.adaptive(
           light: style.Hex(0x000000),
@@ -301,7 +302,8 @@ pub fn adaptive_defaults_to_dark_on_unknown_background_test() {
         )),
       "x",
     )
-  let dark = style.render(sp, style.new() |> style.fg(style.Hex(0xffffff)), "x")
+  let dark =
+    style.render(context, style.new() |> style.fg(style.Hex(0xffffff)), "x")
 
   expect.to_equal(adaptive, dark)
 }
@@ -314,41 +316,43 @@ pub fn adaptive_is_plain_under_no_color_test() {
 }
 
 pub fn hashed_is_deterministic_test() {
-  let sp = spruce.with_color_level(spruce.Ansi256)
-  let first = style.render(sp, style.hashed(sp, "database"), "database")
-  let second = style.render(sp, style.hashed(sp, "database"), "database")
+  let context = spruce.with_color_level(spruce.Ansi256)
+  let first =
+    style.render(context, style.hashed(context, "database"), "database")
+  let second =
+    style.render(context, style.hashed(context, "database"), "database")
   first
   |> expect.to_equal(second)
 }
 
 pub fn hashed_foo_is_deterministic_test() {
-  let sp = spruce.with_color_level(spruce.Ansi256)
-  let first = style.render(sp, style.hashed(sp, "foo"), "foo")
-  let second = style.render(sp, style.hashed(sp, "foo"), "foo")
+  let context = spruce.with_color_level(spruce.Ansi256)
+  let first = style.render(context, style.hashed(context, "foo"), "foo")
+  let second = style.render(context, style.hashed(context, "foo"), "foo")
   first
   |> expect.to_equal(second)
 }
 
 pub fn hashed_distinguishes_simple_anagrams_test() {
-  let sp = spruce.with_color_level(spruce.Ansi256)
-  let ab = style.render(sp, style.hashed(sp, "ab"), "sample")
-  let ba = style.render(sp, style.hashed(sp, "ba"), "sample")
+  let context = spruce.with_color_level(spruce.Ansi256)
+  let ab = style.render(context, style.hashed(context, "ab"), "sample")
+  let ba = style.render(context, style.hashed(context, "ba"), "sample")
 
   expect.to_be_true(ab != ba)
 }
 
 pub fn hashed_uses_valid_palette_color_test() {
-  let sp = spruce.with_color_level(spruce.Ansi256)
+  let context = spruce.with_color_level(spruce.Ansi256)
   let text = "foo"
-  let out = style.render(sp, style.hashed(sp, text), text)
+  let rendered = style.render(context, style.hashed(context, text), text)
 
-  renders_like_valid_ansi256_palette_color(sp, out, text)
+  renders_like_valid_ansi256_palette_color(context, rendered, text)
   |> expect.to_be_true
 }
 
 pub fn hashed_no_color_is_plain_test() {
-  let sp = spruce.no_color()
-  style.render(sp, style.hashed(sp, "database"), "database")
+  let context = spruce.no_color()
+  style.render(context, style.hashed(context, "database"), "database")
   |> expect.to_equal("database")
 }
 
@@ -364,30 +368,31 @@ pub fn hashed_no_color_style_stays_plain_test() {
 }
 
 pub fn hashed_color_adds_escapes_test() {
-  let sp = spruce.with_color_level(spruce.Ansi256)
-  let out = style.render(sp, style.hashed(sp, "database"), "database")
-  expect.to_be_true(out != "database")
+  let context = spruce.with_color_level(spruce.Ansi256)
+  let rendered =
+    style.render(context, style.hashed(context, "database"), "database")
+  expect.to_be_true(rendered != "database")
 }
 
 fn renders_like_valid_ansi256_palette_color(
-  sp: spruce.Spruce,
-  out: String,
+  context: spruce.Spruce,
+  rendered: String,
   text: String,
 ) -> Bool {
   let render = fn(color) {
-    style.render(sp, style.new() |> style.fg(color), text)
+    style.render(context, style.new() |> style.fg(color), text)
   }
 
-  out == render(style.Red)
-  || out == render(style.Green)
-  || out == render(style.Yellow)
-  || out == render(style.Blue)
-  || out == render(style.Magenta)
-  || out == render(style.Cyan)
-  || out == render(style.BrightRed)
-  || out == render(style.BrightGreen)
-  || out == render(style.BrightYellow)
-  || out == render(style.BrightBlue)
-  || out == render(style.BrightMagenta)
-  || out == render(style.BrightCyan)
+  rendered == render(style.Red)
+  || rendered == render(style.Green)
+  || rendered == render(style.Yellow)
+  || rendered == render(style.Blue)
+  || rendered == render(style.Magenta)
+  || rendered == render(style.Cyan)
+  || rendered == render(style.BrightRed)
+  || rendered == render(style.BrightGreen)
+  || rendered == render(style.BrightYellow)
+  || rendered == render(style.BrightBlue)
+  || rendered == render(style.BrightMagenta)
+  || rendered == render(style.BrightCyan)
 }

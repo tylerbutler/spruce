@@ -12,12 +12,12 @@
 //// import spruce/output
 ////
 //// pub fn main() {
-////   let sp = spruce.detect()
+////   let context = spruce.detect()
 ////
-////   output.new(sp)
+////   output.new(context)
 ////   |> output.append(message.start(_, "compiling"))
-////   |> output.group("Tests", fn(o) {
-////     o |> output.append(message.info(_, "running"))
+////   |> output.group("Tests", fn(output) {
+////     output |> output.append(message.info(_, "running"))
 ////   })
 ////   |> output.print
 //// }
@@ -39,25 +39,25 @@ import spruce/symbol
 /// Build one with `new` and the combinators in this module, then finish with
 /// `to_string` or `print`.
 pub opaque type Output {
-  Output(sp: Spruce, chunks: List(String))
+  Output(context: Spruce, chunks: List(String))
 }
 
-/// Start an empty output that renders with `sp`.
-pub fn new(sp: Spruce) -> Output {
-  Output(sp: sp, chunks: [])
+/// Start an empty output that renders with `context`.
+pub fn new(context: Spruce) -> Output {
+  Output(context:, chunks: [])
 }
 
 /// The context the output renders with. Reflects the current group depth inside
 /// a `group` body.
 pub fn context(output: Output) -> Spruce {
-  output.sp
+  output.context
 }
 
 /// Append a rendered block produced by `render`, which receives the output's
 /// context. Works with any `Spruce -> String` renderer via a `_` capture, e.g.
 /// `output.append(message.success(_, "done"))`.
 pub fn append(output: Output, render: fn(Spruce) -> String) -> Output {
-  Output(..output, chunks: [render(output.sp), ..output.chunks])
+  Output(..output, chunks: [render(output.context), ..output.chunks])
 }
 
 /// Append a raw string as-is, without rendering.
@@ -78,10 +78,10 @@ pub fn group(
   heading: String,
   body: fn(Output) -> Output,
 ) -> Output {
-  let titled = text(output, title(output.sp, heading))
+  let titled = text(output, title(output.context, heading))
   let body_output =
-    body(Output(sp: spruce.indented(output.sp), chunks: titled.chunks))
-  Output(sp: output.sp, chunks: body_output.chunks)
+    body(Output(context: spruce.indented(output.context), chunks: titled.chunks))
+  Output(context: output.context, chunks: body_output.chunks)
 }
 
 /// Print a group title, then run `body` with a context indented one level
@@ -92,27 +92,27 @@ pub fn group(
 /// happens and it may perform IO and return any value. For deferred,
 /// pipe-composable grouping that buffers output instead, see `group`.
 pub fn stream_group(
-  sp: Spruce,
+  context: Spruce,
   heading: String,
   body: fn(Spruce) -> result,
 ) -> result {
-  io.println(title(sp, heading))
-  body(spruce.indented(sp))
+  io.println(title(context, heading))
+  body(spruce.indented(context))
 }
 
 /// Render a group title line (indent prefix + styled marker + title), the same
 /// line that `group` and `stream_group` emit.
-pub fn title(sp: Spruce, heading: String) -> String {
+pub fn title(context: Spruce, heading: String) -> String {
   let marker = symbol.status(symbol.Unicode, symbol.Arrow)
-  let line = case spruce.supports_color(sp) {
+  let line = case spruce.supports_color(context) {
     False -> marker <> " " <> heading
     True ->
-      style.render(sp, style.hashed(sp, heading), marker)
+      style.render(context, style.hashed(context, heading), marker)
       <> " "
-      <> style.render(sp, style.new() |> style.bold, heading)
+      <> style.render(context, style.new() |> style.bold, heading)
   }
 
-  spruce.indent_prefix(sp) <> line
+  spruce.indent_prefix(context) <> line
 }
 
 /// Render the accumulated output to a single string, blocks joined by newlines.

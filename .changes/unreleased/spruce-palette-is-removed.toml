@@ -1,3 +1,3 @@
 package = "spruce"
 kind = "Major Release"
-body = "spruce/palette is removed. Deterministic hash colors are now provided by style.hashed(sp, text), a drop-in replacement for palette.hash(sp, text)."
+body = "spruce/palette is removed. Deterministic hash colors are now provided by style.hashed(context, text), a drop-in replacement for palette.hash(context, text)."

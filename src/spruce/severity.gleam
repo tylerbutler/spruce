@@ -67,7 +67,7 @@ pub fn icons(formatter: Formatter, enabled: Bool) -> Formatter {
   case formatter.kind {
     Label ->
       Formatter(..formatter, icons: enabled, target_width: bool_width(enabled))
-    _ -> Formatter(..formatter, icons: enabled)
+    Badge | Simple | Custom(_) -> Formatter(..formatter, icons: enabled)
   }
 }
 
@@ -82,22 +82,26 @@ pub fn target_width(formatter: Formatter) -> Int {
 }
 
 /// Render a severity with the supplied formatter.
-pub fn render(sp: Spruce, formatter: Formatter, severity: Severity) -> String {
+pub fn render(
+  context: Spruce,
+  formatter: Formatter,
+  severity: Severity,
+) -> String {
   case formatter.kind {
-    Label -> render_label(sp, formatter, severity)
-    Badge -> render_badge(sp, severity)
-    Simple -> render_simple(sp, severity)
-    Custom(render) -> render(severity, sp)
+    Label -> render_label(context, formatter, severity)
+    Badge -> render_badge(context, severity)
+    Simple -> render_simple(context, severity)
+    Custom(render) -> render(severity, context)
   }
 }
 
 /// Render a severity and pad it to the formatter's visual target width.
 pub fn render_padded(
-  sp: Spruce,
+  context: Spruce,
   formatter: Formatter,
   severity: Severity,
 ) -> String {
-  render(sp, formatter, severity)
+  render(context, formatter, severity)
   |> align.pad_right(formatter.target_width)
 }
 
@@ -139,37 +143,37 @@ pub fn to_string_lowercase(severity: Severity) -> String {
 }
 
 fn render_label(
-  sp: Spruce,
+  context: Spruce,
   formatter: Formatter,
   severity: Severity,
 ) -> String {
   let text = to_string_lowercase(severity)
   let color = label_color(severity)
   let label_style = style.new() |> style.bold |> style.fg(color)
-  let styled_text = style.render(sp, label_style, text)
+  let styled_text = style.render(context, label_style, text)
 
   case formatter.icons {
     False -> styled_text
     True -> {
       let icon = symbol.status(formatter.mode, status(severity))
-      let styled_icon = style.render(sp, label_style, icon)
+      let styled_icon = style.render(context, label_style, icon)
       styled_icon <> " " <> styled_text
     }
   }
 }
 
-fn render_badge(sp: Spruce, severity: Severity) -> String {
+fn render_badge(context: Spruce, severity: Severity) -> String {
   let text = "[" <> to_string(severity) <> "]"
   style.render(
-    sp,
+    context,
     style.new() |> style.bold |> style.fg(label_color(severity)),
     text,
   )
 }
 
-fn render_simple(sp: Spruce, severity: Severity) -> String {
+fn render_simple(context: Spruce, severity: Severity) -> String {
   style.render(
-    sp,
+    context,
     style.new() |> style.fg(simple_color(severity)),
     to_string(severity),
   )
@@ -211,6 +215,7 @@ fn bool_width(enabled: Bool) -> Int {
 fn simple_color(severity: Severity) -> style.Color {
   case severity {
     Debug -> style.Blue
-    _ -> label_color(severity)
+    Trace | Info | Notice | Warn | Err | Critical | Alert | Fatal ->
+      label_color(severity)
   }
 }

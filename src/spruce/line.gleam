@@ -8,7 +8,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
 import spruce.{type Spruce}
-import spruce/details.{type Details}
+import spruce/detail.{type Details}
 import spruce/severity as severity_module
 import spruce/style
 
@@ -65,13 +65,17 @@ pub fn details(line: Line, details: Details) -> Line {
 }
 
 /// Render the compact line.
-pub fn render(sp: Spruce, line: Line) -> String {
-  let prefix = spruce.indent_prefix(sp)
+pub fn render(context: Spruce, line: Line) -> String {
+  let prefix = spruce.indent_prefix(context)
   let prefix_parts =
     []
-    |> maybe_append(render_timestamp(sp, line.timestamp))
-    |> maybe_append(render_severity(sp, line.severity, line.severity_formatter))
-    |> maybe_append(render_scope(sp, line.scope))
+    |> maybe_append(render_timestamp(context, line.timestamp))
+    |> maybe_append(render_severity(
+      context,
+      line.severity,
+      line.severity_formatter,
+    ))
+    |> maybe_append(render_scope(context, line.scope))
     |> list.reverse
 
   let head = case prefix_parts {
@@ -79,7 +83,7 @@ pub fn render(sp: Spruce, line: Line) -> String {
     _ -> string.join(prefix_parts, " ") <> " " <> line.text
   }
 
-  prefix <> head <> render_details_part(sp, line.details)
+  prefix <> head <> render_details_part(context, line.details)
 }
 
 fn maybe_append(items: List(String), item: Option(String)) -> List(String) {
@@ -90,41 +94,48 @@ fn maybe_append(items: List(String), item: Option(String)) -> List(String) {
   }
 }
 
-fn render_timestamp(sp: Spruce, timestamp: Option(String)) -> Option(String) {
+fn render_timestamp(
+  context: Spruce,
+  timestamp: Option(String),
+) -> Option(String) {
   case timestamp {
     None -> None
     Some(timestamp) ->
-      Some(style.render(sp, style.new() |> style.dim, timestamp))
+      Some(style.render(context, style.new() |> style.dim, timestamp))
   }
 }
 
-fn render_scope(sp: Spruce, scope: Option(String)) -> Option(String) {
+fn render_scope(context: Spruce, scope: Option(String)) -> Option(String) {
   case scope {
     None -> None
     Some(scope) ->
-      Some(style.render(sp, style.new() |> style.dim, "[" <> scope <> "]"))
+      Some(style.render(context, style.new() |> style.dim, "[" <> scope <> "]"))
   }
 }
 
 fn render_severity(
-  sp: Spruce,
+  context: Spruce,
   severity_value: Option(severity_module.Severity),
   formatter: severity_module.Formatter,
 ) -> Option(String) {
   case severity_value {
     None -> None
     Some(severity_value) ->
-      Some(severity_module.render_padded(sp, formatter, severity_value))
+      Some(severity_module.render_padded(context, formatter, severity_value))
   }
 }
 
-fn render_details_part(sp: Spruce, details_option: Option(Details)) -> String {
+fn render_details_part(
+  context: Spruce,
+  details_option: Option(Details),
+) -> String {
   case details_option {
     None -> ""
     Some(details) -> {
-      case details.render(sp, details) {
+      case detail.render(context, details) {
         "" -> ""
-        rendered -> " " <> style.render(sp, style.new() |> style.dim, rendered)
+        rendered ->
+          " " <> style.render(context, style.new() |> style.dim, rendered)
       }
     }
   }

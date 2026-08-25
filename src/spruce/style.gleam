@@ -10,9 +10,9 @@
 //// import spruce/style
 ////
 //// pub fn main() {
-////   let sp = spruce.detect()
+////   let context = spruce.detect()
 ////   let heading = style.new() |> style.fg(style.Cyan) |> style.bold
-////   echo style.render(sp, heading, "Hello")
+////   echo style.render(context, heading, "Hello")
 //// }
 //// ```
 
@@ -172,18 +172,18 @@ pub fn inline(style: Style) -> Style {
 /// dropped (only the `inline` transform is applied). Colors the terminal cannot
 /// represent are downgraded to the nearest available color, and `Adaptive`
 /// colors are resolved against the context's background.
-pub fn render(sp: Spruce, style: Style, text: String) -> String {
+pub fn render(context: Spruce, style: Style, text: String) -> String {
   let text = render_inline(text, style.inline)
 
-  case spruce.supports_color(sp) {
+  case spruce.supports_color(context) {
     False -> text
     True -> {
-      let background = spruce.background(sp)
+      let background = spruce.background(context)
       let fg = resolve_adaptive_option(style.fg, background)
       let bg = resolve_adaptive_option(style.bg, background)
       text
-      |> render_fg(fg, spruce.color_level(sp))
-      |> render_bg(bg, spruce.color_level(sp))
+      |> render_fg(fg, spruce.color_level(context))
+      |> render_bg(bg, spruce.color_level(context))
       |> render_bold(style.bold)
       |> render_dim(style.dim)
       |> render_italic(style.italic)
@@ -221,7 +221,25 @@ fn resolve_adaptive(color: Color, background: spruce.Background) -> Color {
         resolve_adaptive(ansi256, background),
         resolve_adaptive(truecolor, background),
       )
-    other -> other
+    Black
+    | Red
+    | Green
+    | Yellow
+    | Blue
+    | Magenta
+    | Cyan
+    | White
+    | Gray
+    | BrightRed
+    | BrightGreen
+    | BrightYellow
+    | BrightBlue
+    | BrightMagenta
+    | BrightCyan
+    | BrightWhite
+    | Rgb(_, _, _)
+    | Hex(_)
+    | Ansi256(_) -> color
   }
 }
 
@@ -644,13 +662,13 @@ fn render_faint(text: String, enabled: Bool) -> String {
 /// (no color) for `NoColor`.
 ///
 /// ```gleam
-/// style.render(sp, style.hashed(sp, "database"), "database")
+/// style.render(context, style.hashed(context, "database"), "database")
 /// ```
-pub fn hashed(sp: Spruce, text: String) -> Style {
-  case spruce.supports_color(sp) {
+pub fn hashed(context: Spruce, text: String) -> Style {
+  case spruce.supports_color(context) {
     False -> new()
     True -> {
-      let colors = hash_palette(spruce.color_level(sp))
+      let colors = hash_palette(spruce.color_level(context))
       let index = hash_text(text) % list.length(colors)
       let color = case list.drop(colors, index) {
         [c, ..] -> c
@@ -664,8 +682,8 @@ pub fn hashed(sp: Spruce, text: String) -> Style {
 fn hash_text(text: String) -> Int {
   text
   |> string.to_utf_codepoints
-  |> list.fold(5381, fn(hash, cp) {
-    let next = hash * 33 + string.utf_codepoint_to_int(cp)
+  |> list.fold(5381, fn(hash, codepoint) {
+    let next = hash * 33 + string.utf_codepoint_to_int(codepoint)
     bounded_modulo(next, 2_147_483_647)
   })
 }

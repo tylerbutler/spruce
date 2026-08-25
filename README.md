@@ -29,8 +29,8 @@ pub fn main() {
   // Detect the terminal's color support once, then thread the context
   // through render functions. Use `spruce.no_color()` for deterministic
   // output (e.g. in tests or when piping).
-  let sp = spruce.detect()
-  echo spruce.supports_color(sp)
+  let context = spruce.detect()
+  echo spruce.supports_color(context)
 }
 ```
 
@@ -55,10 +55,10 @@ escape-free, deterministic strings.
 - `spruce/border` — border styles and glyphs shared by boxes and tables
 - `spruce/box` — boxed and styled blocks: title, padding, margin, sizing, alignment, per-side borders and colors
 - `spruce/table` — tables with widths, borders, separators, and cell wrapping
-- `spruce/items` — bulleted/ordered lists with arbitrary nesting
+- `spruce/item` — bulleted/ordered lists with arbitrary nesting
 - `spruce/tree` — tree-structured output
 - `spruce/severity` — RFC 5424 severity labels, badges, and the status `Formatter`
-- `spruce/details` — key-value detail rendering
+- `spruce/detail` — key-value detail rendering
 - `spruce/line` — compact terminal line composition (timestamp, severity, scope, details)
 - `spruce/message` — semantic one-liners (success/fail/start/ready/info/warn/error)
 - `spruce/output` — pipeable, buffered output composition and grouping
@@ -75,40 +75,40 @@ import spruce/message
 import spruce/output
 
 pub fn main() {
-  let sp = spruce.detect()
-  box.print(sp, "spruce")
-  output.stream_group(sp, "Building", fn(sp) {
-    io.println(message.start(sp, "compiling"))
-    io.println(message.success(sp, "done"))
+  let context = spruce.detect()
+  box.print(context, "spruce")
+  output.stream_group(context, "Building", fn(context) {
+    io.println(message.start(context, "compiling"))
+    io.println(message.success(context, "done"))
   })
 }
 ```
 
 ```gleam
 import spruce
-import spruce/details
+import spruce/detail
 import spruce/line
 import spruce/severity
 
 pub fn compact_line_example() {
-  let sp = spruce.detect()
+  let context = spruce.detect()
   let meta =
-    details.new()
-    |> details.add("duration", "42ms")
-    |> details.add("target", "javascript")
+    detail.new()
+    |> detail.add("duration", "42ms")
+    |> detail.add("target", "javascript")
 
   line.new("Build complete")
   |> line.severity(severity.Info)
   |> line.scope("build")
   |> line.details(meta)
-  |> line.render(sp, _)
+  |> line.render(context, _)
   |> echo
 
   // Badge-style prefixes come from the severity formatter.
   line.new("Build complete")
   |> line.severity(severity.Notice)
   |> line.severity_formatter(severity.badge())
-  |> line.render(sp, _)
+  |> line.render(context, _)
   |> echo
 }
 ```
@@ -127,16 +127,16 @@ import spruce
 import spruce/style
 
 pub fn styles() {
-  let sp = spruce.detect()
+  let context = spruce.detect()
 
   // Build a style once, then derive variants from it.
   let heading = style.new() |> style.bold |> style.underline
   let accent = heading |> style.fg(style.Cyan)
-  echo style.render(sp, accent, "spruce")
+  echo style.render(context, accent, "spruce")
 
   // `style.hashed` returns a `Style`, so it pipes into more combinators.
-  let service = style.hashed(sp, "api") |> style.bold
-  echo style.render(sp, service, "api")
+  let service = style.hashed(context, "api") |> style.bold
+  echo style.render(context, service, "api")
 
   // Adaptive colors resolve against the detected background at render time.
   let brand =
@@ -145,7 +145,7 @@ pub fn styles() {
       light: style.Hex(0x0369a1),
       dark: style.Hex(0x7dd3fc),
     ))
-  echo style.render(sp, brand, "brand")
+  echo style.render(context, brand, "brand")
 }
 ```
 
@@ -158,15 +158,15 @@ import spruce/box
 import spruce/table
 
 pub fn renderers_nest() {
-  let sp = spruce.detect()
+  let context = spruce.detect()
 
   let grid =
     table.new()
     |> table.headers(["package", "target"])
     |> table.rows([["spruce", "erlang"], ["spruce", "javascript"]])
-    |> table.render(sp, _)
+    |> table.render(context, _)
 
-  box.render(sp, grid, box.new() |> box.title("build"))
+  box.render(context, grid, box.new() |> box.title("build"))
   |> echo
 }
 ```
@@ -176,19 +176,19 @@ and the parent's kind and enumerator drive rendering throughout:
 
 ```gleam
 import spruce
-import spruce/items
+import spruce/item
 
 pub fn lists_nest() {
-  let sp = spruce.detect()
+  let context = spruce.detect()
 
-  items.new()
-  |> items.kind(items.Ordered)
-  |> items.item("setup")
-  |> items.nested(
+  item.new()
+  |> item.kind(item.Ordered)
+  |> item.item("setup")
+  |> item.nested(
     "build",
-    items.new() |> items.item("erlang") |> items.item("javascript"),
+    item.new() |> item.item("erlang") |> item.item("javascript"),
   )
-  |> items.render(sp, _)
+  |> item.render(context, _)
   |> echo
 }
 ```
@@ -221,12 +221,12 @@ import spruce/message
 import spruce/output
 
 pub fn report() {
-  let sp = spruce.detect()
+  let context = spruce.detect()
 
-  output.new(sp)
+  output.new(context)
   |> output.append(message.start(_, "compiling"))
-  |> output.group("Tests", fn(o) {
-    o
+  |> output.group("Tests", fn(buffer) {
+    buffer
     |> output.append(message.success(_, "erlang"))
     |> output.append(message.success(_, "javascript"))
   })

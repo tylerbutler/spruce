@@ -95,7 +95,7 @@ pub fn row_separators(table: Table, enabled: Bool) -> Table {
 }
 
 /// Render a table as a bordered grid.
-pub fn render(sp: Spruce, table: Table) -> String {
+pub fn render(context: Spruce, table: Table) -> String {
   let column_count = count_columns(table.headers, table.rows)
 
   case column_count {
@@ -112,7 +112,7 @@ pub fn render(sp: Spruce, table: Table) -> String {
       let chars = grid_chars(table.border)
       let body =
         render_body_rows(
-          sp,
+          context,
           table.rows,
           widths,
           table.style_fn,
@@ -124,7 +124,7 @@ pub fn render(sp: Spruce, table: Table) -> String {
       let lines =
         [render_top(widths, chars)]
         |> list.append(render_header(
-          sp,
+          context,
           table.headers,
           widths,
           table.style_fn,
@@ -135,7 +135,7 @@ pub fn render(sp: Spruce, table: Table) -> String {
         |> list.append([render_bottom(widths, chars)])
 
       lines
-      |> list.map(fn(line) { spruce.indent_prefix(sp) <> line })
+      |> list.map(fn(line) { spruce.indent_prefix(context) <> line })
       |> string.join("\n")
     }
   }
@@ -246,7 +246,7 @@ fn distributed_widths_loop(
 }
 
 fn render_header(
-  sp: Spruce,
+  context: Spruce,
   headers: List(String),
   widths: List(Int),
   maybe_style: Option(fn(Int, Int) -> style.Style),
@@ -256,7 +256,7 @@ fn render_header(
   case headers {
     [] -> []
     _ -> {
-      let header = render_row(sp, headers, widths, maybe_style, -1, chars)
+      let header = render_row(context, headers, widths, maybe_style, -1, chars)
 
       case body {
         [] -> header
@@ -267,7 +267,7 @@ fn render_header(
 }
 
 fn render_body_rows(
-  sp: Spruce,
+  context: Spruce,
   rows: List(List(String)),
   widths: List(Int),
   maybe_style: Option(fn(Int, Int) -> style.Style),
@@ -278,10 +278,11 @@ fn render_body_rows(
   case rows {
     [] -> []
     [row, ..rest] -> {
-      let rendered = render_row(sp, row, widths, maybe_style, row_index, chars)
+      let rendered =
+        render_row(context, row, widths, maybe_style, row_index, chars)
       let tail =
         render_body_rows(
-          sp,
+          context,
           rest,
           widths,
           maybe_style,
@@ -302,21 +303,21 @@ fn render_body_rows(
 }
 
 fn render_row(
-  sp: Spruce,
+  context: Spruce,
   row: List(String),
   widths: List(Int),
   maybe_style: Option(fn(Int, Int) -> style.Style),
   row_index: Int,
   chars: GridChars,
 ) -> List(String) {
-  let cells = render_cell_lines(sp, row, widths, maybe_style, row_index, 0)
+  let cells = render_cell_lines(context, row, widths, maybe_style, row_index, 0)
   let height = max_cell_height(cells, 1)
 
   render_row_lines(cells, widths, chars, height, 0, [])
 }
 
 fn render_cell_lines(
-  sp: Spruce,
+  context: Spruce,
   row: List(String),
   widths: List(Int),
   maybe_style: Option(fn(Int, Int) -> style.Style),
@@ -330,12 +331,12 @@ fn render_cell_lines(
         cell_at(row, col_index)
         |> wrap_cell(width)
         |> string.split("\n")
-        |> list.map(apply_style(_, sp, maybe_style, row_index, col_index))
+        |> list.map(apply_style(_, context, maybe_style, row_index, col_index))
 
       [
         lines,
         ..render_cell_lines(
-          sp,
+          context,
           row,
           rest,
           maybe_style,
@@ -410,14 +411,15 @@ fn render_cell_line(
 
 fn apply_style(
   content: String,
-  sp: Spruce,
+  context: Spruce,
   maybe_style: Option(fn(Int, Int) -> style.Style),
   row_index: Int,
   col_index: Int,
 ) -> String {
   case maybe_style {
     None -> content
-    Some(style_fn) -> style.render(sp, style_fn(row_index, col_index), content)
+    Some(style_fn) ->
+      style.render(context, style_fn(row_index, col_index), content)
   }
 }
 
