@@ -4,6 +4,8 @@ import {
   useRef,
   useState,
   type HTMLAttributes,
+  type KeyboardEvent,
+  type ReactNode,
 } from "react";
 import { CopyIcon, CheckIcon, MoonIcon, SunIcon } from "../icons";
 
@@ -20,14 +22,102 @@ export function Reveal({
   );
 }
 
+export function Tabs<TValue extends string>({
+  name,
+  label,
+  options,
+  value,
+  onChange,
+  children,
+  className = "color-tabs",
+  panelClassName,
+}: {
+  name: string;
+  label: string;
+  options: readonly { value: TValue; label: string }[];
+  value: TValue;
+  onChange: (value: TValue) => void;
+  children: ReactNode;
+  className?: string;
+  panelClassName?: string;
+}) {
+  const instanceId = useId().replace(/:/g, "");
+  const baseId = `${name}-${instanceId}`;
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  function onKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    let nextIndex: number | undefined;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (index + 1) % options.length;
+    }
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (index - 1 + options.length) % options.length;
+    }
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = options.length - 1;
+    if (nextIndex === undefined) return;
+
+    event.preventDefault();
+    onChange(options[nextIndex].value);
+    tabRefs.current[nextIndex]?.focus();
+  }
+
+  return (
+    <>
+      <div className={className} role="tablist" aria-label={label}>
+        {options.map((option, index) => {
+          const selected = option.value === value;
+          return (
+            <button
+              key={option.value}
+              id={`${baseId}-tab-${option.value}`}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls={`${baseId}-panel`}
+              tabIndex={selected ? 0 : -1}
+              className={selected ? "active" : ""}
+              onClick={() => onChange(option.value)}
+              onKeyDown={(event) => onKeyDown(event, index)}
+              ref={(element) => {
+                tabRefs.current[index] = element;
+              }}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+      <div
+        id={`${baseId}-panel`}
+        className={panelClassName}
+        role="tabpanel"
+        aria-labelledby={`${baseId}-tab-${value}`}
+      >
+        {children}
+      </div>
+    </>
+  );
+}
+
 /* The three-dot title bar shared by every terminal-style panel. */
-export function TermBar({ title }: { title: string }) {
+export function TermBar({
+  title,
+  action,
+}: {
+  title: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="term-bar">
       <span className="dot r" />
       <span className="dot m" />
       <span className="dot m" />
       <span className="term-title">{title}</span>
+      {action && <span className="term-action">{action}</span>}
     </div>
   );
 }
@@ -144,38 +234,7 @@ export function CodeBlock({
 }
 
 export function CopyButton({ text }: { text: string }) {
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
-    "idle",
-  );
-
-  useEffect(() => {
-    if (copyState === "idle") return;
-    const t = setTimeout(() => setCopyState("idle"), 1800);
-    return () => clearTimeout(t);
-  }, [copyState]);
-
-  async function onCopy() {
-    let ok = false;
-    try {
-      await navigator.clipboard.writeText(text);
-      ok = true;
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      try {
-        ok = document.execCommand("copy");
-      } catch {
-        ok = false;
-      }
-      document.body.removeChild(ta);
-    }
-    setCopyState(ok ? "copied" : "failed");
-  }
+  const [copyState, onCopy] = useCopy(text);
 
   const copied = copyState === "copied";
   const failed = copyState === "failed";
@@ -183,6 +242,7 @@ export function CopyButton({ text }: { text: string }) {
   return (
     <span className="copy-wrap">
       <button
+        type="button"
         className={"copy" + (copied ? " copied" : "") + (failed ? " failed" : "")}
         onClick={onCopy}
         aria-label={`Copy: ${text}`}
@@ -200,6 +260,34 @@ export function CopyButton({ text }: { text: string }) {
           Copy failed. Select the command and copy it manually.
         </span>
       )}
+    </span>
+  );
+}
+
+export function CopyTextButton({
+  text,
+  label,
+}: {
+  text: string;
+  label: string;
+}) {
+  const [copyState, onCopy] = useCopy(text);
+  const copied = copyState === "copied";
+  const failed = copyState === "failed";
+
+  return (
+    <span className="text-copy-wrap">
+      <button
+        type="button"
+        className={`text-copy${copied ? " copied" : ""}${failed ? " failed" : ""}`}
+        onClick={onCopy}
+      >
+        {copied ? <CheckIcon /> : <CopyIcon />}
+        {copied ? "Copied" : failed ? "Copy failed" : label}
+      </button>
+      <span className="sr-only" aria-live="polite">
+        {copied ? `${label} copied` : failed ? `${label} copy failed` : ""}
+      </span>
     </span>
   );
 }
@@ -231,4 +319,41 @@ export function ThemeToggle() {
       {light ? <MoonIcon /> : <SunIcon />}
     </button>
   );
+}
+
+function useCopy(text: string) {
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
+
+  useEffect(() => {
+    if (copyState === "idle") return;
+    const timeout = setTimeout(() => setCopyState("idle"), 1800);
+    return () => clearTimeout(timeout);
+  }, [copyState]);
+
+  async function onCopy() {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
+      }
+      document.body.removeChild(textarea);
+    }
+    setCopyState(ok ? "copied" : "failed");
+  }
+
+  return [copyState, onCopy] as const;
 }

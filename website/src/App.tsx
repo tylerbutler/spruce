@@ -1,21 +1,15 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useState } from "react";
+import { Workbench } from "./components/Workbench";
 import {
   Reveal,
   Terminal,
-  CodeBlock,
+  Tabs,
   CopyButton,
   ThemeToggle,
 } from "./components/ui";
-import {
-  GitHubIcon,
-  ArrowIcon,
-  BookIcon,
-  MessageIcon,
-  TableIcon,
-  ShieldIcon,
-} from "./icons";
+import { GitHubIcon, ArrowIcon, BookIcon } from "./icons";
 import { terminalBlocks as T } from "./data/terminalBlocks";
-import { codeSamples } from "./data/codeSamples";
+import type { WorkbenchColorCapability } from "./workbench";
 
 const REPO = "https://github.com/tylerbutler/spruce";
 const CI = `${REPO}/actions`;
@@ -27,7 +21,7 @@ const heroModes = [
   { id: "truecolor", label: "TrueColor", block: "hero" },
   { id: "ansi256", label: "256 color", block: "hero_ansi256" },
   { id: "basic", label: "Basic", block: "hero_basic" },
-  { id: "plain", label: "No color", block: "hero_plain" },
+  { id: "no_color", label: "No color", block: "hero_plain" },
 ] as const;
 
 const moduleGroups: Array<{
@@ -99,8 +93,8 @@ function Nav() {
         </a>
         <div className="nav-spacer" />
         <nav className="nav-links">
-          <a className="text nav-hide-sm" href="#features">
-            Features
+          <a className="text nav-hide-sm" href="#workbench">
+            Workbench
           </a>
           <a className="text nav-hide-sm" href="#modules">
             Modules
@@ -118,31 +112,15 @@ function Nav() {
   );
 }
 
-function Hero() {
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const [mode, setMode] = useState<(typeof heroModes)[number]["id"]>(
-    "truecolor",
-  );
-  const activeMode = heroModes.find((item) => item.id === mode) ?? heroModes[0];
-
-  function onModeKeyDown(
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ) {
-    let nextIndex: number | undefined;
-    if (event.key === "ArrowRight") nextIndex = (index + 1) % heroModes.length;
-    if (event.key === "ArrowLeft") {
-      nextIndex = (index - 1 + heroModes.length) % heroModes.length;
-    }
-    if (event.key === "Home") nextIndex = 0;
-    if (event.key === "End") nextIndex = heroModes.length - 1;
-    if (nextIndex === undefined) return;
-
-    event.preventDefault();
-    setMode(heroModes[nextIndex].id);
-    tabRefs.current[nextIndex]?.focus();
-  }
-
+function Hero({
+  capability,
+  onCapabilityChange,
+}: {
+  capability: WorkbenchColorCapability;
+  onCapabilityChange: (capability: WorkbenchColorCapability) => void;
+}) {
+  const activeMode =
+    heroModes.find((item) => item.id === capability) ?? heroModes[0];
   return (
     <section className="hero" id="top">
       <div className="wrap hero-grid">
@@ -163,42 +141,22 @@ function Hero() {
           </div>
         </div>
         <div className="hero-demo">
-          <div
-            className="color-tabs"
-            role="tablist"
-            aria-label="Terminal color support"
-          >
-            {heroModes.map((item, index) => (
-              <button
-                key={item.id}
-                id={`hero-tab-${item.id}`}
-                type="button"
-                role="tab"
-                aria-selected={mode === item.id}
-                aria-controls="hero-output"
-                tabIndex={mode === item.id ? 0 : -1}
-                className={mode === item.id ? "active" : ""}
-                onClick={() => setMode(item.id)}
-                onKeyDown={(event) => onModeKeyDown(event, index)}
-                ref={(element) => {
-                  tabRefs.current[index] = element;
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <div
-            id="hero-output"
-            role="tabpanel"
-            aria-labelledby={`hero-tab-${activeMode.id}`}
+          <Tabs
+            name="hero-color"
+            label="Terminal color support"
+            options={heroModes.map((item) => ({
+              value: item.id,
+              label: item.label,
+            }))}
+            value={capability}
+            onChange={onCapabilityChange}
           >
             <Terminal
               title={`$ gleam run · ${activeMode.label}`}
               html={T[activeMode.block]}
               caret
             />
-          </div>
+          </Tabs>
           <p className="hero-proof">
             Same Gleam code. The nearest supported color, automatically.
           </p>
@@ -231,88 +189,6 @@ function Runtimes() {
             title="$ gleam run --target javascript"
             html={T.parity}
           />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Features() {
-  return (
-    <section className="section" id="features">
-      <div className="wrap">
-        <Reveal className="section-head">
-          <h2>Start with meaning. Add structure.</h2>
-          <p className="lead">
-            Each spruce primitive returns a string. Build from semantic lines
-            to complete terminal layouts, then print once at the boundary.
-          </p>
-        </Reveal>
-        <Reveal className="bento">
-          <article className="cell cell-messages">
-            <div className="cell-head">
-              <span className="cell-ico">
-                <MessageIcon />
-              </span>
-              <h3>Semantic messages</h3>
-            </div>
-            <p>
-              success, fail, start, ready, info, warn, and error lines, with
-              label, badge, or simple prefixes.
-            </p>
-            <Terminal title="messages" html={T.messages} />
-          </article>
-
-          <article className="cell cell-layout">
-            <div className="cell-head">
-              <span className="cell-ico">
-                <TableIcon />
-              </span>
-              <h3>Structured layouts</h3>
-            </div>
-            <p>ANSI-aware boxes, tables, trees, lists, wrapping, and alignment.</p>
-            <Terminal title="table" html={T.table} />
-          </article>
-
-          <article className="cell cell-compose">
-            <div className="cell-copy">
-              <div className="cell-head">
-                <span className="cell-ico">
-                  <ShieldIcon />
-                </span>
-                <h3>Compose, then print</h3>
-              </div>
-              <p>
-                Nest renderers and collect the complete string. IO stays at the
-                final boundary, so output remains pure and testable.
-              </p>
-            </div>
-            <Terminal title="list" html={T.list} />
-          </article>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-function Example() {
-  return (
-    <section className="section" style={{ paddingTop: 0 }}>
-      <div className="wrap">
-        <Reveal className="section-head">
-          <h2>A few lines in, styled output out.</h2>
-          <p className="lead">
-            Build and test the complete string first. IO stays at the final
-            boundary.
-          </p>
-        </Reveal>
-        <div className="example-grid">
-          <Reveal>
-            <CodeBlock title="main.gleam" html={codeSamples.main} />
-          </Reveal>
-          <Reveal>
-            <Terminal title="$ gleam run" html={T.example} />
-          </Reveal>
         </div>
       </div>
     </section>
@@ -409,14 +285,22 @@ function Footer() {
 }
 
 export default function App() {
+  const [capability, setCapability] =
+    useState<WorkbenchColorCapability>("truecolor");
+
   return (
     <>
       <Nav />
       <main>
-        <Hero />
+        <Hero
+          capability={capability}
+          onCapabilityChange={setCapability}
+        />
         <Runtimes />
-        <Features />
-        <Example />
+        <Workbench
+          capability={capability}
+          onCapabilityChange={setCapability}
+        />
         <Modules />
         <Cta />
       </main>
