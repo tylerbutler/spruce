@@ -26,4 +26,4 @@ Every terminal panel on the page is **genuine spruce output**, not a mockup.
 checks that their output matches, and converts the ANSI output span-for-span
 into `src/data/terminalBlocks.ts`. Run it locally after output changes and
 commit the result; deployment builds use the checked-in snapshot and do not
-require Gleam.
+require Gleam. The root `just build` recipe also regenerates this snapshot.
