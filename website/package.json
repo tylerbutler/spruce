@@ -8,9 +8,9 @@
     "generate": "npm run generate:code && npm run generate:terminal",
     "generate:code": "node tools/generate-code-samples.mjs",
     "generate:terminal": "node tools/generate-terminal-blocks.mjs",
-    "predev": "npm run generate",
+    "predev": "npm run generate:code",
     "dev": "vite",
-    "prebuild": "npm run generate",
+    "prebuild": "npm run generate:code",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
