@@ -56,9 +56,6 @@ export type WorkbenchColor =
       truecolor: WorkbenchAtomicColor;
     };
 
-export const boxKinds = ["framed", "plain"] as const;
-export type WorkbenchBoxKind = (typeof boxKinds)[number];
-
 export const borderStyles = [
   "normal",
   "rounded",
@@ -68,6 +65,10 @@ export const borderStyles = [
   "block",
 ] as const;
 export type WorkbenchBorderStyle = (typeof borderStyles)[number];
+
+export const horizontalAlignments = ["start", "center", "end"] as const;
+export type WorkbenchHorizontalAlignment =
+  (typeof horizontalAlignments)[number];
 
 export type WorkbenchPadding = {
   top: number;
@@ -98,13 +99,11 @@ export type BoxWorkbenchExample = {
   kind: "box";
   capability: WorkbenchColorCapability;
   content: string;
-  box: WorkbenchBoxKind;
   title: string;
   padding: WorkbenchPadding;
   width: number | null;
-  height: number | null;
+  alignment: WorkbenchHorizontalAlignment;
   border: WorkbenchBorderStyle;
-  borderColor: WorkbenchColor | null;
 };
 
 export type TableWidth =
@@ -140,13 +139,11 @@ export type StyleControl =
 export type BoxControl =
   | "capability"
   | "content"
-  | "box"
   | "title"
   | "padding"
   | "width"
-  | "height"
+  | "alignment"
   | "border"
-  | "border_color";
 export type TableControl =
   | "capability"
   | "headers"
@@ -225,12 +222,10 @@ export type StyleControlMetadata = {
 
 export type BoxControlMetadata = {
   capability: WorkbenchChoiceControlMetadata<WorkbenchColorCapability>;
-  box: WorkbenchChoiceControlMetadata<WorkbenchBoxKind>;
   padding: WorkbenchPaddingControlMetadata;
   width: WorkbenchNumberControlMetadata;
-  height: WorkbenchNumberControlMetadata;
+  alignment: WorkbenchChoiceControlMetadata<WorkbenchHorizontalAlignment>;
   border: WorkbenchChoiceControlMetadata<WorkbenchBorderStyle>;
-  border_color: WorkbenchChoiceControlMetadata<WorkbenchColor>;
 };
 
 export type TableControlMetadata = {

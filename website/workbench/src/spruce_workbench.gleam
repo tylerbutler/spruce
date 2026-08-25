@@ -1,5 +1,6 @@
 import gleam/option.{type Option, None, Some}
 import spruce.{type Spruce}
+import spruce/align
 import spruce/border
 import spruce/box
 import spruce/message as messages
@@ -58,9 +59,11 @@ pub type BorderStyle {
   Block
 }
 
-type BoxBase {
-  Framed
-  Plain
+/// Bounded horizontal alignment choices for box content.
+pub type HorizontalAlignment {
+  AlignStart
+  AlignCenter
+  AlignEnd
 }
 
 /// Bounded style controls owned by the workbench facade.
@@ -77,16 +80,14 @@ pub opaque type StyleConfig {
 /// Bounded box controls owned by the workbench facade.
 pub opaque type BoxConfig {
   BoxConfig(
-    base: BoxBase,
     title: String,
     padding_top: Int,
     padding_right: Int,
     padding_bottom: Int,
     padding_left: Int,
     width: Option(Int),
-    height: Option(Int),
+    alignment: HorizontalAlignment,
     border: BorderStyle,
-    border_color: Option(Color),
   )
 }
 
@@ -171,12 +172,7 @@ pub fn render_style(
 
 /// Create a framed box config.
 pub fn new_box() -> BoxConfig {
-  BoxConfig(Framed, "", 0, 1, 0, 1, None, None, Rounded, None)
-}
-
-/// Create a plain box config with no border and no padding.
-pub fn plain_box() -> BoxConfig {
-  BoxConfig(Plain, "", 0, 0, 0, 0, None, None, Hidden, None)
+  BoxConfig("", 0, 1, 0, 1, None, AlignStart, Rounded)
 }
 
 /// Set the box title.
@@ -206,19 +202,17 @@ pub fn box_width(config: BoxConfig, width: Int) -> BoxConfig {
   BoxConfig(..config, width: Some(width))
 }
 
-/// Set the box height.
-pub fn box_height(config: BoxConfig, height: Int) -> BoxConfig {
-  BoxConfig(..config, height: Some(height))
-}
-
 /// Set the box border style.
 pub fn box_border(config: BoxConfig, border: BorderStyle) -> BoxConfig {
   BoxConfig(..config, border: border)
 }
 
-/// Set one color for all four box border sides.
-pub fn box_border_color(config: BoxConfig, color: Color) -> BoxConfig {
-  BoxConfig(..config, border_color: Some(color))
+/// Set the horizontal alignment for box content.
+pub fn box_align(
+  config: BoxConfig,
+  alignment: HorizontalAlignment,
+) -> BoxConfig {
+  BoxConfig(..config, alignment: alignment)
 }
 
 /// Render a box for the chosen browser capability.
@@ -323,19 +317,18 @@ fn apply_if(
 }
 
 fn to_spruce_box(config: BoxConfig) -> box.Box {
-  let base = case config.base {
-    Framed -> box.new()
-    Plain -> box.plain()
-  }
-
   let rendered =
-    base
+    box.new()
     |> box.title(config.title)
     |> box.padding(
       top: config.padding_top,
       right: config.padding_right,
       bottom: config.padding_bottom,
       left: config.padding_left,
+    )
+    |> box.align(
+      horizontal: to_spruce_alignment(config.alignment),
+      vertical: align.Start,
     )
     |> box.border(to_spruce_border(config.border))
 
@@ -344,15 +337,7 @@ fn to_spruce_box(config: BoxConfig) -> box.Box {
     None -> rendered
   }
 
-  let rendered = case config.height {
-    Some(height) -> box.height(rendered, height)
-    None -> rendered
-  }
-
-  case config.border_color {
-    Some(color) -> box.border_color(rendered, to_spruce_color(color))
-    None -> rendered
-  }
+  rendered
 }
 
 fn to_spruce_table(config: TableConfig) -> table.Table {
@@ -381,6 +366,14 @@ fn to_spruce_border(border: BorderStyle) -> border.Border {
     Double -> border.Double
     Hidden -> border.Hidden
     Block -> border.Block
+  }
+}
+
+fn to_spruce_alignment(alignment: HorizontalAlignment) -> align.Pos {
+  case alignment {
+    AlignStart -> align.Start
+    AlignCenter -> align.Center
+    AlignEnd -> align.End
   }
 }
 

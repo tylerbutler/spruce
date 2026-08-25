@@ -4,8 +4,8 @@ export { renderWorkbenchSource } from "./source.ts";
 export {
   WORKBENCH_DOCS_ROOT,
   borderStyles,
-  boxKinds,
   colorCapabilities,
+  horizontalAlignments,
   messageKinds,
   namedColors,
   workbenchKinds,
@@ -29,6 +29,7 @@ export type {
   WorkbenchControlOption,
   WorkbenchExample,
   WorkbenchFallbackBlock,
+  WorkbenchHorizontalAlignment,
   WorkbenchKind,
   WorkbenchMessageKind,
   WorkbenchNumberControlMetadata,

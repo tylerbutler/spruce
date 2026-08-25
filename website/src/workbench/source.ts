@@ -8,6 +8,7 @@ import type {
   WorkbenchColor,
   WorkbenchColorCapability,
   WorkbenchExample,
+  WorkbenchHorizontalAlignment,
   WorkbenchMessageKind,
 } from "./domain.ts";
 
@@ -57,9 +58,9 @@ function renderBoxSource(example: BoxWorkbenchExample): string {
   return [
     "import gleam/io",
     "import spruce",
+    "import spruce/align",
     "import spruce/border",
     "import spruce/box",
-    "import spruce/style",
     "",
     "pub fn main() {",
     `  let context = ${renderContext(example.capability)}`,
@@ -105,7 +106,7 @@ function renderStyleBuilder(example: StyleWorkbenchExample): string {
 }
 
 function renderBoxBuilder(example: BoxWorkbenchExample): string {
-  const lines = [example.box === "plain" ? "box.plain()" : "box.new()"];
+  const lines = ["box.new()"];
 
   if (example.title) {
     lines.push(`|> box.title(${renderString(example.title)})`);
@@ -114,16 +115,13 @@ function renderBoxBuilder(example: BoxWorkbenchExample): string {
   lines.push(
     `|> box.padding(top: ${example.padding.top}, right: ${example.padding.right}, bottom: ${example.padding.bottom}, left: ${example.padding.left})`,
   );
+  lines.push(
+    `|> box.align(horizontal: align.${renderHorizontalAlignment(example.alignment)}, vertical: align.Start)`,
+  );
   lines.push(`|> box.border(border.${renderBorder(example.border)})`);
 
   if (example.width !== null) {
     lines.push(`|> box.width(${example.width})`);
-  }
-  if (example.height !== null) {
-    lines.push(`|> box.height(${example.height})`);
-  }
-  if (example.borderColor) {
-    lines.push(`|> box.border_color(${renderColor(example.borderColor)})`);
   }
 
   return lines.join("\n");
@@ -203,6 +201,19 @@ function renderBorder(border: WorkbenchBorderStyle): string {
       return "Hidden";
     case "block":
       return "Block";
+  }
+}
+
+function renderHorizontalAlignment(
+  alignment: WorkbenchHorizontalAlignment,
+): string {
+  switch (alignment) {
+    case "start":
+      return "Start";
+    case "center":
+      return "Center";
+    case "end":
+      return "End";
   }
 }
 

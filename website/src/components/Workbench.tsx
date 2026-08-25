@@ -443,24 +443,6 @@ function BoxControls({
       </label>
       <div className="control-pair">
         <label className="control-field">
-          <span>Box base</span>
-          <select
-            value={example.box}
-            onChange={(event) =>
-              onChange({
-                ...example,
-                box: event.target.value as BoxWorkbenchExample["box"],
-              })
-            }
-          >
-            {metadata.box.options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="control-field">
           <span>Title</span>
           <input
             type="text"
@@ -507,13 +489,26 @@ function BoxControls({
         metadata={metadata.width}
         onChange={(width) => onChange({ ...example, width })}
       />
-      <RangeControl
-        label="Height"
-        value={example.height}
-        metadata={metadata.height}
-        onChange={(height) => onChange({ ...example, height })}
-      />
       <div className="control-pair">
+        <label className="control-field">
+          <span>Alignment</span>
+          <select
+            value={example.alignment}
+            onChange={(event) =>
+              onChange({
+                ...example,
+                alignment:
+                  event.target.value as BoxWorkbenchExample["alignment"],
+              })
+            }
+          >
+            {metadata.alignment.options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="control-field">
           <span>Border</span>
           <select
@@ -532,13 +527,6 @@ function BoxControls({
             ))}
           </select>
         </label>
-        <ColorSelect
-          label="Border color"
-          value={example.borderColor}
-          options={metadata.border_color.options}
-          clearable={metadata.border_color.clearable}
-          onChange={(borderColor) => onChange({ ...example, borderColor })}
-        />
       </div>
     </>
   );

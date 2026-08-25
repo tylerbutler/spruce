@@ -9,6 +9,7 @@ import type {
   WorkbenchColor,
   WorkbenchColorCapability,
   WorkbenchExample,
+  WorkbenchHorizontalAlignment,
   WorkbenchMessageKind,
   WorkbenchRenderResult,
 } from "./domain.ts";
@@ -94,8 +95,7 @@ function toMessage(message: WorkbenchMessageKind): facade.Message$ {
 }
 
 function toBoxConfig(example: BoxWorkbenchExample): facade.BoxConfig$ {
-  let config =
-    example.box === "plain" ? facade.plain_box() : facade.new_box();
+  let config = facade.new_box();
 
   if (example.title) {
     config = facade.box_title(config, example.title);
@@ -109,15 +109,10 @@ function toBoxConfig(example: BoxWorkbenchExample): facade.BoxConfig$ {
     example.padding.left,
   );
   config = facade.box_border(config, toBorder(example.border));
+  config = facade.box_align(config, toHorizontalAlignment(example.alignment));
 
   if (example.width !== null) {
     config = facade.box_width(config, example.width);
-  }
-  if (example.height !== null) {
-    config = facade.box_height(config, example.height);
-  }
-  if (example.borderColor) {
-    config = facade.box_border_color(config, toColor(example.borderColor));
   }
 
   return config;
@@ -162,6 +157,19 @@ function toBorder(border: WorkbenchBorderStyle): facade.BorderStyle$ {
       return facade.BorderStyle$Hidden();
     case "block":
       return facade.BorderStyle$Block();
+  }
+}
+
+function toHorizontalAlignment(
+  alignment: WorkbenchHorizontalAlignment,
+): facade.HorizontalAlignment$ {
+  switch (alignment) {
+    case "start":
+      return facade.HorizontalAlignment$AlignStart();
+    case "center":
+      return facade.HorizontalAlignment$AlignCenter();
+    case "end":
+      return facade.HorizontalAlignment$AlignEnd();
   }
 }
 

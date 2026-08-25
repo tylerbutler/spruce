@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { terminalBlocks } from "../src/data/terminalBlocks.ts";
 import { convertAnsiToHtml } from "../src/lib/ansi2html.js";
+import { getWorkbenchPreset } from "../src/workbench/index.ts";
 import { workbenchPresets } from "../src/workbench/registry.ts";
 import { loadWorkbenchAdapter } from "../src/workbench/loadAdapter.ts";
 import { renderWorkbenchSource } from "../src/workbench/source.ts";
@@ -56,15 +57,32 @@ test("workbench presets stay mapped to source and rendered output", async () => 
         assert.match(result.html, /facade/);
         break;
       case "box":
+        assert.deepEqual(preset.supportedControls, [
+          "capability",
+          "content",
+          "title",
+          "padding",
+          "width",
+          "alignment",
+          "border",
+        ]);
         assert.match(source, /import spruce\/box/);
+        assert.match(source, /import spruce\/align/);
         assert.match(source, /import spruce\/border/);
         assert.match(source, /box\.title/);
+        assert.match(source, /box\.align/);
         assert.deepEqual(preset.controlMetadata.padding, {
           kind: "padding",
           min: 0,
           max: 4,
           step: 1,
         });
+        assert.equal(preset.controlMetadata.alignment.kind, "choice");
+        assert.deepEqual(
+          preset.controlMetadata.alignment.options.map((option) => option.value),
+          ["start", "center", "end"],
+        );
+        assert.doesNotMatch(source, /box\.(plain|height|border_color)/);
         assert.match(result.html, /spruce/);
         assert.match(result.html, /ready/);
         break;
@@ -82,3 +100,27 @@ test("workbench presets stay mapped to source and rendered output", async () => 
     }
   }
 });
+
+test("box alignment stays synchronized across preset, source, and runtime", async () => {
+  const adapter = await loadWorkbenchAdapter();
+  const preset = getWorkbenchPreset("box");
+  const centered = {
+    ...preset.defaultExample,
+    width: 16,
+    alignment: "center" as const,
+  };
+  const source = renderWorkbenchSource(centered);
+  const result = adapter.render(centered);
+
+  assert.match(source, /import spruce\/align/);
+  assert.match(
+    source,
+    /\|> box\.align\(horizontal: align\.Center, vertical: align\.Start\)/,
+  );
+  assert.doesNotMatch(source, /box\.(plain|height|border_color)/);
+  assert.match(stripAnsi(result.ansi), /│\s+ready\s+│/);
+});
+
+function stripAnsi(value: string): string {
+  return value.replace(/\u001b\[[0-9;]*m/g, "");
+}

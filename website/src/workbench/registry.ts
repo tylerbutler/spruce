@@ -4,10 +4,15 @@ import type {
   StyleWorkbenchExample,
   TableWorkbenchExample,
   WorkbenchColor,
+  WorkbenchHorizontalAlignment,
   WorkbenchKind,
   WorkbenchPreset,
 } from "./domain.ts";
-import { WORKBENCH_DOCS_ROOT, namedColors } from "./domain.ts";
+import {
+  WORKBENCH_DOCS_ROOT,
+  horizontalAlignments,
+  namedColors,
+} from "./domain.ts";
 import { renderWorkbenchSource } from "./source.ts";
 
 const messageDefault: MessageWorkbenchExample = {
@@ -32,13 +37,11 @@ const boxDefault: BoxWorkbenchExample = {
   kind: "box",
   capability: "truecolor",
   content: "ready",
-  box: "framed",
   title: "spruce",
   padding: { top: 0, right: 1, bottom: 0, left: 1 },
   width: null,
-  height: null,
+  alignment: "start",
   border: "rounded",
-  borderColor: { kind: "complete", ansi: { kind: "named", value: "cyan" }, ansi256: { kind: "ansi256", value: 116 }, truecolor: { kind: "hex", value: 0x56b3a4 } },
 };
 
 const tableDefault: TableWorkbenchExample = {
@@ -76,11 +79,6 @@ const booleanOptions = [
   { value: true, label: "On" },
 ] as const;
 
-const boxKindOptions = [
-  { value: "framed", label: "Framed" },
-  { value: "plain", label: "Plain" },
-] as const satisfies WorkbenchPreset<BoxWorkbenchExample>["controlMetadata"]["box"]["options"];
-
 const borderOptions = [
   { value: "normal", label: "Normal" },
   { value: "rounded", label: "Rounded" },
@@ -111,6 +109,14 @@ const workbenchColorOptions = [
   },
 ] as ReadonlyArray<{
   value: WorkbenchColor;
+  label: string;
+}>;
+
+const alignmentOptions = horizontalAlignments.map((value) => ({
+  value,
+  label: humanizeToken(value),
+})) as ReadonlyArray<{
+  value: WorkbenchHorizontalAlignment;
   label: string;
 }>;
 
@@ -177,26 +183,18 @@ export const workbenchPresets = [
     supportedControls: [
       "capability",
       "content",
-      "box",
       "title",
       "padding",
       "width",
-      "height",
+      "alignment",
       "border",
-      "border_color",
     ],
     controlMetadata: {
       capability: { kind: "choice", options: colorCapabilityOptions },
-      box: { kind: "choice", options: boxKindOptions },
       padding: { kind: "padding", min: 0, max: 4, step: 1 },
       width: { kind: "number", min: 12, max: 80, step: 1, nullable: true },
-      height: { kind: "number", min: 1, max: 12, step: 1, nullable: true },
+      alignment: { kind: "choice", options: alignmentOptions },
       border: { kind: "choice", options: borderOptions },
-      border_color: {
-        kind: "choice",
-        options: workbenchColorOptions,
-        clearable: true,
-      },
     },
     defaultExample: boxDefault,
     fallbackBlock: "example",
