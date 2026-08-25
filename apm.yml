@@ -11,6 +11,7 @@ targets:
 dependencies:
   apm:
     - tylerbutler/apm-base
+    - tylerbutler/agent-marketplace/plugins/gleam
   mcp: []
 includes: auto
 scripts: {}
