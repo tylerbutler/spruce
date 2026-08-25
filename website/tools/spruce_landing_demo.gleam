@@ -19,17 +19,33 @@ fn mark(name: String) -> Nil {
   io.println("\u{0001}" <> name)
 }
 
-pub fn main() {
-  let context = spruce.with_color_level(spruce.TrueColor)
-
-  mark("hero")
+fn render_hero(context: spruce.Spruce) {
   box.print(context, "spruce")
+  io.println(
+    style.new()
+    |> style.fg(style.Hex(0x7de2c4))
+    |> style.bold
+    |> style.render(context, _, "adaptive accent"),
+  )
   output.stream_group(context, "Build", fn(context) {
     io.println(message.start(context, "compiling 14 modules"))
     io.println(message.success(context, "compiled in 312ms"))
     io.println(message.info(context, "target: javascript"))
     io.println(message.warn(context, "2 deprecation notices"))
   })
+}
+
+pub fn main() {
+  let context = spruce.with_color_level(spruce.TrueColor)
+
+  mark("hero")
+  render_hero(context)
+
+  mark("hero_ansi256")
+  render_hero(spruce.with_color_level(spruce.Ansi256))
+
+  mark("hero_basic")
+  render_hero(spruce.with_color_level(spruce.Basic))
 
   mark("messages")
   let badge = fn(severity_value: severity.Severity, text: String) {
@@ -105,15 +121,12 @@ pub fn main() {
   box.print(context, "spruce")
   io.println(message.success(context, "ready"))
 
+  mark("parity")
+  io.println(message.success(context, "same render path"))
+  io.println(message.info(context, "pure String output"))
+
   mark("hero_plain")
-  let np = spruce.no_color()
-  box.print(np, "spruce")
-  output.stream_group(np, "Build", fn(np) {
-    io.println(message.start(np, "compiling 14 modules"))
-    io.println(message.success(np, "compiled in 312ms"))
-    io.println(message.info(np, "target: javascript"))
-    io.println(message.warn(np, "2 deprecation notices"))
-  })
+  render_hero(spruce.no_color())
 
   mark("style")
   io.println(
