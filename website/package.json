@@ -11,9 +11,9 @@
     "dev": "vite",
     "prebuild": "npm run generate:code && npm run build:gleam",
     "build": "tsc -b && vite build",
-    "test": "tsc -b",
+    "preview": "vite preview",
     "pretest": "npm run build:gleam",
-    "preview": "vite preview"
+    "test": "node --test"
   },
   "dependencies": {
     "react": "^18.3.1",
