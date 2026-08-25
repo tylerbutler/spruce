@@ -1,5 +1,11 @@
 import { useRef, useState, type KeyboardEvent } from "react";
-import { Reveal, Terminal, TermBar, CopyButton, ThemeToggle } from "./components/ui";
+import {
+  Reveal,
+  Terminal,
+  CodeBlock,
+  CopyButton,
+  ThemeToggle,
+} from "./components/ui";
 import {
   GitHubIcon,
   ArrowIcon,
@@ -9,8 +15,10 @@ import {
   ShieldIcon,
 } from "./icons";
 import { terminalBlocks as T } from "./data/terminalBlocks";
+import { codeSamples } from "./data/codeSamples";
 
 const REPO = "https://github.com/tylerbutler/spruce";
+const CI = `${REPO}/actions`;
 const DOCS = "https://hexdocs.pm/spruce/";
 const HEX = "https://hex.pm/packages/spruce";
 const INSTALL = "gleam add spruce";
@@ -37,32 +45,44 @@ const moduleGroups: Array<{
   },
   {
     title: "Style and symbols",
-    summary: "Build reusable terminal styling without leaking IO.",
+    summary: "Build reusable color, emphasis, and terminal glyphs.",
     modules: [
       ["spruce/style", "Named, RGB, hex, 256, adaptive, and hashed colors."],
       ["spruce/symbol", "Named glyphs with automatic ASCII fallbacks."],
-      ["spruce/severity", "RFC 5424 severity labels, badges, and formatters."],
     ],
   },
   {
-    title: "Structure and layout",
-    summary: "Keep multiline output aligned, nested, and readable.",
+    title: "Layout primitives",
+    summary: "Control width, alignment, borders, and framed blocks.",
     modules: [
       ["spruce/align", "ANSI-aware length, padding, and block composition."],
       ["spruce/border", "Border styles and glyphs shared by boxes and tables."],
       ["spruce/box", "Titles, padding, margin, sizing, alignment, borders."],
+    ],
+  },
+  {
+    title: "Structured content",
+    summary: "Render data and hierarchy without hand-built spacing.",
+    modules: [
       ["spruce/table", "Widths, borders, separators, and cell wrapping."],
       ["spruce/item", "Bulleted and ordered lists with arbitrary nesting."],
       ["spruce/tree", "Tree-structured output with Unicode or ASCII."],
     ],
   },
   {
-    title: "Semantic output",
-    summary: "Turn raw strings into meaningful developer-facing lines.",
+    title: "Status and diagnostics",
+    summary: "Give developer-facing lines consistent meaning and detail.",
     modules: [
+      ["spruce/severity", "RFC 5424 severity labels, badges, and formatters."],
       ["spruce/message", "Semantic one-liners: success, fail, start, and more."],
       ["spruce/line", "Compact severity, scope, and key/value detail."],
       ["spruce/detail", "Key and value detail rendering."],
+    ],
+  },
+  {
+    title: "Rich text",
+    summary: "Bring source code and Markdown into terminal output.",
+    modules: [
       ["spruce/highlight", "Syntax highlighting for fenced code blocks."],
       ["spruce/markdown", "Markdown to ANSI, in the style of Glamour."],
     ],
@@ -190,12 +210,27 @@ function Hero() {
 
 function Runtimes() {
   return (
-    <section className="runtimes">
-      <div className="wrap runtimes-inner">
-        <p>Two targets. No native extensions.</p>
-        <div className="runtime-targets" aria-label="Supported targets">
-          <span>Erlang / BEAM</span>
-          <span>JavaScript / Node</span>
+    <section className="runtimes" aria-labelledby="runtimes-title">
+      <div className="wrap runtime-proof">
+        <div className="runtime-proof-copy">
+          <h2 id="runtimes-title">Same render. Both runtimes.</h2>
+          <p>
+            No native extensions. The same pure Gleam path produces the same
+            output on Erlang and JavaScript.
+          </p>
+          <a className="runtime-ci" href={CI}>
+            See the test matrix <ArrowIcon />
+          </a>
+        </div>
+        <div className="runtime-outputs">
+          <Terminal
+            title="$ gleam run --target erlang"
+            html={T.parity}
+          />
+          <Terminal
+            title="$ gleam run --target javascript"
+            html={T.parity}
+          />
         </div>
       </div>
     </section>
@@ -207,14 +242,14 @@ function Features() {
     <section className="section" id="features">
       <div className="wrap">
         <Reveal className="section-head">
-          <h2>Build the whole output surface.</h2>
+          <h2>Start with meaning. Add structure.</h2>
           <p className="lead">
-            Compose messages, structured layouts, and runtime-safe output with
-            one small set of pure string builders.
+            Each spruce primitive returns a string. Build from semantic lines
+            to complete terminal layouts, then print once at the boundary.
           </p>
         </Reveal>
         <Reveal className="bento">
-          <article className="cell">
+          <article className="cell cell-messages">
             <div className="cell-head">
               <span className="cell-ico">
                 <MessageIcon />
@@ -228,7 +263,7 @@ function Features() {
             <Terminal title="messages" html={T.messages} />
           </article>
 
-          <article className="cell">
+          <article className="cell cell-layout">
             <div className="cell-head">
               <span className="cell-ico">
                 <TableIcon />
@@ -239,17 +274,19 @@ function Features() {
             <Terminal title="table" html={T.table} />
           </article>
 
-          <article className="cell">
-            <div className="cell-head">
-              <span className="cell-ico">
-                <ShieldIcon />
-              </span>
-              <h3>Target-safe by default</h3>
+          <article className="cell cell-compose">
+            <div className="cell-copy">
+              <div className="cell-head">
+                <span className="cell-ico">
+                  <ShieldIcon />
+                </span>
+                <h3>Compose, then print</h3>
+              </div>
+              <p>
+                Nest renderers and collect the complete string. IO stays at the
+                final boundary, so output remains pure and testable.
+              </p>
             </div>
-            <p>
-              The same pure builders run on Erlang and JavaScript with no
-              spruce FFI.
-            </p>
             <Terminal title="list" html={T.list} />
           </article>
         </Reveal>
@@ -270,49 +307,8 @@ function Example() {
           </p>
         </Reveal>
         <div className="example-grid">
-          <Reveal className="code">
-            <TermBar title="main.gleam" />
-            <pre>
-              <span className="k">import</span>{" "}
-              <span className="m">gleam/io</span>
-              {"\n"}
-              <span className="k">import</span> <span className="m">spruce</span>
-              {"\n"}
-              <span className="k">import</span>{" "}
-              <span className="m">spruce/box</span>
-              {"\n"}
-              <span className="k">import</span>{" "}
-              <span className="m">spruce/message</span>
-              {"\n"}
-              <span className="k">import</span>{" "}
-              <span className="m">spruce/output</span>
-              {"\n\n"}
-              <span className="k">pub fn</span> <span className="f">main</span>
-              () {"{"}
-              {"\n  "}
-              <span className="k">let</span> context ={" "}
-              <span className="m">spruce</span>.
-              <span className="f">detect</span>()
-              {"\n  "}
-              <span className="k">let</span> rendered ={"\n    "}
-              <span className="m">output</span>.<span className="f">new</span>(context)
-              {"\n    |> "}
-              <span className="m">output</span>.<span className="f">append</span>(
-              <span className="m">box</span>.<span className="f">simple</span>(_,{" "}
-              <span className="s">"spruce"</span>))
-              {"\n    |> "}
-              <span className="m">output</span>.<span className="f">append</span>(
-              <span className="m">message</span>.
-              <span className="f">success</span>(_,{" "}
-              <span className="s">"ready"</span>))
-              {"\n    |> "}
-              <span className="m">output</span>.<span className="f">to_string</span>
-              {"\n\n  "}
-              <span className="m">io</span>.<span className="f">println</span>(
-              rendered)
-              {"\n"}
-              {"}"}
-            </pre>
+          <Reveal>
+            <CodeBlock title="main.gleam" html={codeSamples.main} />
           </Reveal>
           <Reveal>
             <Terminal title="$ gleam run" html={T.example} />
@@ -330,8 +326,9 @@ function Modules() {
         <Reveal className="section-head">
           <h2>Focused modules for every terminal job.</h2>
           <p className="lead">
-            Import only what you print. Each module owns one job and nothing
-            more.
+            Start with <code>message</code> for status lines, <code>box</code>{" "}
+            for framed blocks, or <code>output</code> to compose a complete
+            render.
           </p>
         </Reveal>
         <div className="mods">

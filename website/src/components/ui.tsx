@@ -90,6 +90,59 @@ export function Terminal({
   );
 }
 
+export function CodeBlock({
+  title,
+  html,
+}: {
+  title: string;
+  html: string;
+}) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const hintId = useId();
+  const [hasOverflow, setHasOverflow] = useState(false);
+
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+
+    const updateOverflow = () => {
+      setHasOverflow(body.scrollWidth > body.clientWidth + 1);
+    };
+    updateOverflow();
+
+    const observer = new ResizeObserver(updateOverflow);
+    observer.observe(body);
+    return () => observer.disconnect();
+  }, [html]);
+
+  return (
+    <div className="code-panel">
+      <TermBar title={title} />
+      <div className="code-content">
+        <div
+          ref={bodyRef}
+          className="code-scroll"
+          tabIndex={hasOverflow ? 0 : undefined}
+          role="region"
+          aria-label={`${title} source code`}
+          aria-describedby={hasOverflow ? hintId : undefined}
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+        {hasOverflow && (
+          <>
+            <span className="term-scroll-cue" aria-hidden="true">
+              Scroll →
+            </span>
+            <span className="sr-only" id={hintId}>
+              This source code scrolls horizontally.
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function CopyButton({ text }: { text: string }) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
     "idle",

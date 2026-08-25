@@ -1,4 +1,4 @@
-// AUTO-GENERATED. Real spruce output captured from a live `gleam run` at
+// AUTO-GENERATED. Real spruce output captured from live runs on both Erlang and JavaScript at
 // each advertised color level, converted span-for-span. Regenerate via website/tools (see README).
 // Do not edit by hand.
 
@@ -12,6 +12,7 @@ export const terminalBlocks: Record<string, string> = {
   "list": "• Auto-detects color support\n• Renders on both runtimes\n  • Erlang / BEAM\n  • JavaScript / Node\n• Pure, testable string builders",
   "line": "<span style=\"color:#56b3a4;font-weight:700\">ℹ</span> <span style=\"color:#56b3a4;font-weight:700\">info</span>     <span style=\"opacity:.6\">[http]</span> Request handled <span style=\"color:#7fccc0;opacity:.6\">duration=42ms</span><span style=\"opacity:.6\"> </span><span style=\"color:#f59ab0;opacity:.6\">target=javascript</span>",
   "example": "<span style=\"color:#56b3a4\">╭────────╮</span>\n<span style=\"color:#56b3a4\">│</span> spruce <span style=\"color:#56b3a4\">│</span>\n<span style=\"color:#56b3a4\">╰────────╯</span>\n<span style=\"color:#58c98c\">✔</span> <span style=\"color:#58c98c;font-weight:700\">success</span> ready",
+  "parity": "<span style=\"color:#58c98c\">✔</span> <span style=\"color:#58c98c;font-weight:700\">success</span> same render path\n<span style=\"color:#56b3a4\">ℹ</span> <span style=\"color:#56b3a4;font-weight:700\">info</span> pure String output",
   "hero_plain": "╭────────╮\n│ spruce │\n╰────────╯\nadaptive accent\n▸ Build\n  ◐ start compiling 14 modules\n  ✔ success compiled in 312ms\n  ℹ info target: javascript\n  ⚠ warn 2 deprecation notices",
   "style": "<span style=\"color:rgb(236,106,130);font-weight:700\">rose</span>\n<span style=\"color:rgb(47,111,84);font-weight:700\">spruce</span>"
 };

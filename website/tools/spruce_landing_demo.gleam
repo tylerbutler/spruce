@@ -121,6 +121,10 @@ pub fn main() {
   box.print(context, "spruce")
   io.println(message.success(context, "ready"))
 
+  mark("parity")
+  io.println(message.success(context, "same render path"))
+  io.println(message.info(context, "pure String output"))
+
   mark("hero_plain")
   render_hero(spruce.no_color())
 
