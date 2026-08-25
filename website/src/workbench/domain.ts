@@ -168,6 +168,85 @@ export type WorkbenchControlSetByKind = {
   table: TableControl;
 };
 
+export type WorkbenchControlOption<TValue> = {
+  value: TValue;
+  label: string;
+};
+
+export type WorkbenchChoiceControlMetadata<TValue> = {
+  kind: "choice";
+  options: readonly WorkbenchControlOption<TValue>[];
+  clearable?: boolean;
+};
+
+export type WorkbenchNumberControlMetadata = {
+  kind: "number";
+  min: number;
+  max: number;
+  step: number;
+  nullable?: boolean;
+};
+
+export type WorkbenchPaddingControlMetadata = {
+  kind: "padding";
+  min: number;
+  max: number;
+  step: number;
+};
+
+export type WorkbenchTableWidthControlMetadata = {
+  kind: "table_width";
+  modes: readonly WorkbenchControlOption<TableWidth["kind"]>[];
+  table: {
+    min: number;
+    max: number;
+    step: number;
+  };
+  column: {
+    min: number;
+    max: number;
+    step: number;
+  };
+};
+
+export type MessageControlMetadata = {
+  capability: WorkbenchChoiceControlMetadata<WorkbenchColorCapability>;
+  message: WorkbenchChoiceControlMetadata<WorkbenchMessageKind>;
+};
+
+export type StyleControlMetadata = {
+  capability: WorkbenchChoiceControlMetadata<WorkbenchColorCapability>;
+  foreground: WorkbenchChoiceControlMetadata<WorkbenchColor>;
+  background: WorkbenchChoiceControlMetadata<WorkbenchColor>;
+  bold: WorkbenchChoiceControlMetadata<boolean>;
+  italic: WorkbenchChoiceControlMetadata<boolean>;
+  underline: WorkbenchChoiceControlMetadata<boolean>;
+};
+
+export type BoxControlMetadata = {
+  capability: WorkbenchChoiceControlMetadata<WorkbenchColorCapability>;
+  box: WorkbenchChoiceControlMetadata<WorkbenchBoxKind>;
+  padding: WorkbenchPaddingControlMetadata;
+  width: WorkbenchNumberControlMetadata;
+  height: WorkbenchNumberControlMetadata;
+  border: WorkbenchChoiceControlMetadata<WorkbenchBorderStyle>;
+  border_color: WorkbenchChoiceControlMetadata<WorkbenchColor>;
+};
+
+export type TableControlMetadata = {
+  capability: WorkbenchChoiceControlMetadata<WorkbenchColorCapability>;
+  width: WorkbenchTableWidthControlMetadata;
+  border: WorkbenchChoiceControlMetadata<WorkbenchBorderStyle>;
+  row_separators: WorkbenchChoiceControlMetadata<boolean>;
+};
+
+export type WorkbenchControlMetadataByKind = {
+  message: MessageControlMetadata;
+  style: StyleControlMetadata;
+  box: BoxControlMetadata;
+  table: TableControlMetadata;
+};
+
 export type WorkbenchFallbackBlock =
   | "messages"
   | "style"
@@ -180,6 +259,7 @@ export type WorkbenchPreset<T extends WorkbenchExample> = {
   summary: string;
   docsHref: string;
   supportedControls: readonly WorkbenchControlSetByKind[T["kind"]][];
+  controlMetadata: WorkbenchControlMetadataByKind[T["kind"]];
   defaultExample: T;
   fallbackBlock: WorkbenchFallbackBlock;
   createSource: (example?: T) => string;
