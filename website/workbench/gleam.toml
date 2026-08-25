@@ -7,4 +7,5 @@ gleam = ">= 1.16.0"
 typescript_declarations = true
 
 [dependencies]
+gleam_stdlib = ">= 0.44.0 and < 2.0.0"
 spruce = { path = "../.." }
