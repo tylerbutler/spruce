@@ -36,6 +36,7 @@ import {
   type WorkbenchKind,
   type WorkbenchNumberControlMetadata,
 } from "../workbench";
+import { highlightWorkbenchSource } from "../workbench/highlight";
 import { CopyTextButton, Tabs, TermBar, Terminal } from "./ui";
 
 type ExamplesByKind = {
@@ -49,6 +50,11 @@ type AdapterState =
   | { status: "loading" }
   | { status: "ready"; adapter: WorkbenchAdapter }
   | { status: "error"; message: string };
+
+type HighlightState =
+  | { status: "loading"; source: string }
+  | { status: "ready"; source: string; html: string }
+  | { status: "error"; source: string; message: string };
 
 const kindIcons: Record<
   WorkbenchKind,
@@ -105,7 +111,7 @@ export function Workbench({
     status: "loading",
   });
   const loadRequest = useRef(0);
-  const sourceRef = useRef<HTMLPreElement>(null);
+  const sourceRef = useRef<HTMLDivElement>(null);
   const sourceHintId = useId();
   const [sourceOverflow, setSourceOverflow] = useState({
     horizontal: false,
@@ -143,10 +149,38 @@ export function Workbench({
   const example = withCapability(examples[kind], capability);
   const Icon = kindIcons[kind];
   const source = renderWorkbenchSource(example);
+  const [highlightState, setHighlightState] = useState<HighlightState>({
+    status: "loading",
+    source,
+  });
   const sourceHasOverflow =
     sourceOverflow.horizontal || sourceOverflow.vertical;
   const sourceCue = sourceOverflowCue(sourceOverflow);
   const sourceHint = sourceOverflowHint(sourceOverflow);
+
+  useEffect(() => {
+    let active = true;
+    setHighlightState({ status: "loading", source });
+
+    void highlightWorkbenchSource(source).then(
+      (html) => {
+        if (active) setHighlightState({ status: "ready", source, html });
+      },
+      (error: unknown) => {
+        if (active) {
+          setHighlightState({
+            status: "error",
+            source,
+            message: errorMessage(error),
+          });
+        }
+      },
+    );
+
+    return () => {
+      active = false;
+    };
+  }, [source]);
 
   useEffect(() => {
     const sourceElement = sourceRef.current;
@@ -166,7 +200,7 @@ export function Workbench({
     const observer = new ResizeObserver(updateOverflow);
     observer.observe(sourceElement);
     return () => observer.disconnect();
-  }, [source]);
+  }, [source, highlightState]);
 
   let renderedHtml: string | null = null;
   let renderError: string | null = null;
@@ -305,17 +339,37 @@ export function Workbench({
                       }
                     />
                     <div className="term-content">
-                      <pre
+                      <div
                         ref={sourceRef}
+                        className="code-scroll"
                         tabIndex={sourceHasOverflow ? 0 : undefined}
                         role="region"
                         aria-label="Gleam source code"
+                        aria-busy={highlightState.status === "loading"}
                         aria-describedby={
                           sourceHasOverflow ? sourceHintId : undefined
                         }
                       >
-                        <code>{source}</code>
-                      </pre>
+                        {highlightState.status === "ready" &&
+                        highlightState.source === source ? (
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: highlightState.html,
+                            }}
+                          />
+                        ) : (
+                          <pre>
+                            <code>{source}</code>
+                          </pre>
+                        )}
+                      </div>
+                      {highlightState.status === "error" &&
+                        highlightState.source === source && (
+                          <span className="source-highlight-error" role="alert">
+                            Syntax highlighting failed:{" "}
+                            {highlightState.message}
+                          </span>
+                        )}
                       {sourceHasOverflow && (
                         <>
                           <span className="term-scroll-cue" aria-hidden="true">

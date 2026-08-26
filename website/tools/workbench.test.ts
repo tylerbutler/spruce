@@ -7,6 +7,7 @@ import { getWorkbenchPreset } from "../src/workbench/index.ts";
 import { workbenchPresets } from "../src/workbench/registry.ts";
 import { loadWorkbenchAdapter } from "../src/workbench/loadAdapter.ts";
 import { renderWorkbenchSource } from "../src/workbench/source.ts";
+import { highlightWorkbenchSource } from "../src/workbench/highlight.ts";
 import {
   detectSourceOverflow,
   sourceOverflowCue,
@@ -152,6 +153,17 @@ test("source overflow announces the active scroll axis", () => {
     sourceOverflowHint({ horizontal: true, vertical: false }),
     "This source code scrolls horizontally.",
   );
+});
+
+test("workbench source is highlighted with Expressive Code", async () => {
+  const source = renderWorkbenchSource(
+    getWorkbenchPreset("message").defaultExample,
+  );
+  const html = await highlightWorkbenchSource(source);
+
+  assert.match(html, /class="expressive-code"/);
+  assert.match(html, /data-language="gleam"/);
+  assert.match(html, /<span style="--0:#[0-9A-F]{6}">import<\/span>/);
 });
 
 function stripAnsi(value: string): string {

@@ -37,7 +37,8 @@ generated JavaScript checked into the untracked `workbench/build/` boundary,
 which Vite and TypeScript consume from `src/workbench/runtime.ts`.
 
 The React workbench UI and its generated Gleam runtime lazy-load on the
-standalone page.
+standalone page. Its changing Gleam source is syntax-highlighted in the browser
+with Expressive Code.
 Its native controls update real ANSI output and runnable public Gleam source
 from the same typed state.
 

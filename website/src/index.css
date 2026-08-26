@@ -1008,6 +1008,7 @@ section {
 .code-scroll {
   overflow-x: auto;
   overflow-y: auto;
+  max-height: 410px;
   tab-size: 2;
 }
 .code pre {
@@ -1033,6 +1034,17 @@ section {
 .code-panel .expressive-code pre {
   margin: 0;
   overflow: visible;
+}
+.source-panel .code-scroll > pre {
+  max-height: none;
+  overflow: visible;
+}
+.source-highlight-error {
+  display: block;
+  padding: 10px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  color: var(--accent);
+  font-size: 0.78rem;
 }
 .code-scroll::-webkit-scrollbar {
   height: 8px;
