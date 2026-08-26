@@ -1,0 +1,12 @@
+# Netlify configuration for the spruce website.
+# The site lives in website/; its build compiles the Gleam workbench facade
+# to JavaScript first (see website/scripts/netlify-build.sh).
+
+[build]
+  base = "website"
+  command = "./scripts/netlify-build.sh"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  GLEAM_VERSION = "1.16.0"

@@ -1,10 +1,13 @@
 # spruce website
 
-Marketing site for [spruce](https://hex.pm/packages/spruce), built with Vite +
-React + TypeScript, Tailwind v4, and Motion.
+Marketing site for [spruce](https://hex.pm/packages/spruce), built with Vite,
+React, TypeScript, and Tailwind v4.
 
 ```sh
 npm install
+npm run build:gleam  # compile the nested Gleam workbench facade
+npm run check:gleam  # smoke-test the generated JavaScript facade
+npm test         # ANSI and workbench adapter checks
 npm run dev      # local dev server
 npm run build    # static build to dist/
 npm run preview  # serve the built site
@@ -18,6 +21,28 @@ host. `base` is relative, so it works from a subpath.
 Source samples in `code-samples/` are rendered at build time with Expressive
 Code and Shiki's bundled Gleam grammar. `npm run generate:code` writes static
 HTML and CSS under `src/data/`; `npm run dev` and `npm run build` regenerate them automatically.
+
+## Netlify
+
+The root `netlify.toml` builds from `website/` and publishes `website/dist/`.
+Netlify installs npm dependencies, then `scripts/netlify-build.sh` provides
+Gleam 1.16.0 when needed and runs the normal `npm run build` command.
+
+## Interactive workbench
+
+The standalone workbench at `/workbench/` is driven by the nested Gleam package in
+`website/workbench/`. `npm run build:gleam` compiles that facade to the
+generated JavaScript checked into the untracked `workbench/build/` boundary,
+which Vite and TypeScript consume from `src/workbench/runtime.ts`.
+
+The React workbench UI and its generated Gleam runtime lazy-load on the
+standalone page. Its changing Gleam source is syntax-highlighted in the browser
+with Expressive Code.
+Its native controls update real ANSI output and runnable public Gleam source
+from the same typed state.
+
+`npm run dev`, `npm test`, and `npm run build` all compile the browser facade in
+`workbench/` before running their website checks.
 
 ## Real terminal output
 

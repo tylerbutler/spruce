@@ -1,8 +1,9 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { lazy, Suspense, useState } from "react";
 import {
   Reveal,
   Terminal,
-  CodeBlock,
+  TermBar,
+  Tabs,
   CopyButton,
   ThemeToggle,
 } from "./components/ui";
@@ -11,23 +12,38 @@ import {
   ArrowIcon,
   BookIcon,
   MessageIcon,
-  TableIcon,
-  ShieldIcon,
+  TerminalIcon,
 } from "./icons";
 import { terminalBlocks as T } from "./data/terminalBlocks";
-import { codeSamples } from "./data/codeSamples";
+import type { WorkbenchColorCapability } from "./workbench";
+
+const Workbench = lazy(async () => {
+  const module = await import("./components/Workbench");
+  return { default: module.Workbench };
+});
 
 const REPO = "https://github.com/tylerbutler/spruce";
 const CI = `${REPO}/actions`;
 const DOCS = "https://hexdocs.pm/spruce/";
 const HEX = "https://hex.pm/packages/spruce";
 const INSTALL = "gleam add spruce";
+const WORKBENCH_URL = "./workbench/";
+const WORKBENCH_FALLBACK_SOURCE = `import gleam/io
+import spruce
+import spruce/message
+
+pub fn main() {
+  let context = spruce.with_color_level(spruce.TrueColor)
+  io.println(message.success(context, "Deploy complete"))
+}`;
+
+type Page = "home" | "workbench";
 
 const heroModes = [
   { id: "truecolor", label: "TrueColor", block: "hero" },
   { id: "ansi256", label: "256 color", block: "hero_ansi256" },
   { id: "basic", label: "Basic", block: "hero_basic" },
-  { id: "plain", label: "No color", block: "hero_plain" },
+  { id: "no_color", label: "No color", block: "hero_plain" },
 ] as const;
 
 const moduleGroups: Array<{
@@ -89,20 +105,31 @@ const moduleGroups: Array<{
   },
 ];
 
-function Nav() {
+function Nav({ page }: { page: Page }) {
+  const homeHref = page === "home" ? "#top" : "../";
+  const workbenchHref = page === "home" ? WORKBENCH_URL : "./";
+  const modulesHref = page === "home" ? "#modules" : "../#modules";
+
   return (
     <header className="nav">
       <div className="wrap nav-inner">
-        <a className="brand" href="#top">
-          <img src="./spruce.webp" alt="spruce logo" />
+        <a className="brand" href={homeHref}>
+          <img
+            src={page === "home" ? "./spruce.webp" : "../spruce.webp"}
+            alt="spruce logo"
+          />
           <span>spruce</span>
         </a>
         <div className="nav-spacer" />
         <nav className="nav-links">
-          <a className="text nav-hide-sm" href="#features">
-            Features
+          <a
+            className="text nav-hide-sm"
+            href={workbenchHref}
+            aria-current={page === "workbench" ? "page" : undefined}
+          >
+            Workbench
           </a>
-          <a className="text nav-hide-sm" href="#modules">
+          <a className="text nav-hide-sm" href={modulesHref}>
             Modules
           </a>
           <a className="text" href={DOCS}>
@@ -118,31 +145,15 @@ function Nav() {
   );
 }
 
-function Hero() {
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const [mode, setMode] = useState<(typeof heroModes)[number]["id"]>(
-    "truecolor",
-  );
-  const activeMode = heroModes.find((item) => item.id === mode) ?? heroModes[0];
-
-  function onModeKeyDown(
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ) {
-    let nextIndex: number | undefined;
-    if (event.key === "ArrowRight") nextIndex = (index + 1) % heroModes.length;
-    if (event.key === "ArrowLeft") {
-      nextIndex = (index - 1 + heroModes.length) % heroModes.length;
-    }
-    if (event.key === "Home") nextIndex = 0;
-    if (event.key === "End") nextIndex = heroModes.length - 1;
-    if (nextIndex === undefined) return;
-
-    event.preventDefault();
-    setMode(heroModes[nextIndex].id);
-    tabRefs.current[nextIndex]?.focus();
-  }
-
+function Hero({
+  capability,
+  onCapabilityChange,
+}: {
+  capability: WorkbenchColorCapability;
+  onCapabilityChange: (capability: WorkbenchColorCapability) => void;
+}) {
+  const activeMode =
+    heroModes.find((item) => item.id === capability) ?? heroModes[0];
   return (
     <section className="hero" id="top">
       <div className="wrap hero-grid">
@@ -157,48 +168,31 @@ function Hero() {
           </p>
           <div className="hero-cta">
             <CopyButton text={INSTALL} />
+            <a className="btn btn-primary" href={WORKBENCH_URL}>
+              <TerminalIcon /> Open the workbench
+            </a>
             <a className="docs-link" href={DOCS}>
               Read the docs <ArrowIcon />
             </a>
           </div>
         </div>
         <div className="hero-demo">
-          <div
-            className="color-tabs"
-            role="tablist"
-            aria-label="Terminal color support"
-          >
-            {heroModes.map((item, index) => (
-              <button
-                key={item.id}
-                id={`hero-tab-${item.id}`}
-                type="button"
-                role="tab"
-                aria-selected={mode === item.id}
-                aria-controls="hero-output"
-                tabIndex={mode === item.id ? 0 : -1}
-                className={mode === item.id ? "active" : ""}
-                onClick={() => setMode(item.id)}
-                onKeyDown={(event) => onModeKeyDown(event, index)}
-                ref={(element) => {
-                  tabRefs.current[index] = element;
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <div
-            id="hero-output"
-            role="tabpanel"
-            aria-labelledby={`hero-tab-${activeMode.id}`}
+          <Tabs
+            name="hero-color"
+            label="Terminal color support"
+            options={heroModes.map((item) => ({
+              value: item.id,
+              label: item.label,
+            }))}
+            value={capability}
+            onChange={onCapabilityChange}
           >
             <Terminal
               title={`$ gleam run · ${activeMode.label}`}
               html={T[activeMode.block]}
               caret
             />
-          </div>
+          </Tabs>
           <p className="hero-proof">
             Same Gleam code. The nearest supported color, automatically.
           </p>
@@ -237,82 +231,141 @@ function Runtimes() {
   );
 }
 
-function Features() {
+function WorkbenchInvite() {
   return (
-    <section className="section" id="features">
+    <section
+      className="section workbench-invite"
+      aria-labelledby="workbench-invite-title"
+    >
       <div className="wrap">
-        <Reveal className="section-head">
-          <h2>Start with meaning. Add structure.</h2>
-          <p className="lead">
-            Each spruce primitive returns a string. Build from semantic lines
-            to complete terminal layouts, then print once at the boundary.
-          </p>
-        </Reveal>
-        <Reveal className="bento">
-          <article className="cell cell-messages">
-            <div className="cell-head">
-              <span className="cell-ico">
-                <MessageIcon />
-              </span>
-              <h3>Semantic messages</h3>
-            </div>
+        <Reveal className="workbench-invite-panel">
+          <div className="workbench-invite-copy">
+            <h2 id="workbench-invite-title">
+              Shape real output before you write the code.
+            </h2>
             <p>
-              success, fail, start, ready, info, warn, and error lines, with
-              label, badge, or simple prefixes.
+              Adjust messages, styles, boxes, and tables in the browser. The
+              workbench renders with spruce and gives you the matching public
+              Gleam source.
             </p>
-            <Terminal title="messages" html={T.messages} />
-          </article>
-
-          <article className="cell cell-layout">
-            <div className="cell-head">
-              <span className="cell-ico">
-                <TableIcon />
-              </span>
-              <h3>Structured layouts</h3>
-            </div>
-            <p>ANSI-aware boxes, tables, trees, lists, wrapping, and alignment.</p>
-            <Terminal title="table" html={T.table} />
-          </article>
-
-          <article className="cell cell-compose">
-            <div className="cell-copy">
-              <div className="cell-head">
-                <span className="cell-ico">
-                  <ShieldIcon />
-                </span>
-                <h3>Compose, then print</h3>
-              </div>
-              <p>
-                Nest renderers and collect the complete string. IO stays at the
-                final boundary, so output remains pure and testable.
-              </p>
-            </div>
-            <Terminal title="list" html={T.list} />
-          </article>
+            <a className="btn btn-primary" href={WORKBENCH_URL}>
+              <TerminalIcon /> Try the workbench
+            </a>
+          </div>
+          <div className="workbench-invite-preview">
+            <Terminal
+              title="Workbench preview · semantic messages"
+              html={T.messages}
+            />
+            <span>Change the preset, color support, content, and layout.</span>
+          </div>
         </Reveal>
       </div>
     </section>
   );
 }
 
-function Example() {
+function WorkbenchFallback() {
   return (
-    <section className="section" style={{ paddingTop: 0 }}>
+    <section
+      className="section workbench-fallback"
+      id="workbench"
+      aria-busy="true"
+    >
       <div className="wrap">
-        <Reveal className="section-head">
-          <h2>A few lines in, styled output out.</h2>
+        <div className="section-head">
+          <h2>Shape the output, then take the code.</h2>
           <p className="lead">
-            Build and test the complete string first. IO stays at the final
-            boundary.
+            Choose one focused spruce capability. Every control updates real
+            Gleam-rendered ANSI output and the public source beside it.
           </p>
-        </Reveal>
-        <div className="example-grid">
-          <Reveal>
-            <CodeBlock title="main.gleam" html={codeSamples.main} />
-          </Reveal>
-          <Reveal>
-            <Terminal title="$ gleam run" html={T.example} />
-          </Reveal>
+        </div>
+        <div className="workbench">
+          <div className="workbench-kind-tabs" aria-hidden="true">
+            <button className="active" type="button" disabled>
+              Semantic messages
+            </button>
+            <button type="button" disabled>
+              Styled text
+            </button>
+            <button type="button" disabled>
+              Boxed blocks
+            </button>
+            <button type="button" disabled>
+              Tables
+            </button>
+          </div>
+          <div className="workbench-stage">
+            <div className="workbench-stage-head">
+              <div className="workbench-title">
+                <span className="workbench-icon">
+                  <MessageIcon />
+                </span>
+                <div>
+                  <h3>Semantic messages</h3>
+                  <p>
+                    Render one semantic line with the bounded message
+                    constructors.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p className="sr-only" role="status">
+              Loading the interactive workbench.
+            </p>
+            <div
+              className="color-tabs workbench-color-tabs"
+              aria-hidden="true"
+            >
+              <button type="button" disabled>
+                No color
+              </button>
+              <button type="button" disabled>
+                Basic ANSI
+              </button>
+              <button type="button" disabled>
+                ANSI 256
+              </button>
+              <button className="active" type="button" disabled>
+                Truecolor
+              </button>
+            </div>
+            <div className="workbench-grid">
+              <fieldset
+                className="workbench-controls"
+                disabled
+                aria-hidden="true"
+              >
+                <legend>Adjust semantic messages</legend>
+                <label className="control-field">
+                  <span>Message kind</span>
+                  <select defaultValue="success">
+                    <option value="success">Success</option>
+                  </select>
+                </label>
+                <label className="control-field">
+                  <span>Text</span>
+                  <input type="text" defaultValue="Deploy complete" />
+                </label>
+              </fieldset>
+              <div className="workbench-results">
+                <div className="workbench-output">
+                  <Terminal
+                    title="Real output preview"
+                    html={T.messages}
+                  />
+                </div>
+                <div className="code source-panel" aria-hidden="true">
+                  <TermBar title="main.gleam" />
+                  <div className="term-content">
+                    <pre>
+                      <code>{WORKBENCH_FALLBACK_SOURCE}</code>
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -374,7 +427,10 @@ function Cta() {
           </p>
           <div className="cta-actions">
             <CopyButton text={INSTALL} />
-            <a className="btn btn-primary" href={DOCS}>
+            <a className="btn btn-primary" href={WORKBENCH_URL}>
+              <TerminalIcon /> Open the workbench
+            </a>
+            <a className="btn btn-ghost" href={DOCS}>
               <BookIcon /> Read the docs
             </a>
             <a className="btn btn-ghost" href={REPO}>
@@ -387,12 +443,17 @@ function Cta() {
   );
 }
 
-function Footer() {
+function Footer({ page }: { page: Page }) {
   return (
     <footer className="footer">
       <div className="wrap footer-inner">
-        <a className="brand" href="#top">
-          <img src="./spruce.webp" alt="" width={22} height={22} />
+        <a className="brand" href={page === "home" ? "#top" : "../"}>
+          <img
+            src={page === "home" ? "./spruce.webp" : "../spruce.webp"}
+            alt=""
+            width={22}
+            height={22}
+          />
           <span>spruce</span>
         </a>
         <span className="dotsep">/</span>
@@ -409,18 +470,42 @@ function Footer() {
 }
 
 export default function App() {
+  const [capability, setCapability] =
+    useState<WorkbenchColorCapability>("truecolor");
+  const page =
+    document.body.dataset.page === "workbench" ? "workbench" : "home";
+
+  if (page === "workbench") {
+    return (
+      <>
+        <Nav page={page} />
+        <main className="workbench-page">
+          <Suspense fallback={<WorkbenchFallback />}>
+            <Workbench
+              capability={capability}
+              onCapabilityChange={setCapability}
+            />
+          </Suspense>
+        </main>
+        <Footer page={page} />
+      </>
+    );
+  }
+
   return (
     <>
-      <Nav />
+      <Nav page={page} />
       <main>
-        <Hero />
+        <Hero
+          capability={capability}
+          onCapabilityChange={setCapability}
+        />
         <Runtimes />
-        <Features />
-        <Example />
+        <WorkbenchInvite />
         <Modules />
         <Cta />
       </main>
-      <Footer />
+      <Footer page={page} />
     </>
   );
 }
