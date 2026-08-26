@@ -9,3 +9,6 @@ typescript_declarations = true
 [dependencies]
 gleam_stdlib = ">= 0.44.0 and < 2.0.0"
 spruce = { path = "../.." }
+
+[dev_dependencies]
+glinter = ">= 2.19.2 and < 3.0.0"
