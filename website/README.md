@@ -31,13 +31,13 @@ Gleam 1.16.0 when needed and runs the normal `npm run build` command.
 
 ## Interactive workbench
 
-The homepage workbench is driven by the nested Gleam package in
+The standalone workbench at `/workbench/` is driven by the nested Gleam package in
 `website/workbench/`. `npm run build:gleam` compiles that facade to the
 generated JavaScript checked into the untracked `workbench/build/` boundary,
 which Vite and TypeScript consume from `src/workbench/runtime.ts`.
 
-The React workbench UI lazy-loads separately from the landing-page shell, and
-its generated Gleam runtime remains a second lazy chunk behind that boundary.
+The React workbench UI and its generated Gleam runtime lazy-load on the
+standalone page.
 Its native controls update real ANSI output and runnable public Gleam source
 from the same typed state.
 

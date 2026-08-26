@@ -247,6 +247,10 @@ h3 {
   color: var(--text);
   background: var(--card);
 }
+.nav-links a.text[aria-current="page"] {
+  color: var(--brand-strong);
+  background: var(--card);
+}
 .icon-btn {
   display: inline-grid;
   place-items: center;
@@ -615,6 +619,43 @@ h3 {
   font-size: 0.76rem;
 }
 
+/* workbench invitation */
+.workbench-invite {
+  padding-bottom: 72px;
+}
+.workbench-invite-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(26rem, 1.18fr);
+  align-items: center;
+  gap: clamp(36px, 6vw, 76px);
+  padding: clamp(28px, 5vw, 58px);
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+.workbench-invite-copy h2 {
+  max-width: 15ch;
+  font-size: clamp(1.9rem, 3.4vw, 2.65rem);
+}
+.workbench-invite-copy p {
+  max-width: 48ch;
+  margin: 18px 0 28px;
+  color: var(--muted);
+}
+.workbench-invite-preview {
+  min-width: 0;
+}
+.workbench-invite-preview .term-body {
+  min-height: 150px;
+}
+.workbench-invite-preview > span {
+  display: block;
+  margin: 13px 2px 0;
+  color: var(--faint);
+  font-size: 0.82rem;
+}
+
 /* sections */
 section {
   scroll-margin-top: 80px;
@@ -634,6 +675,23 @@ section {
 }
 
 /* workbench */
+.workbench-page {
+  min-height: calc(100vh - 64px);
+}
+.workbench-page .section {
+  padding: 64px 0 80px;
+}
+.workbench-page .section-head {
+  max-width: 72ch;
+  margin-bottom: 36px;
+}
+.workbench-page .section-head h2 {
+  max-width: 18ch;
+  font-size: clamp(2.15rem, 4.4vw, 3.35rem);
+}
+.workbench-page .section-head .lead {
+  max-width: 68ch;
+}
 .workbench {
   overflow: hidden;
   background: var(--card);
@@ -1191,6 +1249,9 @@ section {
     grid-template-columns: 1fr;
     gap: 28px;
   }
+  .workbench-invite-panel {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 560px) {
   .wrap {
@@ -1201,6 +1262,19 @@ section {
   }
   .section {
     padding: 64px 0;
+  }
+  .workbench-page .section {
+    padding: 44px 0 56px;
+  }
+  .workbench-page .section-head {
+    margin-bottom: 30px;
+  }
+  .workbench-invite {
+    padding-bottom: 48px;
+  }
+  .workbench-invite-panel {
+    gap: 32px;
+    padding: 24px 18px 20px;
   }
   .mods {
     grid-template-columns: 1fr;

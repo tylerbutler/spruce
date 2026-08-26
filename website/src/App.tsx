@@ -7,7 +7,13 @@ import {
   CopyButton,
   ThemeToggle,
 } from "./components/ui";
-import { GitHubIcon, ArrowIcon, BookIcon, MessageIcon } from "./icons";
+import {
+  GitHubIcon,
+  ArrowIcon,
+  BookIcon,
+  MessageIcon,
+  TerminalIcon,
+} from "./icons";
 import { terminalBlocks as T } from "./data/terminalBlocks";
 import type { WorkbenchColorCapability } from "./workbench";
 
@@ -21,6 +27,7 @@ const CI = `${REPO}/actions`;
 const DOCS = "https://hexdocs.pm/spruce/";
 const HEX = "https://hex.pm/packages/spruce";
 const INSTALL = "gleam add spruce";
+const WORKBENCH_URL = "./workbench/";
 const WORKBENCH_FALLBACK_SOURCE = `import gleam/io
 import spruce
 import spruce/message
@@ -29,6 +36,8 @@ pub fn main() {
   let context = spruce.with_color_level(spruce.TrueColor)
   io.println(message.success(context, "Deploy complete"))
 }`;
+
+type Page = "home" | "workbench";
 
 const heroModes = [
   { id: "truecolor", label: "TrueColor", block: "hero" },
@@ -96,20 +105,31 @@ const moduleGroups: Array<{
   },
 ];
 
-function Nav() {
+function Nav({ page }: { page: Page }) {
+  const homeHref = page === "home" ? "#top" : "../";
+  const workbenchHref = page === "home" ? WORKBENCH_URL : "./";
+  const modulesHref = page === "home" ? "#modules" : "../#modules";
+
   return (
     <header className="nav">
       <div className="wrap nav-inner">
-        <a className="brand" href="#top">
-          <img src="./spruce.webp" alt="spruce logo" />
+        <a className="brand" href={homeHref}>
+          <img
+            src={page === "home" ? "./spruce.webp" : "../spruce.webp"}
+            alt="spruce logo"
+          />
           <span>spruce</span>
         </a>
         <div className="nav-spacer" />
         <nav className="nav-links">
-          <a className="text nav-hide-sm" href="#workbench">
+          <a
+            className="text nav-hide-sm"
+            href={workbenchHref}
+            aria-current={page === "workbench" ? "page" : undefined}
+          >
             Workbench
           </a>
-          <a className="text nav-hide-sm" href="#modules">
+          <a className="text nav-hide-sm" href={modulesHref}>
             Modules
           </a>
           <a className="text" href={DOCS}>
@@ -148,6 +168,9 @@ function Hero({
           </p>
           <div className="hero-cta">
             <CopyButton text={INSTALL} />
+            <a className="btn btn-primary" href={WORKBENCH_URL}>
+              <TerminalIcon /> Open the workbench
+            </a>
             <a className="docs-link" href={DOCS}>
               Read the docs <ArrowIcon />
             </a>
@@ -203,6 +226,40 @@ function Runtimes() {
             html={T.parity}
           />
         </div>
+      </div>
+    </section>
+  );
+}
+
+function WorkbenchInvite() {
+  return (
+    <section
+      className="section workbench-invite"
+      aria-labelledby="workbench-invite-title"
+    >
+      <div className="wrap">
+        <Reveal className="workbench-invite-panel">
+          <div className="workbench-invite-copy">
+            <h2 id="workbench-invite-title">
+              Shape real output before you write the code.
+            </h2>
+            <p>
+              Adjust messages, styles, boxes, and tables in the browser. The
+              workbench renders with spruce and gives you the matching public
+              Gleam source.
+            </p>
+            <a className="btn btn-primary" href={WORKBENCH_URL}>
+              <TerminalIcon /> Try the workbench
+            </a>
+          </div>
+          <div className="workbench-invite-preview">
+            <Terminal
+              title="Workbench preview · semantic messages"
+              html={T.messages}
+            />
+            <span>Change the preset, color support, content, and layout.</span>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -370,7 +427,10 @@ function Cta() {
           </p>
           <div className="cta-actions">
             <CopyButton text={INSTALL} />
-            <a className="btn btn-primary" href={DOCS}>
+            <a className="btn btn-primary" href={WORKBENCH_URL}>
+              <TerminalIcon /> Open the workbench
+            </a>
+            <a className="btn btn-ghost" href={DOCS}>
               <BookIcon /> Read the docs
             </a>
             <a className="btn btn-ghost" href={REPO}>
@@ -383,12 +443,17 @@ function Cta() {
   );
 }
 
-function Footer() {
+function Footer({ page }: { page: Page }) {
   return (
     <footer className="footer">
       <div className="wrap footer-inner">
-        <a className="brand" href="#top">
-          <img src="./spruce.webp" alt="" width={22} height={22} />
+        <a className="brand" href={page === "home" ? "#top" : "../"}>
+          <img
+            src={page === "home" ? "./spruce.webp" : "../spruce.webp"}
+            alt=""
+            width={22}
+            height={22}
+          />
           <span>spruce</span>
         </a>
         <span className="dotsep">/</span>
@@ -407,26 +472,40 @@ function Footer() {
 export default function App() {
   const [capability, setCapability] =
     useState<WorkbenchColorCapability>("truecolor");
+  const page =
+    document.body.dataset.page === "workbench" ? "workbench" : "home";
+
+  if (page === "workbench") {
+    return (
+      <>
+        <Nav page={page} />
+        <main className="workbench-page">
+          <Suspense fallback={<WorkbenchFallback />}>
+            <Workbench
+              capability={capability}
+              onCapabilityChange={setCapability}
+            />
+          </Suspense>
+        </main>
+        <Footer page={page} />
+      </>
+    );
+  }
 
   return (
     <>
-      <Nav />
+      <Nav page={page} />
       <main>
         <Hero
           capability={capability}
           onCapabilityChange={setCapability}
         />
         <Runtimes />
-        <Suspense fallback={<WorkbenchFallback />}>
-          <Workbench
-            capability={capability}
-            onCapabilityChange={setCapability}
-          />
-        </Suspense>
+        <WorkbenchInvite />
         <Modules />
         <Cta />
       </main>
-      <Footer />
+      <Footer page={page} />
     </>
   );
 }

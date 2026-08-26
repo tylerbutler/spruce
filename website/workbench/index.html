@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/webp" href="../spruce.webp" />
+    <meta name="color-scheme" content="dark light" />
+    <title>spruce workbench: build terminal UI in Gleam</title>
+    <meta
+      name="description"
+      content="Shape real spruce terminal output, compare color capabilities, and copy the runnable Gleam source."
+    />
+    <meta property="og:title" content="spruce workbench" />
+    <meta
+      property="og:description"
+      content="Shape real spruce terminal output and copy the runnable Gleam source."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="../spruce.png" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("spruce-theme");
+          var light =
+            t === "light" ||
+            (t !== "dark" &&
+              window.matchMedia("(prefers-color-scheme: light)").matches);
+          var d = document.documentElement;
+          d.classList.remove("dark");
+          d.classList.add(light ? "light" : "dark");
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+  </head>
+  <body data-page="workbench">
+    <div id="root"></div>
+    <script type="module" src="../src/main.tsx"></script>
+  </body>
+</html>
