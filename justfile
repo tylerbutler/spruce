@@ -23,6 +23,7 @@ deps:
 # Compile the project
 build:
     trellis run build
+    npm --prefix website run generate:terminal
 
 # Build with warnings as errors (both targets)
 build-strict:

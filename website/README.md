@@ -20,8 +20,7 @@ host. `base` is relative, so it works from a subpath.
 
 Source samples in `code-samples/` are rendered at build time with Expressive
 Code and Shiki's bundled Gleam grammar. `npm run generate:code` writes static
-HTML and CSS under `src/data/`; `npm run dev` and `npm run build` regenerate
-them automatically.
+HTML and CSS under `src/data/`; `npm run dev` and `npm run build` regenerate them automatically.
 
 ## Netlify
 
@@ -47,23 +46,9 @@ from the same typed state.
 
 ## Real terminal output
 
-Every terminal panel on the page is **genuine spruce output**, not a mockup. The
-strings in `src/data/terminalBlocks.ts` are captured from a live `gleam run` at
-each advertised color level and converted span-for-span to HTML by the shared
-module in `src/lib/ansi2html.js`.
-
-To regenerate after changing spruce:
-
-1. Copy `tools/spruce_landing_demo.gleam` into the repo `src/` directory.
-2. From the repo root, capture both targets and verify that their output matches:
-   ```sh
-   FORCE_COLOR=3 gleam run -m spruce_landing_demo --target erlang > /tmp/spruce_erlang.ansi
-   FORCE_COLOR=3 gleam run -m spruce_landing_demo --target javascript > /tmp/spruce_javascript.ansi
-   diff /tmp/spruce_erlang.ansi /tmp/spruce_javascript.ansi
-   node website/tools/ansi2html.cjs /tmp/spruce_erlang.ansi > website/spruce_blocks.json
-   ```
-3. Rebuild `src/data/terminalBlocks.ts` from that JSON, then delete the demo
-   module from `src/` (it must not ship in the published package).
-
-After regenerating fixtures, rerun `npm test` to verify the ANSI converter and
-workbench adapter still agree with the captured output.
+Every terminal panel on the page is **genuine spruce output**, not a mockup.
+`npm run generate:terminal` runs `dev/spruce_landing_demo.gleam` on both targets,
+checks that their output matches, and converts the ANSI output span-for-span
+into `src/data/terminalBlocks.ts`. Run it locally after output changes and
+commit the result; deployment builds use the checked-in snapshot and do not
+require Gleam. The root `just build` recipe also regenerates this snapshot.

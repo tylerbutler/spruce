@@ -46,11 +46,11 @@ typography:
     fontSize: "16px"
     lineHeight: 1.6
   label:
-    fontFamily: "ui-monospace, SF Mono, JetBrains Mono, Cascadia Code, Fira Code, Menlo, Consolas, monospace"
+    fontFamily: "Fira Code, Cascadia Code, JetBrains Mono, SF Mono, Menlo, Consolas, monospace"
     fontSize: "0.72rem"
     letterSpacing: "0.18em"
   code:
-    fontFamily: "ui-monospace, SF Mono, JetBrains Mono, Cascadia Code, Fira Code, Menlo, Consolas, monospace"
+    fontFamily: "Fira Code, Cascadia Code, JetBrains Mono, SF Mono, Menlo, Consolas, monospace"
     fontSize: "0.82rem"
     lineHeight: 1.62
 rounded:
@@ -140,7 +140,7 @@ The palette is a dark spruce workbench: green-black surfaces, mint text, a funct
 
 **Display Font:** System sans stack (`ui-sans-serif`, system UI, Segoe UI, Roboto, Arial).
 **Body Font:** System sans stack.
-**Label/Mono Font:** System monospace stack (`ui-monospace`, SF Mono, JetBrains Mono, Cascadia Code, Fira Code, Menlo, Consolas).
+**Label/Mono Font:** Hosted Fira Code (400, 500, and 600) with Cascadia Code, JetBrains Mono, SF Mono, Menlo, Consolas, and `monospace` fallbacks. Common and contextual ligatures are enabled for code, commands, terminal output, and technical labels.
 
 **Character:** The type system is single-sans with a functional mono layer. Sans carries calm clarity; mono appears where the content is genuinely terminal, code, command, or compact metadata. Mono is not a decorative shorthand for "developer."
 

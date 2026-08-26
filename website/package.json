@@ -5,7 +5,9 @@
   "type": "module",
   "description": "Marketing site for the spruce terminal-UI kit.",
   "scripts": {
+    "generate": "npm run generate:code && npm run generate:terminal",
     "generate:code": "node tools/generate-code-samples.mjs",
+    "generate:terminal": "node tools/generate-terminal-blocks.mjs",
     "build:gleam": "cd workbench && gleam build --target javascript",
     "check:gleam": "cd workbench && node check.mjs",
     "predev": "npm run generate:code && npm run build:gleam",

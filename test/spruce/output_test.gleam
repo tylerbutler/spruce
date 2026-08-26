@@ -16,7 +16,7 @@ pub fn append_threads_context_test() {
   |> output.append(message.success(_, "done"))
   |> output.append(message.info(_, "next"))
   |> output.to_string
-  |> expect.to_equal("✔ success done\nℹ info next")
+  |> expect.to_equal("✔ success done\nℹ︎ info next")
 }
 
 pub fn text_appends_raw_test() {
@@ -36,7 +36,7 @@ pub fn group_indents_body_test() {
     buffer |> output.append(message.info(_, "running"))
   })
   |> output.to_string
-  |> expect.to_equal("▸ Tests\n  ℹ info running")
+  |> expect.to_equal("▸ Tests\n  ℹ︎ info running")
 }
 
 pub fn group_restores_outer_depth_test() {
@@ -61,7 +61,7 @@ pub fn nested_groups_test() {
     })
   })
   |> output.to_string
-  |> expect.to_equal("▸ Outer\n  ℹ info a\n  ▸ Inner\n    ℹ info b")
+  |> expect.to_equal("▸ Outer\n  ℹ︎ info a\n  ▸ Inner\n    ℹ︎ info b")
 }
 
 pub fn context_reflects_group_depth_test() {

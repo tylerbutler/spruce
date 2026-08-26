@@ -44,7 +44,7 @@ pub fn ready(context: Spruce, text: String) -> String {
   render(context, symbol.Success, style.Green, "ready", text)
 }
 
-/// Format an info message line, e.g. `ℹ info resolving dependencies`.
+/// Format an info message line, e.g. `ℹ︎ info resolving dependencies`.
 pub fn info(context: Spruce, text: String) -> String {
   render(context, symbol.Info, style.Cyan, "info", text)
 }

@@ -30,7 +30,7 @@ pub fn ready_no_color_test() {
 pub fn info_no_color_test() {
   spruce.no_color()
   |> message.info("noted")
-  |> expect.to_equal("ℹ info noted")
+  |> expect.to_equal("ℹ︎ info noted")
 }
 
 pub fn warn_indented_test() {

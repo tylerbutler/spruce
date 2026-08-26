@@ -3,7 +3,7 @@ import startest/expect
 
 pub fn unicode_status_glyphs_test() {
   symbol.status(symbol.Unicode, symbol.Info)
-  |> expect.to_equal("ℹ")
+  |> expect.to_equal("ℹ︎")
   symbol.status(symbol.Unicode, symbol.Success)
   |> expect.to_equal("✔")
   symbol.status(symbol.Unicode, symbol.Error)
