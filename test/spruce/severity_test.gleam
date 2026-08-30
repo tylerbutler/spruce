@@ -2,6 +2,7 @@ import gleam/list
 import gleam/string
 import gleeunit/should
 import spruce
+import spruce/align
 import spruce/severity
 
 pub fn label_formatter_no_color_test() {
@@ -27,7 +28,7 @@ pub fn label_formatter_without_icons_target_width_test() {
   severity.label()
   |> severity.icons(False)
   |> severity.target_width
-  |> should.equal(8)
+  |> should.equal(9)
 }
 
 pub fn badge_formatter_no_color_test() {
@@ -42,7 +43,7 @@ pub fn simple_formatter_no_color_test() {
 
 pub fn padded_label_formatter_uses_visual_width_test() {
   severity.render_padded(spruce.no_color(), severity.label(), severity.Info)
-  |> should.equal("ℹ︎ info    ")
+  |> should.equal("ℹ︎ info      ")
 }
 
 pub fn color_formatter_emits_escapes_test() {
@@ -155,4 +156,105 @@ pub fn label_mode_override_wins_over_context_test() {
 
   severity.render(ctx, formatter, severity.Warning)
   |> should.equal("⚠ warning")
+}
+
+const all_severities = [
+  severity.Emergency,
+  severity.Alert,
+  severity.Critical,
+  severity.Error,
+  severity.Warning,
+  severity.Notice,
+  severity.Info,
+  severity.Debug,
+]
+
+fn padded_widths(
+  context: spruce.Spruce,
+  formatter: severity.Formatter,
+) -> List(Int) {
+  all_severities
+  |> list.map(fn(severity_value) {
+    severity.render_padded(context, formatter, severity_value)
+    |> align.visual_length
+  })
+}
+
+fn assert_alignment(context: spruce.Spruce, formatter: severity.Formatter) {
+  let width = severity.target_width(formatter)
+
+  padded_widths(context, formatter)
+  |> should.equal(list.repeat(width, list.length(all_severities)))
+}
+
+pub fn padded_label_aligns_in_unicode_mode_test() {
+  assert_alignment(spruce.no_color(), severity.label())
+}
+
+pub fn padded_label_aligns_in_ascii_mode_test() {
+  let context = spruce.no_color() |> spruce.with_symbol_mode(spruce.Ascii)
+
+  assert_alignment(context, severity.label())
+}
+
+pub fn padded_label_without_icons_aligns_test() {
+  assert_alignment(spruce.no_color(), severity.label() |> severity.icons(False))
+}
+
+pub fn padded_badge_aligns_test() {
+  assert_alignment(spruce.no_color(), severity.badge())
+}
+
+pub fn padded_simple_aligns_test() {
+  assert_alignment(spruce.no_color(), severity.simple())
+}
+
+pub fn padded_label_fits_ascii_emergency_test() {
+  let context = spruce.no_color() |> spruce.with_symbol_mode(spruce.Ascii)
+
+  severity.render_padded(context, severity.label(), severity.Emergency)
+  |> should.equal("!! emergency")
+}
+
+pub fn padded_label_fits_unicode_emergency_test() {
+  severity.render_padded(
+    spruce.no_color(),
+    severity.label(),
+    severity.Emergency,
+  )
+  |> should.equal("‼ emergency ")
+}
+
+pub fn padded_label_without_icons_fits_emergency_test() {
+  let formatter = severity.label() |> severity.icons(False)
+
+  severity.render_padded(spruce.no_color(), formatter, severity.Emergency)
+  |> should.equal("emergency")
+}
+
+pub fn padded_badge_fits_emergency_test() {
+  severity.render_padded(
+    spruce.no_color(),
+    severity.badge(),
+    severity.Emergency,
+  )
+  |> should.equal("[EMERGENCY]")
+}
+
+pub fn padded_simple_fits_emergency_test() {
+  severity.render_padded(
+    spruce.no_color(),
+    severity.simple(),
+    severity.Emergency,
+  )
+  |> should.equal("EMERGENCY")
+}
+
+pub fn formatter_target_widths_test() {
+  severity.target_width(severity.label())
+  |> should.equal(12)
+  severity.target_width(severity.badge())
+  |> should.equal(11)
+  severity.target_width(severity.simple())
+  |> should.equal(9)
 }

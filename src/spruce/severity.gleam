@@ -39,19 +39,28 @@ type FormatKind {
   Custom(render: fn(Severity, Spruce) -> String)
 }
 
+/// The widest lowercase or uppercase severity name: `emergency`.
+const name_width = 9
+
+/// `[EMERGENCY]`.
+const badge_width = 11
+
+/// The widest ASCII icon (`!!`), a space, and `emergency`.
+const label_width = 12
+
 /// Render an icon plus lowercase severity label, e.g. `ℹ︎ info`.
 pub fn label() -> Formatter {
-  Formatter(kind: Label, icons: True, mode: None, target_width: 10)
+  Formatter(kind: Label, icons: True, mode: None, target_width: label_width)
 }
 
-/// Render an uppercase bracketed severity badge, e.g. `[WARN]`.
+/// Render an uppercase bracketed severity badge, e.g. `[WARNING]`.
 pub fn badge() -> Formatter {
-  Formatter(kind: Badge, icons: False, mode: None, target_width: 10)
+  Formatter(kind: Badge, icons: False, mode: None, target_width: badge_width)
 }
 
 /// Render an uppercase severity name, e.g. `DEBUG`.
 pub fn simple() -> Formatter {
-  Formatter(kind: Simple, icons: False, mode: None, target_width: 8)
+  Formatter(kind: Simple, icons: False, mode: None, target_width: name_width)
 }
 
 /// Render severities with a caller-supplied function.
@@ -208,8 +217,8 @@ fn label_color(severity: Severity) -> style.Color {
 }
 
 fn bool_width(enabled: Bool) -> Int {
-  use <- bool.guard(when: enabled, return: 10)
-  8
+  use <- bool.guard(when: enabled, return: label_width)
+  name_width
 }
 
 fn simple_color(severity: Severity) -> style.Color {

@@ -30,7 +30,9 @@ import spruce.{type Spruce}
 /// and `Ansi256` give finer control and are downgraded to the nearest
 /// representable color when the terminal lacks support. `Complete` and
 /// `Adaptive` select a color based on the color level and terminal background
-/// respectively (see `complete` and `adaptive`).
+/// respectively (see `complete` and `adaptive`). `Hashed(key)` holds the key
+/// itself, so the deterministic hash color is resolved at render time against
+/// the rendering context's color level (see `hashed`).
 pub type Color {
   Black
   Red

@@ -39,16 +39,32 @@ pub fn main() {
 Every render function takes an explicit `Spruce` value, which carries:
 
 - the detected **color level** (`NoColor`, `Basic`, `Ansi256`, `TrueColor`), so
-  output is plain text when color is unsupported; and
+  output is plain text when color is unsupported;
+- the **symbol mode** (`spruce.Unicode` by default, or `spruce.Ascii`), so
+  icons, bullets, and tree branches degrade to ASCII when the output
+  environment requires it; and
 - the current **indent depth**, so grouped output nests without any global
   state.
+
+Symbol mode is independent of color support. Set it explicitly and read it back
+with `spruce.with_symbol_mode` and `spruce.symbol_mode`:
+
+```gleam
+import spruce
+import spruce/message
+
+pub fn main() {
+  let context = spruce.detect() |> spruce.with_symbol_mode(spruce.Ascii)
+  echo message.success(context, "done")
+}
+```
 
 This keeps rendering pure and testable: `spruce.no_color()` produces
 escape-free, deterministic strings.
 
 ## Modules
 
-- `spruce` — the `Spruce` context (color level + terminal background + indent depth)
+- `spruce` — the `Spruce` context (color level + terminal background + symbol mode + indent depth)
 - `spruce/style` — composable text styling (named, RGB/hex/256, complete, and adaptive light/dark colors) and deterministic hash colors
 - `spruce/symbol` — named glyphs (with ASCII fallbacks)
 - `spruce/align` — ANSI-aware length, padding, wrapping, and multi-line block composition
