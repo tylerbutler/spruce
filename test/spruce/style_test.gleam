@@ -1,3 +1,4 @@
+import gleam/list
 import gleam/string
 import gleeunit/should
 import spruce
@@ -397,4 +398,19 @@ fn renders_like_valid_ansi256_palette_color(
   || rendered == render(style.BrightBlue)
   || rendered == render(style.BrightMagenta)
   || rendered == render(style.BrightCyan)
+}
+
+pub fn dim_and_faint_together_emit_single_dim_sequence_test() {
+  let rendered =
+    style.render(
+      spruce.with_color_level(spruce.TrueColor),
+      style.new() |> style.dim |> style.faint,
+      "x",
+    )
+  let dim_seq = "\u{001b}[2m"
+  let count =
+    string.split(rendered, dim_seq)
+    |> list.length
+    |> fn(n) { n - 1 }
+  count |> should.equal(1)
 }

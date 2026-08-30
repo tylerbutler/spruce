@@ -76,7 +76,6 @@ pub opaque type Style {
     underline: Bool,
     strikethrough: Bool,
     reverse: Bool,
-    faint: Bool,
     inline: Bool,
   )
 }
@@ -92,7 +91,6 @@ pub fn new() -> Style {
     underline: False,
     strikethrough: False,
     reverse: False,
-    faint: False,
     inline: False,
   )
 }
@@ -158,7 +156,7 @@ pub fn reverse(style: Style) -> Style {
 
 /// Enable faint text. This is an alias for `dim`.
 pub fn faint(style: Style) -> Style {
-  Style(..style, faint: True)
+  Style(..style, dim: True)
 }
 
 /// Collapse newlines in the text to single spaces when rendering, keeping a
@@ -191,7 +189,6 @@ pub fn render(context: Spruce, style: Style, text: String) -> String {
       |> render_underline(style.underline)
       |> render_strikethrough(style.strikethrough)
       |> render_reverse(style.reverse)
-      |> render_faint(style.faint)
     }
   }
 }
@@ -653,11 +650,6 @@ fn render_strikethrough(text: String, enabled: Bool) -> String {
 fn render_reverse(text: String, enabled: Bool) -> String {
   use <- bool.guard(when: !enabled, return: text)
   ansi.inverse(text)
-}
-
-fn render_faint(text: String, enabled: Bool) -> String {
-  use <- bool.guard(when: !enabled, return: text)
-  ansi.dim(text)
 }
 
 /// Map a string to a deterministic color style.
