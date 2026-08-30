@@ -85,3 +85,27 @@ pub fn detect_returns_a_known_background_test() {
     spruce.Light | spruce.Dark | spruce.Unknown -> should.be_true(True)
   }
 }
+
+// A fresh context defaults to Unicode symbol mode.
+pub fn default_symbol_mode_is_unicode_test() {
+  spruce.no_color()
+  |> spruce.symbol_mode
+  |> should.equal(spruce.Unicode)
+}
+
+// with_symbol_mode overrides the context's symbol mode.
+pub fn with_symbol_mode_sets_mode_test() {
+  spruce.no_color()
+  |> spruce.with_symbol_mode(spruce.Ascii)
+  |> spruce.symbol_mode
+  |> should.equal(spruce.Ascii)
+}
+
+// indented preserves the symbol mode.
+pub fn indented_preserves_symbol_mode_test() {
+  spruce.no_color()
+  |> spruce.with_symbol_mode(spruce.Ascii)
+  |> spruce.indented
+  |> spruce.symbol_mode
+  |> should.equal(spruce.Ascii)
+}

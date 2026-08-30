@@ -1,3 +1,4 @@
+import gleam/list
 import gleam/string
 import gleeunit/should
 import spruce
@@ -29,8 +30,8 @@ pub fn bullet_ordered_nested_tasklist_test() {
   let markdown_text = "- parent\n  - child\n- [x] done\n\n3. third\n4. fourth"
   let rendered = markdown.render(spruce.no_color(), markdown_text)
 
-  should.be_true(string.contains(rendered, "- parent\n  - child"))
-  should.be_true(string.contains(rendered, "- [x] done"))
+  should.be_true(string.contains(rendered, "• parent\n  • child"))
+  should.be_true(string.contains(rendered, "• [x] done"))
   should.be_true(string.contains(rendered, "3. third\n4. fourth"))
 }
 
@@ -100,7 +101,7 @@ pub fn github_alert_note_test() {
   should.be_true(string.contains(rendered, "Note"))
   should.be_true(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Info),
+    symbol.status(spruce.Unicode, symbol.Info),
   ))
   should.be_true(string.contains(rendered, "Pay attention."))
   should.be_false(string.contains(rendered, "[!NOTE]"))
@@ -112,7 +113,7 @@ pub fn github_alert_custom_title_test() {
 
   should.be_true(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Warn),
+    symbol.status(spruce.Unicode, symbol.Warn),
   ))
   should.be_true(string.contains(rendered, "Heads up"))
   should.be_true(string.contains(rendered, "Be careful."))
@@ -124,7 +125,7 @@ pub fn github_alert_aliases_test() {
   should.be_true(string.contains(tip, "Tip"))
   should.be_true(string.contains(
     tip,
-    symbol.status(symbol.Unicode, symbol.Success),
+    symbol.status(spruce.Unicode, symbol.Success),
   ))
 
   let important =
@@ -132,14 +133,14 @@ pub fn github_alert_aliases_test() {
   should.be_true(string.contains(important, "Important"))
   should.be_true(string.contains(
     important,
-    symbol.status(symbol.Unicode, symbol.Notice),
+    symbol.status(spruce.Unicode, symbol.Notice),
   ))
 
   let caution = markdown.render(spruce.no_color(), "> [!CAUTION]\n> Danger.")
   should.be_true(string.contains(caution, "Caution"))
   should.be_true(string.contains(
     caution,
-    symbol.status(symbol.Unicode, symbol.Error),
+    symbol.status(spruce.Unicode, symbol.Error),
   ))
 }
 
@@ -149,7 +150,7 @@ pub fn github_alert_unknown_stays_quote_test() {
   should.be_true(string.contains(rendered, "[!BOGUS]"))
   should.be_false(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Info),
+    symbol.status(spruce.Unicode, symbol.Info),
   ))
 }
 
@@ -160,7 +161,7 @@ pub fn astro_directive_note_test() {
   should.be_true(string.contains(rendered, "Note"))
   should.be_true(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Info),
+    symbol.status(spruce.Unicode, symbol.Info),
   ))
   should.be_true(string.contains(rendered, "Astro aside body."))
   should.be_false(string.contains(rendered, ":::"))
@@ -175,7 +176,7 @@ pub fn astro_directive_custom_title_test() {
 
   should.be_true(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Error),
+    symbol.status(spruce.Unicode, symbol.Error),
   ))
   should.be_true(string.contains(rendered, "Watch Out"))
   should.be_true(string.contains(rendered, "Something risky."))
@@ -297,4 +298,161 @@ pub fn heading_theme_adapts_to_background_test() {
   should.be_true(string.contains(dark, "\u{001b}"))
   should.be_true(string.contains(light, "\u{001b}"))
   should.not_equal(dark, light)
+}
+
+// ---------------------------------------------------------------------------
+// Depth-1 indentation tests: every block kind must receive the context indent
+// exactly once, with no double-indentation inside containers.
+// ---------------------------------------------------------------------------
+
+/// Every non-empty line in `text` must start with `prefix`.
+fn assert_all_lines_indented(text: String, prefix: String) -> Nil {
+  text
+  |> string.split("\n")
+  |> list.filter(fn(line) { line != "" })
+  |> list.each(fn(line) { should.be_true(string.starts_with(line, prefix)) })
+}
+
+/// Depth-1 output equals depth-0 output with "  " prepended to non-empty lines.
+fn assert_indented_matches(depth0: String, depth1: String) -> Nil {
+  let expected =
+    depth0
+    |> string.split("\n")
+    |> list.map(fn(line) {
+      case line {
+        "" -> ""
+        _ -> "  " <> line
+      }
+    })
+    |> string.join("\n")
+  should.equal(depth1, expected)
+}
+
+pub fn indented_paragraph_test() {
+  let md = "Hello world."
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_heading_test() {
+  let md = "# Title"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  should.equal(d1, "  # Title")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_rule_test() {
+  let md = "---"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_blockquote_test() {
+  let md = "> quoted"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  should.equal(d1, "  ┃ quoted")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_alert_test() {
+  let md = "> [!NOTE]\n> Pay attention."
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_code_block_test() {
+  let md = "```gleam\nlet x = 1\n```"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_bullet_list_test() {
+  let md = "- alpha\n- beta"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_ordered_list_test() {
+  let md = "1. first\n2. second"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_table_test() {
+  let md = "| A | B |\n| - | - |\n| 1 | 2 |"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_html_block_test() {
+  let md = "<div>\n  <p>html</p>\n</div>"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+// -- Structural nesting at depth 1 --
+
+pub fn indented_nested_list_test() {
+  let md = "- parent\n  - child"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  // Nested list structure preserved: child indented relative to parent.
+  should.be_true(string.contains(d1, "  • parent\n    • child"))
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_nested_blockquote_test() {
+  let md = "> > nested"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_alert_with_list_test() {
+  let md = "> [!TIP]\n> - one\n> - two"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
+}
+
+pub fn indented_multi_block_test() {
+  let md = "# Title\n\nParagraph.\n\n> quote\n\n- item"
+  let d0 = markdown.render(spruce.no_color(), md)
+  let d1 = markdown.render(spruce.no_color() |> spruce.indented(), md)
+
+  assert_all_lines_indented(d1, "  ")
+  assert_indented_matches(d0, d1)
 }

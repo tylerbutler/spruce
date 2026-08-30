@@ -210,7 +210,12 @@ pub fn render_with(
     |> mork.heading_ids(True)
     |> mork.parse_with_options(expand_directives(markdown))
 
-  render_blocks(context, blocks, options)
+  // Render all blocks at depth zero so that containers (box, table, item)
+  // that apply their own indentation do not double-indent nested content.
+  // The context's indent prefix is applied once here at the boundary.
+  let inner = spruce.flat(context)
+  render_blocks(inner, blocks, options)
+  |> indent_rendered(spruce.indent_prefix(context))
 }
 
 /// Render Markdown with the default options and print it to stdout.
@@ -443,7 +448,8 @@ fn render_admonition(
   options: Options,
 ) -> String {
   let Alert(kind:, title:, body:) = alert
-  let #(color, icon, default_title) = alert_properties(kind)
+  let #(color, icon, default_title) =
+    alert_properties(kind, spruce.symbol_mode(context))
 
   let title_text = case title {
     Some(inlines) ->
@@ -481,34 +487,37 @@ fn render_admonition(
   box.render(context, content, admonition_box)
 }
 
-fn alert_properties(kind: AlertKind) -> #(style.Color, String, String) {
+fn alert_properties(
+  kind: AlertKind,
+  mode: spruce.SymbolMode,
+) -> #(style.Color, String, String) {
   let adapt = fn(light: Int, dark: Int) {
     style.adaptive(light: style.Hex(light), dark: style.Hex(dark))
   }
   case kind {
     AlertNote -> #(
       adapt(0x1d4ed8, 0x60a5fa),
-      symbol.status(symbol.Unicode, symbol.Info),
+      symbol.status(mode, symbol.Info),
       "Note",
     )
     AlertTip -> #(
       adapt(0x15803d, 0x4ade80),
-      symbol.status(symbol.Unicode, symbol.Success),
+      symbol.status(mode, symbol.Success),
       "Tip",
     )
     AlertImportant -> #(
       adapt(0x7e22ce, 0xc084fc),
-      symbol.status(symbol.Unicode, symbol.Notice),
+      symbol.status(mode, symbol.Notice),
       "Important",
     )
     AlertWarning -> #(
       adapt(0xb45309, 0xfbbf24),
-      symbol.status(symbol.Unicode, symbol.Warn),
+      symbol.status(mode, symbol.Warn),
       "Warning",
     )
     AlertCaution -> #(
       adapt(0xb91c1c, 0xf87171),
-      symbol.status(symbol.Unicode, symbol.Error),
+      symbol.status(mode, symbol.Error),
       "Caution",
     )
   }
@@ -824,10 +833,10 @@ fn render_table(
     table.new()
     |> table.headers(render_table_headers(context, headers, options))
     |> table.rows(render_table_rows(context, rows, options))
-    |> table.style_fn(fn(row, _column) {
-      case row {
-        -1 -> options.theme.table_header
-        _ -> style.new()
+    |> table.style_fn(fn(row_context, _column) {
+      case row_context {
+        table.Header -> options.theme.table_header
+        table.Body(_) -> style.new()
       }
     })
 
@@ -1076,5 +1085,23 @@ fn remove_empty(lines: List(String)) -> List(String) {
     [] -> []
     ["", ..rest] -> remove_empty(rest)
     [line, ..rest] -> [line, ..remove_empty(rest)]
+  }
+}
+
+/// Prepend `prefix` to every non-empty line. Empty lines (block separators)
+/// stay empty so the output has no trailing whitespace on blank lines.
+fn indent_rendered(text: String, prefix: String) -> String {
+  case prefix {
+    "" -> text
+    _ ->
+      text
+      |> string.split("\n")
+      |> list.map(fn(line) {
+        case line {
+          "" -> ""
+          _ -> prefix <> line
+        }
+      })
+      |> string.join("\n")
   }
 }

@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Added"
+body = "spruce.flat(context) returns a copy of a context with its indent depth reset to zero. Composing renderers that own indentation at their boundary — such as spruce/markdown — use it so inner blocks are not indented twice."

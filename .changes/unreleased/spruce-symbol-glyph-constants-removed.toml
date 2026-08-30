@@ -1,3 +1,3 @@
 package = "spruce"
 kind = "Major Release"
-body = "spruce/symbol no longer exports the glyph constants (symbol.info, symbol.info_ascii, symbol.arrow, and the rest) or resolve. Use symbol.status(symbol.Unicode, symbol.Info) for a Unicode glyph and symbol.status(symbol.Ascii, symbol.Info) for its ASCII fallback."
+body = "spruce/symbol no longer exports the glyph constants (symbol.info, symbol.info_ascii, symbol.arrow, and the rest) or resolve. Use symbol.status(spruce.Unicode, symbol.Info) for a Unicode glyph and symbol.status(spruce.Ascii, symbol.Info) for its ASCII fallback."

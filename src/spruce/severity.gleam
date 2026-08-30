@@ -1,30 +1,35 @@
-//// Generic RFC 5424 severity/status formatting.
+//// Erlang/OTP Logger and RFC 5424 severity formatting.
 
 import gleam/bool
+import gleam/option.{type Option, None, Some}
 import gleam/string
 import spruce.{type Spruce}
 import spruce/align
 import spruce/style
 import spruce/symbol
 
-/// RFC 5424 severity levels, in ascending order.
+/// RFC 5424 / Erlang OTP Logger severity levels, in descending order of urgency.
 pub type Severity {
-  Trace
-  Debug
-  Info
-  Notice
-  Warn
-  Err
-  Critical
+  Emergency
   Alert
-  Fatal
+  Critical
+  Error
+  Warning
+  Notice
+  Info
+  Debug
 }
 
 /// Controls how a `Severity` is rendered: its style (label, badge, simple, or
 /// custom), whether icons are shown, the glyph mode, and the padding width.
 /// Construct one with `label`, `badge`, `simple`, or `custom`.
 pub opaque type Formatter {
-  Formatter(kind: FormatKind, icons: Bool, mode: symbol.Mode, target_width: Int)
+  Formatter(
+    kind: FormatKind,
+    icons: Bool,
+    mode: Option(spruce.SymbolMode),
+    target_width: Int,
+  )
 }
 
 type FormatKind {
@@ -34,19 +39,28 @@ type FormatKind {
   Custom(render: fn(Severity, Spruce) -> String)
 }
 
+/// The widest lowercase or uppercase severity name: `emergency`.
+const name_width = 9
+
+/// `[EMERGENCY]`.
+const badge_width = 11
+
+/// The widest ASCII icon (`!!`), a space, and `emergency`.
+const label_width = 12
+
 /// Render an icon plus lowercase severity label, e.g. `ℹ︎ info`.
 pub fn label() -> Formatter {
-  Formatter(kind: Label, icons: True, mode: symbol.Unicode, target_width: 10)
+  Formatter(kind: Label, icons: True, mode: None, target_width: label_width)
 }
 
-/// Render an uppercase bracketed severity badge, e.g. `[WARN]`.
+/// Render an uppercase bracketed severity badge, e.g. `[WARNING]`.
 pub fn badge() -> Formatter {
-  Formatter(kind: Badge, icons: False, mode: symbol.Unicode, target_width: 10)
+  Formatter(kind: Badge, icons: False, mode: None, target_width: badge_width)
 }
 
 /// Render an uppercase severity name, e.g. `DEBUG`.
 pub fn simple() -> Formatter {
-  Formatter(kind: Simple, icons: False, mode: symbol.Unicode, target_width: 8)
+  Formatter(kind: Simple, icons: False, mode: None, target_width: name_width)
 }
 
 /// Render severities with a caller-supplied function.
@@ -54,12 +68,7 @@ pub fn custom(
   render: fn(Severity, Spruce) -> String,
   target_width target_width: Int,
 ) -> Formatter {
-  Formatter(
-    kind: Custom(render),
-    icons: False,
-    mode: symbol.Unicode,
-    target_width:,
-  )
+  Formatter(kind: Custom(render), icons: False, mode: None, target_width:)
 }
 
 /// Enable or disable icons for formatters that support them.
@@ -71,9 +80,11 @@ pub fn icons(formatter: Formatter, enabled: Bool) -> Formatter {
   }
 }
 
-/// Set the glyph mode used by icon-bearing formatters.
-pub fn mode(formatter: Formatter, mode: symbol.Mode) -> Formatter {
-  Formatter(..formatter, mode:)
+/// Override the glyph mode used by icon-bearing formatters.
+/// By default the rendering context's symbol mode is used; call this to pin
+/// a specific mode regardless of the context.
+pub fn mode(formatter: Formatter, mode: spruce.SymbolMode) -> Formatter {
+  Formatter(..formatter, mode: Some(mode))
 }
 
 /// Return the visual target width used by `render_padded`.
@@ -108,30 +119,28 @@ pub fn render_padded(
 /// Convert a severity to its RFC 5424 ordering integer.
 pub fn to_int(severity: Severity) -> Int {
   case severity {
-    Trace -> 0
-    Debug -> 1
-    Info -> 2
-    Notice -> 3
-    Warn -> 4
-    Err -> 5
-    Critical -> 6
-    Alert -> 7
-    Fatal -> 8
+    Emergency -> 0
+    Alert -> 1
+    Critical -> 2
+    Error -> 3
+    Warning -> 4
+    Notice -> 5
+    Info -> 6
+    Debug -> 7
   }
 }
 
 /// Convert a severity to its uppercase label.
 pub fn to_string(severity: Severity) -> String {
   case severity {
-    Trace -> "TRACE"
-    Debug -> "DEBUG"
-    Info -> "INFO"
-    Notice -> "NOTICE"
-    Warn -> "WARN"
-    Err -> "ERROR"
-    Critical -> "CRITICAL"
+    Emergency -> "EMERGENCY"
     Alert -> "ALERT"
-    Fatal -> "FATAL"
+    Critical -> "CRITICAL"
+    Error -> "ERROR"
+    Warning -> "WARNING"
+    Notice -> "NOTICE"
+    Info -> "INFO"
+    Debug -> "DEBUG"
   }
 }
 
@@ -155,7 +164,9 @@ fn render_label(
   case formatter.icons {
     False -> styled_text
     True -> {
-      let icon = symbol.status(formatter.mode, status(severity))
+      let resolved_mode =
+        option.unwrap(formatter.mode, spruce.symbol_mode(context))
+      let icon = symbol.status(resolved_mode, status(severity))
       let styled_icon = style.render(context, label_style, icon)
       styled_icon <> " " <> styled_text
     }
@@ -181,41 +192,39 @@ fn render_simple(context: Spruce, severity: Severity) -> String {
 
 fn status(severity: Severity) -> symbol.Status {
   case severity {
-    Trace -> symbol.Trace
-    Debug -> symbol.Debug
-    Info -> symbol.Info
-    Notice -> symbol.Notice
-    Warn -> symbol.Warn
-    Err -> symbol.Error
-    Critical -> symbol.Error
+    Emergency -> symbol.Alert
     Alert -> symbol.Alert
-    Fatal -> symbol.Error
+    Critical -> symbol.Error
+    Error -> symbol.Error
+    Warning -> symbol.Warn
+    Notice -> symbol.Notice
+    Info -> symbol.Info
+    Debug -> symbol.Debug
   }
 }
 
 fn label_color(severity: Severity) -> style.Color {
   case severity {
-    Trace -> style.Gray
-    Debug -> style.Gray
-    Info -> style.Cyan
-    Notice -> style.Cyan
-    Warn -> style.Yellow
-    Err -> style.Red
-    Critical -> style.BrightRed
+    Emergency -> style.BrightRed
     Alert -> style.BrightRed
-    Fatal -> style.BrightRed
+    Critical -> style.BrightRed
+    Error -> style.Red
+    Warning -> style.Yellow
+    Notice -> style.Cyan
+    Info -> style.Cyan
+    Debug -> style.Gray
   }
 }
 
 fn bool_width(enabled: Bool) -> Int {
-  use <- bool.guard(when: enabled, return: 10)
-  8
+  use <- bool.guard(when: enabled, return: label_width)
+  name_width
 }
 
 fn simple_color(severity: Severity) -> style.Color {
   case severity {
     Debug -> style.Blue
-    Trace | Info | Notice | Warn | Err | Critical | Alert | Fatal ->
+    Emergency | Alert | Critical | Error | Warning | Notice | Info ->
       label_color(severity)
   }
 }

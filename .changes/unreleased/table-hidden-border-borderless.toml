@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "table.border(border.Hidden) now renders a borderless table with no leading or trailing blank lines. Cell padding and two-space column separation are preserved."

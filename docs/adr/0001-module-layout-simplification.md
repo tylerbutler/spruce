@@ -54,7 +54,7 @@ inline `string.repeat("  ", spruce.depth(context))` instead of using it, and
 
 - `message.Kind` (7 kinds) with `message.Formatter` (`Label` / `Badge` /
   `Simple` / `Custom`)
-- `severity.Severity` (9 RFC 5424 levels) with `severity.Formatter` — the same
+- `severity.Severity` (8 RFC 5424 / OTP Logger levels) with `severity.Formatter` — the same
   four constructors plus icons, glyph mode, and target width
 - `symbol.Status` — a third enum of 11 statuses
 - `line` is `message` plus timestamp and scope, but keyed on `Severity` rather

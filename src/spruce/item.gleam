@@ -1,9 +1,9 @@
 //// Pure bullet and ordered list rendering.
 ////
 //// An `Items` value is a list of labelled entries rendered with an explicit
-//// `Spruce` context. Bullet lists use a Unicode bullet when color is supported
-//// and a deterministic ASCII marker when it is not. Ordered lists count from
-//// one at each nesting depth.
+//// `Spruce` context. Bullet lists use a Unicode bullet (`•`) when the context
+//// symbol mode is `Unicode` and a plain ASCII marker (`-`) when it is `Ascii`.
+//// Ordered lists count from one at each nesting depth.
 ////
 //// ```gleam
 //// item.new()
@@ -13,7 +13,6 @@
 //// |> item.render(context, _)
 //// ```
 
-import gleam/bool
 import gleam/int
 import gleam/list
 import gleam/string
@@ -208,6 +207,8 @@ fn marker(
 }
 
 fn bullet_marker(context: Spruce) -> String {
-  use <- bool.guard(when: !spruce.supports_color(context), return: "- ")
-  "• "
+  case spruce.symbol_mode(context) {
+    spruce.Ascii -> "- "
+    spruce.Unicode -> "• "
+  }
 }

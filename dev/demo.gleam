@@ -109,7 +109,7 @@ fn symbol_section(_sp: spruce.Spruce) -> Nil {
     #("arrow", symbol.Arrow),
   ]
 
-  let row = fn(mode: symbol.Mode) {
+  let row = fn(mode: spruce.SymbolMode) {
     statuses
     |> list.map(fn(pair) {
       let #(name, status) = pair
@@ -118,8 +118,8 @@ fn symbol_section(_sp: spruce.Spruce) -> Nil {
     |> string.join("    ")
   }
 
-  io.println("  unicode: " <> row(symbol.Unicode))
-  io.println("  ascii:   " <> row(symbol.Ascii))
+  io.println("  unicode: " <> row(spruce.Unicode))
+  io.println("  ascii:   " <> row(spruce.Ascii))
 }
 
 fn message_section(context: spruce.Spruce) -> Nil {
@@ -146,7 +146,7 @@ fn message_section(context: spruce.Spruce) -> Nil {
     |> detail.add(key: "since", value: "0.4.0")
 
   line.new("Deprecated option in config")
-  |> line.severity(severity.Warn)
+  |> line.severity(severity.Warning)
   |> line.severity_formatter(severity.badge())
   |> line.details(deprecation)
   |> line.render(context, _)
@@ -172,7 +172,7 @@ fn formatter_section(context: spruce.Spruce) -> Nil {
 
   io.println(
     "  "
-    <> severity.render(context, severity.badge(), severity.Warn)
+    <> severity.render(context, severity.badge(), severity.Warning)
     <> " "
     <> "Configuration uses deprecated option",
   )
@@ -182,9 +182,7 @@ fn hashed_section(context: spruce.Spruce) -> Nil {
   heading("style.hashed — deterministic hash colors")
 
   ["alice", "bob", "carol", "dave", "spruce", "gleam"]
-  |> list.map(fn(name) {
-    style.render(context, style.hashed(context, name), name)
-  })
+  |> list.map(fn(name) { style.render(context, style.hashed(name), name) })
   |> string.join("  ")
   |> fn(line) { io.println("  " <> line) }
 }
@@ -277,10 +275,10 @@ fn table_section(context: spruce.Spruce) -> Nil {
     ["table", "180", "both"],
     ["tree", "90", "both"],
   ])
-  |> table.style_fn(fn(row, _col) {
-    case row {
-      -1 -> style.new() |> style.bold |> style.fg(style.BrightYellow)
-      _ -> style.new()
+  |> table.style_fn(fn(row_context, _col) {
+    case row_context {
+      table.Header -> style.new() |> style.bold |> style.fg(style.BrightYellow)
+      table.Body(_) -> style.new()
     }
   })
   |> table.render(context, _)

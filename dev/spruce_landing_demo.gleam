@@ -52,7 +52,7 @@ pub fn main() {
     |> line.render(context, _)
   }
   io.println(badge(severity.Info, "Deploy complete"))
-  io.println(badge(severity.Err, "Connection refused"))
+  io.println(badge(severity.Error, "Connection refused"))
   io.println(badge(severity.Debug, "Cache warmed"))
   io.println(badge(severity.Notice, "Listening on :4000"))
 

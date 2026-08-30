@@ -66,7 +66,8 @@ fn render(
   label: String,
   text: String,
 ) -> String {
-  let icon = symbol.status(symbol.Unicode, status)
+  let mode = spruce.symbol_mode(context)
+  let icon = symbol.status(mode, status)
   let prefix = case spruce.supports_color(context) {
     False -> icon <> " " <> label
     True -> {

@@ -1,26 +1,27 @@
 import gleeunit/should
+import spruce
 import spruce/symbol
 
 pub fn unicode_status_glyphs_test() {
-  symbol.status(symbol.Unicode, symbol.Info)
+  symbol.status(spruce.Unicode, symbol.Info)
   |> should.equal("ℹ︎")
-  symbol.status(symbol.Unicode, symbol.Success)
+  symbol.status(spruce.Unicode, symbol.Success)
   |> should.equal("✔")
-  symbol.status(symbol.Unicode, symbol.Error)
+  symbol.status(spruce.Unicode, symbol.Error)
   |> should.equal("✖")
-  symbol.status(symbol.Unicode, symbol.Warn)
+  symbol.status(spruce.Unicode, symbol.Warn)
   |> should.equal("⚠")
-  symbol.status(symbol.Unicode, symbol.Arrow)
+  symbol.status(spruce.Unicode, symbol.Arrow)
   |> should.equal("▸")
 }
 
 pub fn ascii_status_glyphs_test() {
-  symbol.status(symbol.Ascii, symbol.Success)
+  symbol.status(spruce.Ascii, symbol.Success)
   |> should.equal("+")
-  symbol.status(symbol.Ascii, symbol.Error)
+  symbol.status(spruce.Ascii, symbol.Error)
   |> should.equal("x")
-  symbol.status(symbol.Ascii, symbol.Warn)
+  symbol.status(spruce.Ascii, symbol.Warn)
   |> should.equal("!")
-  symbol.status(symbol.Ascii, symbol.Bullet)
+  symbol.status(spruce.Ascii, symbol.Bullet)
   |> should.equal("-")
 }

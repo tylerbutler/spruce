@@ -40,7 +40,7 @@ pub fn render(context: Spruce, details: Details) -> String {
 fn render_pair(context: Spruce, pair: #(String, String)) -> String {
   let #(key, value) = pair
   let text = key <> "=" <> escape_value(value)
-  style.render(context, style.hashed(context, key), text)
+  style.render(context, style.hashed(key), text)
 }
 
 fn escape_value(value: String) -> String {

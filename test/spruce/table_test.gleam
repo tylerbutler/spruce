@@ -43,15 +43,15 @@ pub fn table_pads_short_rows_and_uses_ansi_aware_widths_test() {
   should.equal(align.visual_length(top), align.visual_length(bottom))
 }
 
-pub fn table_style_fn_applies_to_headers_with_negative_row_test() {
+pub fn table_style_fn_applies_to_headers_with_header_context_test() {
   let rendered =
     table.new()
     |> table.headers(["H"])
     |> table.rows([["x"]])
-    |> table.style_fn(fn(row, _col) {
-      case row {
-        -1 -> style.new() |> style.bold
-        _ -> style.new() |> style.fg(style.Green)
+    |> table.style_fn(fn(row_context, _col) {
+      case row_context {
+        table.Header -> style.new() |> style.bold
+        table.Body(_) -> style.new() |> style.fg(style.Green)
       }
     })
     |> table.render(spruce.with_color_level(spruce.TrueColor), _)
@@ -64,7 +64,7 @@ pub fn table_style_fn_wraps_each_line_independently_test() {
   table.new()
   |> table.rows([["alpha beta", "z"]])
   |> table.column_widths([5, 1])
-  |> table.style_fn(fn(_row, column) {
+  |> table.style_fn(fn(_row_context, column) {
     case column {
       0 -> style.new() |> style.fg(style.Red)
       _ -> style.new()
@@ -194,4 +194,30 @@ pub fn table_row_separators_between_body_rows_test() {
   |> table.row_separators(True)
   |> table.render(spruce.no_color(), _)
   |> should.equal("┌───┐\n" <> "│ a │\n" <> "├───┤\n" <> "│ b │\n" <> "└───┘")
+}
+
+pub fn table_hidden_border_no_blank_lines_test() {
+  let result =
+    table.new()
+    |> table.headers(["A", "B"])
+    |> table.rows([["x", "y"]])
+    |> table.border(border.Hidden)
+    |> table.render(spruce.no_color(), _)
+
+  // Exactly two lines: header + one body row; no leading or trailing blank line.
+  let lines = string.split(result, "\n")
+  should.equal(list.length(lines), 2)
+  let assert [first, last] = lines
+  should.be_false(string.is_empty(string.trim(first)))
+  should.be_false(string.is_empty(string.trim(last)))
+  should.be_true(string.contains(result, "A"))
+  should.be_true(string.contains(result, "x"))
+}
+
+pub fn table_hidden_border_exact_output_test() {
+  table.new()
+  |> table.rows([["foo", "bar"], ["x", "yy"]])
+  |> table.border(border.Hidden)
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(" foo  bar \n x    yy  ")
 }

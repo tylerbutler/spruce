@@ -4,11 +4,19 @@ import gleeunit/should
 import spruce
 import spruce/item
 
-pub fn render_no_color_bullets_use_ascii_fallback_test() {
+pub fn render_no_color_bullets_use_unicode_by_default_test() {
   item.new()
   |> item.item("first")
   |> item.item("second")
   |> item.render(spruce.no_color(), _)
+  |> should.equal("• first\n• second")
+}
+
+pub fn render_ascii_mode_bullets_use_ascii_marker_test() {
+  item.new()
+  |> item.item("first")
+  |> item.item("second")
+  |> item.render(spruce.no_color() |> spruce.with_symbol_mode(spruce.Ascii), _)
   |> should.equal("- first\n- second")
 }
 
@@ -44,7 +52,7 @@ pub fn render_preserves_item_insertion_order_test() {
   |> item.item("second")
   |> item.item("third")
   |> item.render(spruce.no_color(), _)
-  |> should.equal("- first\n- second\n- third")
+  |> should.equal("• first\n• second\n• third")
 }
 
 pub fn render_multiline_labels_indent_subsequent_lines_test() {
@@ -52,7 +60,7 @@ pub fn render_multiline_labels_indent_subsequent_lines_test() {
   |> item.child("line one\nline two", ["child line one\nchild line two"])
   |> item.render(spruce.no_color(), _)
   |> should.equal(
-    "- line one\n  line two\n  - child line one\n    child line two",
+    "• line one\n  line two\n  • child line one\n    child line two",
   )
 }
 
@@ -83,7 +91,7 @@ pub fn render_nested_lists_arbitrary_depth_bullets_test() {
   item.new()
   |> item.nested("parent", children)
   |> item.render(spruce.no_color(), _)
-  |> should.equal("- parent\n  - child\n    - grandchild\n      - great")
+  |> should.equal("• parent\n  • child\n    • grandchild\n      • great")
 }
 
 pub fn render_nested_lists_arbitrary_depth_ordered_test() {
