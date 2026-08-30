@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Major Release"
+body = "symbol.Mode is removed. Use spruce.SymbolMode (spruce.Unicode / spruce.Ascii) instead. The Spruce context now carries a symbol_mode (default Unicode), and renderers — message, severity, item, output.title, tree, and Markdown alerts — consult it automatically."

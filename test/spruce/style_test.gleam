@@ -317,26 +317,24 @@ pub fn adaptive_is_plain_under_no_color_test() {
 
 pub fn hashed_is_deterministic_test() {
   let context = spruce.with_color_level(spruce.Ansi256)
-  let first =
-    style.render(context, style.hashed(context, "database"), "database")
-  let second =
-    style.render(context, style.hashed(context, "database"), "database")
+  let first = style.render(context, style.hashed("database"), "database")
+  let second = style.render(context, style.hashed("database"), "database")
   first
   |> should.equal(second)
 }
 
 pub fn hashed_foo_is_deterministic_test() {
   let context = spruce.with_color_level(spruce.Ansi256)
-  let first = style.render(context, style.hashed(context, "foo"), "foo")
-  let second = style.render(context, style.hashed(context, "foo"), "foo")
+  let first = style.render(context, style.hashed("foo"), "foo")
+  let second = style.render(context, style.hashed("foo"), "foo")
   first
   |> should.equal(second)
 }
 
 pub fn hashed_distinguishes_simple_anagrams_test() {
   let context = spruce.with_color_level(spruce.Ansi256)
-  let ab = style.render(context, style.hashed(context, "ab"), "sample")
-  let ba = style.render(context, style.hashed(context, "ba"), "sample")
+  let ab = style.render(context, style.hashed("ab"), "sample")
+  let ba = style.render(context, style.hashed("ba"), "sample")
 
   should.be_true(ab != ba)
 }
@@ -344,7 +342,7 @@ pub fn hashed_distinguishes_simple_anagrams_test() {
 pub fn hashed_uses_valid_palette_color_test() {
   let context = spruce.with_color_level(spruce.Ansi256)
   let text = "foo"
-  let rendered = style.render(context, style.hashed(context, text), text)
+  let rendered = style.render(context, style.hashed(text), text)
 
   renders_like_valid_ansi256_palette_color(context, rendered, text)
   |> should.be_true
@@ -352,25 +350,29 @@ pub fn hashed_uses_valid_palette_color_test() {
 
 pub fn hashed_no_color_is_plain_test() {
   let context = spruce.no_color()
-  style.render(context, style.hashed(context, "database"), "database")
+  style.render(context, style.hashed("database"), "database")
   |> should.equal("database")
 }
 
-pub fn hashed_no_color_style_stays_plain_test() {
-  let hashed_style = style.hashed(spruce.no_color(), "database")
+pub fn hashed_resolves_at_render_time_test() {
+  let hashed_style = style.hashed("database")
 
+  // Same style resolves to colored output with a color-capable context.
   style.render(
     spruce.with_color_level(spruce.Ansi256),
     hashed_style,
     "database",
   )
+  |> should.not_equal("database")
+
+  // And to plain text under NoColor.
+  style.render(spruce.no_color(), hashed_style, "database")
   |> should.equal("database")
 }
 
 pub fn hashed_color_adds_escapes_test() {
   let context = spruce.with_color_level(spruce.Ansi256)
-  let rendered =
-    style.render(context, style.hashed(context, "database"), "database")
+  let rendered = style.render(context, style.hashed("database"), "database")
   should.be_true(rendered != "database")
 }
 

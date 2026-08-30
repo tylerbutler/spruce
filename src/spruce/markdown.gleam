@@ -443,7 +443,8 @@ fn render_admonition(
   options: Options,
 ) -> String {
   let Alert(kind:, title:, body:) = alert
-  let #(color, icon, default_title) = alert_properties(kind)
+  let #(color, icon, default_title) =
+    alert_properties(kind, spruce.symbol_mode(context))
 
   let title_text = case title {
     Some(inlines) ->
@@ -481,34 +482,37 @@ fn render_admonition(
   box.render(context, content, admonition_box)
 }
 
-fn alert_properties(kind: AlertKind) -> #(style.Color, String, String) {
+fn alert_properties(
+  kind: AlertKind,
+  mode: spruce.SymbolMode,
+) -> #(style.Color, String, String) {
   let adapt = fn(light: Int, dark: Int) {
     style.adaptive(light: style.Hex(light), dark: style.Hex(dark))
   }
   case kind {
     AlertNote -> #(
       adapt(0x1d4ed8, 0x60a5fa),
-      symbol.status(symbol.Unicode, symbol.Info),
+      symbol.status(mode, symbol.Info),
       "Note",
     )
     AlertTip -> #(
       adapt(0x15803d, 0x4ade80),
-      symbol.status(symbol.Unicode, symbol.Success),
+      symbol.status(mode, symbol.Success),
       "Tip",
     )
     AlertImportant -> #(
       adapt(0x7e22ce, 0xc084fc),
-      symbol.status(symbol.Unicode, symbol.Notice),
+      symbol.status(mode, symbol.Notice),
       "Important",
     )
     AlertWarning -> #(
       adapt(0xb45309, 0xfbbf24),
-      symbol.status(symbol.Unicode, symbol.Warn),
+      symbol.status(mode, symbol.Warn),
       "Warning",
     )
     AlertCaution -> #(
       adapt(0xb91c1c, 0xf87171),
-      symbol.status(symbol.Unicode, symbol.Error),
+      symbol.status(mode, symbol.Error),
       "Caution",
     )
   }

@@ -13,7 +13,6 @@
 //// |> item.render(context, _)
 //// ```
 
-import gleam/bool
 import gleam/int
 import gleam/list
 import gleam/string
@@ -208,6 +207,8 @@ fn marker(
 }
 
 fn bullet_marker(context: Spruce) -> String {
-  use <- bool.guard(when: !spruce.supports_color(context), return: "- ")
-  "• "
+  case spruce.symbol_mode(context) {
+    spruce.Ascii -> "- "
+    spruce.Unicode -> "• "
+  }
 }

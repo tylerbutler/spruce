@@ -135,7 +135,7 @@ pub fn styles() {
   echo style.render(context, accent, "spruce")
 
   // `style.hashed` returns a `Style`, so it pipes into more combinators.
-  let service = style.hashed(context, "api") |> style.bold
+  let service = style.hashed("api") |> style.bold
   echo style.render(context, service, "api")
 
   // Adaptive colors resolve against the detected background at render time.

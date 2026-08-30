@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Major Release"
+body = "style.hashed(text) no longer takes a Spruce context. The hash color is resolved at render time, so the same style works across different color levels without reconstruction."

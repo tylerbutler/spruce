@@ -1,7 +1,8 @@
 //// Pure nested tree rendering.
 ////
-//// Trees use Unicode branches by default, independent of color support.
-//// Call `ascii` for an ASCII fallback or `branches` for custom glyphs.
+//// Trees use the context's symbol mode for branch glyphs by default.
+//// Call `unicode` or `ascii` to force a specific mode, or `branches` for
+//// custom glyphs.
 
 import gleam/bool
 import gleam/int
@@ -21,8 +22,9 @@ pub type BranchChars {
 }
 
 type BranchStyle {
-  Unicode
-  Ascii
+  Default
+  TreeUnicode
+  TreeAscii
   Custom(BranchChars)
 }
 
@@ -42,7 +44,7 @@ pub opaque type Tree {
 
 /// Build a tree root with no children.
 pub fn root(label: String) -> Tree {
-  Tree(label: label, columns: [], children: [], branch_style: Unicode)
+  Tree(label: label, columns: [], children: [], branch_style: Default)
 }
 
 /// Add a child to `parent`, preserving insertion order.
@@ -55,14 +57,14 @@ pub fn columns(tree: Tree, columns: List(String)) -> Tree {
   Tree(..tree, columns:)
 }
 
-/// Force Unicode branch markers regardless of color support.
+/// Force Unicode branch markers regardless of context mode.
 pub fn unicode(tree: Tree) -> Tree {
-  Tree(..tree, branch_style: Unicode)
+  Tree(..tree, branch_style: TreeUnicode)
 }
 
 /// Force deterministic ASCII branch markers.
 pub fn ascii(tree: Tree) -> Tree {
-  Tree(..tree, branch_style: Ascii)
+  Tree(..tree, branch_style: TreeAscii)
 }
 
 /// Set all four branch tokens used to render the tree.
@@ -86,12 +88,13 @@ pub fn render_with(
   render_label: fn(String, Int, Int, Bool) -> String,
 ) -> String {
   let base = spruce.indent_prefix(context)
+  let resolved = resolve_branch_style(context, tree.branch_style)
   let lines =
     render_label(tree.label, align.visual_length(base), 0, True)
     |> label_lines(base, base, _)
     |> list.append(render_children(
       tree.children,
-      tree.branch_style,
+      resolved,
       1,
       [],
       base,
@@ -107,6 +110,7 @@ pub fn render_with(
 /// multi-line labels and cells preserve the tree's continuation guides.
 pub fn render_table(context: Spruce, tree: Tree) -> String {
   let base = spruce.indent_prefix(context)
+  let resolved = resolve_branch_style(context, tree.branch_style)
   let rows = [
     TableRow(
       prefix: base,
@@ -114,7 +118,7 @@ pub fn render_table(context: Spruce, tree: Tree) -> String {
       label: tree.label,
       columns: tree.columns,
     ),
-    ..table_child_rows(tree.children, tree.branch_style, [], base)
+    ..table_child_rows(tree.children, resolved, [], base)
   ]
   let column_count =
     rows
@@ -407,14 +411,14 @@ fn ancestor_token(branch_style: BranchStyle, last: Bool) -> String {
 
 fn branch_chars(branch_style: BranchStyle) -> BranchChars {
   case branch_style {
-    Unicode ->
+    Default | TreeUnicode ->
       BranchChars(
         branch_mid: "├─ ",
         branch_last: "└─ ",
         pipe: "│  ",
         blank: "   ",
       )
-    Ascii ->
+    TreeAscii ->
       BranchChars(
         branch_mid: "|- ",
         branch_last: "`- ",
@@ -422,5 +426,16 @@ fn branch_chars(branch_style: BranchStyle) -> BranchChars {
         blank: "   ",
       )
     Custom(chars) -> chars
+  }
+}
+
+fn resolve_branch_style(context: Spruce, style: BranchStyle) -> BranchStyle {
+  case style {
+    Default ->
+      case spruce.symbol_mode(context) {
+        spruce.Unicode -> TreeUnicode
+        spruce.Ascii -> TreeAscii
+      }
+    _ -> style
   }
 }

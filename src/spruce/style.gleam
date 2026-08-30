@@ -53,6 +53,7 @@ pub type Color {
   Ansi256(index: Int)
   Complete(ansi: Color, ansi256: Color, truecolor: Color)
   Adaptive(light: Color, dark: Color)
+  Hashed(key: String)
 }
 
 type BasicCandidate {
@@ -239,7 +240,8 @@ fn resolve_adaptive(color: Color, background: spruce.Background) -> Color {
     | BrightWhite
     | Rgb(_, _, _)
     | Hex(_)
-    | Ansi256(_) -> color
+    | Ansi256(_)
+    | Hashed(_) -> color
   }
 }
 
@@ -305,6 +307,8 @@ fn render_fg_color(
         color_level,
       )
     Adaptive(_, dark) -> render_fg_color(text, dark, color_level)
+    Hashed(key) ->
+      render_fg_color(text, resolve_hashed(key, color_level), color_level)
   }
 }
 
@@ -340,6 +344,8 @@ fn render_bg_color(
         color_level,
       )
     Adaptive(_, dark) -> render_bg_color(text, dark, color_level)
+    Hashed(key) ->
+      render_bg_color(text, resolve_hashed(key, color_level), color_level)
   }
 }
 
@@ -582,6 +588,7 @@ fn basic_color_rgb(color: Color) -> RgbValue {
     Ansi256(index) -> ansi256_to_rgb(index)
     Complete(ansi, _, _) -> basic_color_rgb(ansi)
     Adaptive(_, dark) -> basic_color_rgb(dark)
+    Hashed(key) -> basic_color_rgb(resolve_hashed(key, spruce.Basic))
   }
 }
 
@@ -657,26 +664,15 @@ fn render_faint(text: String, enabled: Bool) -> String {
 ///
 /// The same input always produces the same color, which keeps repeated
 /// identifiers (log categories, service names, user IDs) visually consistent.
-/// The palette adapts to the context's color level: a broader set of colors
-/// for `Ansi256` and `TrueColor`, a smaller set for `Basic`, and a plain style
-/// (no color) for `NoColor`.
+/// The palette adapts to the rendering context's color level at render time:
+/// a broader set of colors for `Ansi256` and `TrueColor`, a smaller set for
+/// `Basic`, and plain text (no color) for `NoColor`.
 ///
 /// ```gleam
-/// style.render(context, style.hashed(context, "database"), "database")
+/// style.render(context, style.hashed("database"), "database")
 /// ```
-pub fn hashed(context: Spruce, text: String) -> Style {
-  case spruce.supports_color(context) {
-    False -> new()
-    True -> {
-      let colors = hash_palette(spruce.color_level(context))
-      let index = hash_text(text) % list.length(colors)
-      let color = case list.drop(colors, index) {
-        [c, ..] -> c
-        [] -> Cyan
-      }
-      new() |> fg(color)
-    }
-  }
+pub fn hashed(text: String) -> Style {
+  new() |> fg(Hashed(text))
 }
 
 fn hash_text(text: String) -> Int {
@@ -712,5 +708,14 @@ fn hash_palette(level: spruce.ColorLevel) -> List(Color) {
       BrightCyan,
     ]
     spruce.Basic | spruce.NoColor -> [Cyan, Green, Yellow, Magenta, Blue, Red]
+  }
+}
+
+fn resolve_hashed(key: String, color_level: spruce.ColorLevel) -> Color {
+  let colors = hash_palette(color_level)
+  let index = hash_text(key) % list.length(colors)
+  case list.drop(colors, index) {
+    [c, ..] -> c
+    [] -> Cyan
   }
 }

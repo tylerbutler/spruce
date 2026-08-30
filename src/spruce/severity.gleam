@@ -1,6 +1,7 @@
 //// Erlang/OTP Logger and RFC 5424 severity formatting.
 
 import gleam/bool
+import gleam/option.{type Option, None, Some}
 import gleam/string
 import spruce.{type Spruce}
 import spruce/align
@@ -23,7 +24,12 @@ pub type Severity {
 /// custom), whether icons are shown, the glyph mode, and the padding width.
 /// Construct one with `label`, `badge`, `simple`, or `custom`.
 pub opaque type Formatter {
-  Formatter(kind: FormatKind, icons: Bool, mode: symbol.Mode, target_width: Int)
+  Formatter(
+    kind: FormatKind,
+    icons: Bool,
+    mode: Option(spruce.SymbolMode),
+    target_width: Int,
+  )
 }
 
 type FormatKind {
@@ -35,17 +41,17 @@ type FormatKind {
 
 /// Render an icon plus lowercase severity label, e.g. `ℹ︎ info`.
 pub fn label() -> Formatter {
-  Formatter(kind: Label, icons: True, mode: symbol.Unicode, target_width: 10)
+  Formatter(kind: Label, icons: True, mode: None, target_width: 10)
 }
 
 /// Render an uppercase bracketed severity badge, e.g. `[WARN]`.
 pub fn badge() -> Formatter {
-  Formatter(kind: Badge, icons: False, mode: symbol.Unicode, target_width: 10)
+  Formatter(kind: Badge, icons: False, mode: None, target_width: 10)
 }
 
 /// Render an uppercase severity name, e.g. `DEBUG`.
 pub fn simple() -> Formatter {
-  Formatter(kind: Simple, icons: False, mode: symbol.Unicode, target_width: 8)
+  Formatter(kind: Simple, icons: False, mode: None, target_width: 8)
 }
 
 /// Render severities with a caller-supplied function.
@@ -53,12 +59,7 @@ pub fn custom(
   render: fn(Severity, Spruce) -> String,
   target_width target_width: Int,
 ) -> Formatter {
-  Formatter(
-    kind: Custom(render),
-    icons: False,
-    mode: symbol.Unicode,
-    target_width:,
-  )
+  Formatter(kind: Custom(render), icons: False, mode: None, target_width:)
 }
 
 /// Enable or disable icons for formatters that support them.
@@ -70,9 +71,10 @@ pub fn icons(formatter: Formatter, enabled: Bool) -> Formatter {
   }
 }
 
-/// Set the glyph mode used by icon-bearing formatters.
-pub fn mode(formatter: Formatter, mode: symbol.Mode) -> Formatter {
-  Formatter(..formatter, mode:)
+/// Override the glyph mode used by icon-bearing formatters.
+/// When not set, the rendering context's symbol mode is used.
+pub fn mode(formatter: Formatter, mode: spruce.SymbolMode) -> Formatter {
+  Formatter(..formatter, mode: Some(mode))
 }
 
 /// Return the visual target width used by `render_padded`.
@@ -152,7 +154,9 @@ fn render_label(
   case formatter.icons {
     False -> styled_text
     True -> {
-      let icon = symbol.status(formatter.mode, status(severity))
+      let resolved_mode =
+        option.unwrap(formatter.mode, spruce.symbol_mode(context))
+      let icon = symbol.status(resolved_mode, status(severity))
       let styled_icon = style.render(context, label_style, icon)
       styled_icon <> " " <> styled_text
     }

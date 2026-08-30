@@ -29,8 +29,8 @@ pub fn bullet_ordered_nested_tasklist_test() {
   let markdown_text = "- parent\n  - child\n- [x] done\n\n3. third\n4. fourth"
   let rendered = markdown.render(spruce.no_color(), markdown_text)
 
-  should.be_true(string.contains(rendered, "- parent\n  - child"))
-  should.be_true(string.contains(rendered, "- [x] done"))
+  should.be_true(string.contains(rendered, "• parent\n  • child"))
+  should.be_true(string.contains(rendered, "• [x] done"))
   should.be_true(string.contains(rendered, "3. third\n4. fourth"))
 }
 
@@ -100,7 +100,7 @@ pub fn github_alert_note_test() {
   should.be_true(string.contains(rendered, "Note"))
   should.be_true(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Info),
+    symbol.status(spruce.Unicode, symbol.Info),
   ))
   should.be_true(string.contains(rendered, "Pay attention."))
   should.be_false(string.contains(rendered, "[!NOTE]"))
@@ -112,7 +112,7 @@ pub fn github_alert_custom_title_test() {
 
   should.be_true(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Warn),
+    symbol.status(spruce.Unicode, symbol.Warn),
   ))
   should.be_true(string.contains(rendered, "Heads up"))
   should.be_true(string.contains(rendered, "Be careful."))
@@ -124,7 +124,7 @@ pub fn github_alert_aliases_test() {
   should.be_true(string.contains(tip, "Tip"))
   should.be_true(string.contains(
     tip,
-    symbol.status(symbol.Unicode, symbol.Success),
+    symbol.status(spruce.Unicode, symbol.Success),
   ))
 
   let important =
@@ -132,14 +132,14 @@ pub fn github_alert_aliases_test() {
   should.be_true(string.contains(important, "Important"))
   should.be_true(string.contains(
     important,
-    symbol.status(symbol.Unicode, symbol.Notice),
+    symbol.status(spruce.Unicode, symbol.Notice),
   ))
 
   let caution = markdown.render(spruce.no_color(), "> [!CAUTION]\n> Danger.")
   should.be_true(string.contains(caution, "Caution"))
   should.be_true(string.contains(
     caution,
-    symbol.status(symbol.Unicode, symbol.Error),
+    symbol.status(spruce.Unicode, symbol.Error),
   ))
 }
 
@@ -149,7 +149,7 @@ pub fn github_alert_unknown_stays_quote_test() {
   should.be_true(string.contains(rendered, "[!BOGUS]"))
   should.be_false(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Info),
+    symbol.status(spruce.Unicode, symbol.Info),
   ))
 }
 
@@ -160,7 +160,7 @@ pub fn astro_directive_note_test() {
   should.be_true(string.contains(rendered, "Note"))
   should.be_true(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Info),
+    symbol.status(spruce.Unicode, symbol.Info),
   ))
   should.be_true(string.contains(rendered, "Astro aside body."))
   should.be_false(string.contains(rendered, ":::"))
@@ -175,7 +175,7 @@ pub fn astro_directive_custom_title_test() {
 
   should.be_true(string.contains(
     rendered,
-    symbol.status(symbol.Unicode, symbol.Error),
+    symbol.status(spruce.Unicode, symbol.Error),
   ))
   should.be_true(string.contains(rendered, "Watch Out"))
   should.be_true(string.contains(rendered, "Something risky."))

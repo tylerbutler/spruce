@@ -51,11 +51,24 @@ pub type Background {
   Unknown
 }
 
+/// Glyph rendering mode: Unicode for rich glyphs, Ascii for plain fallbacks.
+/// Every renderer that emits icons or bullets consults the context's mode.
+pub type SymbolMode {
+  Unicode
+  Ascii
+}
+
 /// The rendering context. Carries the detected color level, the detected
-/// terminal background, and the current indent depth. Construct it with
-/// `detect`, `with_color_level`, or `no_color`, and deepen it with `indented`.
+/// terminal background, the symbol mode, and the current indent depth.
+/// Construct it with `detect`, `with_color_level`, or `no_color`, and deepen
+/// it with `indented`.
 pub opaque type Spruce {
-  Spruce(color: ColorLevel, background: Background, depth: Int)
+  Spruce(
+    color: ColorLevel,
+    background: Background,
+    symbol_mode: SymbolMode,
+    depth: Int,
+  )
 }
 
 /// Build a context by auto-detecting the color support of standard output.
@@ -74,6 +87,7 @@ pub fn detect_stream(stream: Stream) -> Spruce {
   Spruce(
     color: tty_color_level_to_color_level(tty.detect_color_level(stream)),
     background: tty_background_to_background(tty.detect_background(stream)),
+    symbol_mode: Unicode,
     depth: 0,
   )
 }
@@ -83,13 +97,13 @@ pub fn detect_stream(stream: Stream) -> Spruce {
 /// The background defaults to `Unknown` (treated as `Dark` by adaptive colors);
 /// override it with `with_background`.
 pub fn with_color_level(level: ColorLevel) -> Spruce {
-  Spruce(color: level, background: Unknown, depth: 0)
+  Spruce(color: level, background: Unknown, symbol_mode: Unicode, depth: 0)
 }
 
 /// Build a context that never emits color. All output is plain text.
 /// This is the recommended context for deterministic tests.
 pub fn no_color() -> Spruce {
-  Spruce(color: NoColor, background: Unknown, depth: 0)
+  Spruce(color: NoColor, background: Unknown, symbol_mode: Unicode, depth: 0)
 }
 
 /// Get the color level of a context.
@@ -112,6 +126,17 @@ pub fn background(context: Spruce) -> Background {
 /// a user `--background` flag.
 pub fn with_background(context: Spruce, background: Background) -> Spruce {
   Spruce(..context, background:)
+}
+
+/// Get the glyph rendering mode of a context.
+pub fn symbol_mode(context: Spruce) -> SymbolMode {
+  context.symbol_mode
+}
+
+/// Return a copy of the context with an explicit symbol mode.
+/// Use `Ascii` for environments that cannot display Unicode glyphs.
+pub fn with_symbol_mode(context: Spruce, mode: SymbolMode) -> Spruce {
+  Spruce(..context, symbol_mode: mode)
 }
 
 /// Get the current indent depth of a context (0 at the top level).

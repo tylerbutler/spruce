@@ -109,7 +109,7 @@ fn symbol_section(_sp: spruce.Spruce) -> Nil {
     #("arrow", symbol.Arrow),
   ]
 
-  let row = fn(mode: symbol.Mode) {
+  let row = fn(mode: spruce.SymbolMode) {
     statuses
     |> list.map(fn(pair) {
       let #(name, status) = pair
@@ -118,8 +118,8 @@ fn symbol_section(_sp: spruce.Spruce) -> Nil {
     |> string.join("    ")
   }
 
-  io.println("  unicode: " <> row(symbol.Unicode))
-  io.println("  ascii:   " <> row(symbol.Ascii))
+  io.println("  unicode: " <> row(spruce.Unicode))
+  io.println("  ascii:   " <> row(spruce.Ascii))
 }
 
 fn message_section(context: spruce.Spruce) -> Nil {
@@ -182,9 +182,7 @@ fn hashed_section(context: spruce.Spruce) -> Nil {
   heading("style.hashed — deterministic hash colors")
 
   ["alice", "bob", "carol", "dave", "spruce", "gleam"]
-  |> list.map(fn(name) {
-    style.render(context, style.hashed(context, name), name)
-  })
+  |> list.map(fn(name) { style.render(context, style.hashed(name), name) })
   |> string.join("  ")
   |> fn(line) { io.println("  " <> line) }
 }

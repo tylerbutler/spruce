@@ -103,11 +103,11 @@ pub fn stream_group(
 /// Render a group title line (indent prefix + styled marker + title), the same
 /// line that `group` and `stream_group` emit.
 pub fn title(context: Spruce, heading: String) -> String {
-  let marker = symbol.status(symbol.Unicode, symbol.Arrow)
+  let marker = symbol.status(spruce.symbol_mode(context), symbol.Arrow)
   let line = case spruce.supports_color(context) {
     False -> marker <> " " <> heading
     True ->
-      style.render(context, style.hashed(context, heading), marker)
+      style.render(context, style.hashed(heading), marker)
       <> " "
       <> style.render(context, style.new() |> style.bold, heading)
   }

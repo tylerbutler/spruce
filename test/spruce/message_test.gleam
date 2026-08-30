@@ -58,3 +58,10 @@ pub fn label_is_bold_and_colored_test() {
   should.be_true(string.contains(rendered, "\u{001b}[1m"))
   should.be_true(string.contains(rendered, "\u{001b}[33m"))
 }
+
+pub fn ascii_mode_uses_ascii_icons_test() {
+  spruce.no_color()
+  |> spruce.with_symbol_mode(spruce.Ascii)
+  |> message.success("done")
+  |> should.equal("+ success done")
+}

@@ -1,18 +1,15 @@
 //// Named terminal glyphs with ASCII fallbacks.
 ////
-//// Resolve a `Status` to a glyph with `status`, choosing `Unicode` for rich
-//// terminal output or `Ascii` when output must stay plain ASCII.
+//// Resolve a `Status` to a glyph with `status`, choosing `spruce.Unicode`
+//// for rich terminal output or `spruce.Ascii` when output must stay plain
+//// ASCII.
 ////
 //// ```gleam
-//// symbol.status(symbol.Unicode, symbol.Success) // "✔"
-//// symbol.status(symbol.Ascii, symbol.Success) // "+"
+//// symbol.status(spruce.Unicode, symbol.Success) // "✔"
+//// symbol.status(spruce.Ascii, symbol.Success) // "+"
 //// ```
 
-/// Glyph rendering mode.
-pub type Mode {
-  Unicode
-  Ascii
-}
+import spruce
 
 /// Named status glyphs.
 pub type Status {
@@ -30,29 +27,29 @@ pub type Status {
 }
 
 /// Resolve a named status glyph according to the requested mode.
-pub fn status(mode: Mode, status: Status) -> String {
+pub fn status(mode: spruce.SymbolMode, status: Status) -> String {
   case status, mode {
-    Info, Unicode -> "ℹ︎"
-    Info, Ascii -> "i"
-    Warn, Unicode -> "⚠"
-    Warn, Ascii -> "!"
-    Error, Unicode -> "✖"
-    Error, Ascii -> "x"
-    Success, Unicode -> "✔"
-    Success, Ascii -> "+"
-    Start, Unicode -> "◐"
-    Start, Ascii -> "*"
-    Trace, Unicode -> "→"
-    Trace, Ascii -> ">"
-    Debug, Unicode -> "⚙"
-    Debug, Ascii -> "*"
-    Notice, Unicode -> "◉"
-    Notice, Ascii -> "o"
-    Alert, Unicode -> "‼"
-    Alert, Ascii -> "!!"
-    Bullet, Unicode -> "•"
-    Bullet, Ascii -> "-"
-    Arrow, Unicode -> "▸"
-    Arrow, Ascii -> ">"
+    Info, spruce.Unicode -> "ℹ︎"
+    Info, spruce.Ascii -> "i"
+    Warn, spruce.Unicode -> "⚠"
+    Warn, spruce.Ascii -> "!"
+    Error, spruce.Unicode -> "✖"
+    Error, spruce.Ascii -> "x"
+    Success, spruce.Unicode -> "✔"
+    Success, spruce.Ascii -> "+"
+    Start, spruce.Unicode -> "◐"
+    Start, spruce.Ascii -> "*"
+    Trace, spruce.Unicode -> "→"
+    Trace, spruce.Ascii -> ">"
+    Debug, spruce.Unicode -> "⚙"
+    Debug, spruce.Ascii -> "*"
+    Notice, spruce.Unicode -> "◉"
+    Notice, spruce.Ascii -> "o"
+    Alert, spruce.Unicode -> "‼"
+    Alert, spruce.Ascii -> "!!"
+    Bullet, spruce.Unicode -> "•"
+    Bullet, spruce.Ascii -> "-"
+    Arrow, spruce.Unicode -> "▸"
+    Arrow, spruce.Ascii -> ">"
   }
 }

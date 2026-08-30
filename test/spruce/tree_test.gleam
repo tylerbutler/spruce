@@ -119,3 +119,19 @@ pub fn render_table_aligns_tree_labels_and_columns_test() {
     <> "└─ glint         1.3.0    MIT",
   )
 }
+
+pub fn render_default_uses_context_ascii_mode_test() {
+  tree.root("app")
+  |> tree.child(child: tree.root("src"))
+  |> tree.child(child: tree.root("test"))
+  |> tree.render(spruce.no_color() |> spruce.with_symbol_mode(spruce.Ascii), _)
+  |> should.equal("app\n|- src\n`- test")
+}
+
+pub fn render_unicode_override_ignores_ascii_context_test() {
+  tree.root("app")
+  |> tree.child(child: tree.root("src"))
+  |> tree.unicode()
+  |> tree.render(spruce.no_color() |> spruce.with_symbol_mode(spruce.Ascii), _)
+  |> should.equal("app\n└─ src")
+}

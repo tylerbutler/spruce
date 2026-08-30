@@ -94,3 +94,10 @@ pub fn title_is_indented_and_marked_test() {
   |> output.title("Build")
   |> should.equal("  ▸ Build")
 }
+
+pub fn title_uses_ascii_arrow_in_ascii_mode_test() {
+  spruce.no_color()
+  |> spruce.with_symbol_mode(spruce.Ascii)
+  |> output.title("Build")
+  |> should.equal("> Build")
+}

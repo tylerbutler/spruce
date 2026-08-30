@@ -3,7 +3,6 @@ import gleam/string
 import gleeunit/should
 import spruce
 import spruce/severity
-import spruce/symbol
 
 pub fn label_formatter_no_color_test() {
   severity.render(spruce.no_color(), severity.label(), severity.Info)
@@ -11,7 +10,7 @@ pub fn label_formatter_no_color_test() {
 }
 
 pub fn label_formatter_ascii_no_color_test() {
-  let formatter = severity.label() |> severity.mode(symbol.Ascii)
+  let formatter = severity.label() |> severity.mode(spruce.Ascii)
 
   severity.render(spruce.no_color(), formatter, severity.Warning)
   |> should.equal("! warning")
@@ -141,4 +140,19 @@ pub fn custom_formatter_test() {
 
   severity.render_padded(spruce.no_color(), formatter, severity.Warning)
   |> should.equal("heads-up")
+}
+
+pub fn label_uses_context_symbol_mode_test() {
+  let ctx = spruce.no_color() |> spruce.with_symbol_mode(spruce.Ascii)
+
+  severity.render(ctx, severity.label(), severity.Warning)
+  |> should.equal("! warning")
+}
+
+pub fn label_mode_override_wins_over_context_test() {
+  let ctx = spruce.no_color() |> spruce.with_symbol_mode(spruce.Ascii)
+  let formatter = severity.label() |> severity.mode(spruce.Unicode)
+
+  severity.render(ctx, formatter, severity.Warning)
+  |> should.equal("⚠ warning")
 }
