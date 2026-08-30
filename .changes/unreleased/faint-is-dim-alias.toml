@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "style.faint is now a true alias for style.dim. Applying both attributes emits one dim escape sequence instead of nesting duplicate sequences."

@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Changed"
+body = "The built-in severity formatter target widths increase to fit Emergency in label, badge, and simple formats. render_padded now produces equal-width output for every OTP Logger severity in both Unicode and ASCII symbol modes."
