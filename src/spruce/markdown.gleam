@@ -65,8 +65,18 @@ import spruce/symbol
 import spruce/table
 
 /// A set of styles controlling how each Markdown element is rendered.
-/// Construct one with `dark_theme`, `light_theme`, or `adaptive_theme`.
-pub opaque type Theme {
+///
+/// Use a built-in theme as a base and replace selected fields:
+///
+/// ```gleam
+/// markdown.Theme(
+///   ..markdown.dark_theme(),
+///   h1: style.new() |> style.bold |> style.fg(style.Hex(0xff6b6b)),
+/// )
+/// ```
+///
+/// The public constructor also supports defining every style from scratch.
+pub type Theme {
   Theme(
     h1: style.Style,
     h2: style.Style,
