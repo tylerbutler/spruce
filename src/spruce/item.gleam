@@ -1,9 +1,9 @@
 //// Pure bullet and ordered list rendering.
 ////
 //// An `Items` value is a list of labelled entries rendered with an explicit
-//// `Spruce` context. Bullet lists use a Unicode bullet when color is supported
-//// and a deterministic ASCII marker when it is not. Ordered lists count from
-//// one at each nesting depth.
+//// `Spruce` context. Bullet lists use a Unicode bullet (`•`) when the context
+//// symbol mode is `Unicode` and a plain ASCII marker (`-`) when it is `Ascii`.
+//// Ordered lists count from one at each nesting depth.
 ////
 //// ```gleam
 //// item.new()

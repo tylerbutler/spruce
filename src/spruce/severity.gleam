@@ -72,7 +72,8 @@ pub fn icons(formatter: Formatter, enabled: Bool) -> Formatter {
 }
 
 /// Override the glyph mode used by icon-bearing formatters.
-/// When not set, the rendering context's symbol mode is used.
+/// By default the rendering context's symbol mode is used; call this to pin
+/// a specific mode regardless of the context.
 pub fn mode(formatter: Formatter, mode: spruce.SymbolMode) -> Formatter {
   Formatter(..formatter, mode: Some(mode))
 }

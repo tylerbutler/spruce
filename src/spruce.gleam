@@ -8,9 +8,10 @@
 //// ## The `Spruce` context
 ////
 //// Every render function takes an explicit `Spruce` value. The context carries
-//// two things: the detected color level (so output is plain when color is
-//// unsupported) and the current indent depth (so grouped output nests without
-//// any global state).
+//// four things: the detected color level (so output is plain when color is
+//// unsupported), the terminal background hint (light or dark, used for adaptive
+//// colors), the symbol mode (Unicode or ASCII glyphs), and the current indent
+//// depth (so grouped output nests without any global state).
 ////
 //// ```gleam
 //// import spruce
