@@ -210,7 +210,12 @@ pub fn render_with(
     |> mork.heading_ids(True)
     |> mork.parse_with_options(expand_directives(markdown))
 
-  render_blocks(context, blocks, options)
+  // Render all blocks at depth zero so that containers (box, table, item)
+  // that apply their own indentation do not double-indent nested content.
+  // The context's indent prefix is applied once here at the boundary.
+  let inner = spruce.flat(context)
+  render_blocks(inner, blocks, options)
+  |> indent_rendered(spruce.indent_prefix(context))
 }
 
 /// Render Markdown with the default options and print it to stdout.
@@ -1080,5 +1085,23 @@ fn remove_empty(lines: List(String)) -> List(String) {
     [] -> []
     ["", ..rest] -> remove_empty(rest)
     [line, ..rest] -> [line, ..remove_empty(rest)]
+  }
+}
+
+/// Prepend `prefix` to every non-empty line. Empty lines (block separators)
+/// stay empty so the output has no trailing whitespace on blank lines.
+fn indent_rendered(text: String, prefix: String) -> String {
+  case prefix {
+    "" -> text
+    _ ->
+      text
+      |> string.split("\n")
+      |> list.map(fn(line) {
+        case line {
+          "" -> ""
+          _ -> prefix <> line
+        }
+      })
+      |> string.join("\n")
   }
 }

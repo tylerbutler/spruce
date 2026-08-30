@@ -151,6 +151,14 @@ pub fn indented(context: Spruce) -> Spruce {
   Spruce(..context, depth: context.depth + 1)
 }
 
+/// Return a copy of the context with its indent depth reset to zero.
+/// Composing modules that own indentation at their boundary use this so that
+/// inner renderers do not double-indent content that the outer module will
+/// indent itself.
+pub fn flat(context: Spruce) -> Spruce {
+  Spruce(..context, depth: 0)
+}
+
 /// The indentation prefix for the context's depth: two spaces per level.
 /// Block-producing renderers prepend this to every line they emit.
 pub fn indent_prefix(context: Spruce) -> String {
