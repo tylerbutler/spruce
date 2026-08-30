@@ -1,8 +1,8 @@
 import gleam/bool
 import gleam/int
+import gleeunit/should
 import spruce
 import spruce/tree
-import startest/expect
 
 pub fn render_no_color_uses_unicode_branches_test() {
   tree.root("app")
@@ -11,7 +11,7 @@ pub fn render_no_color_uses_unicode_branches_test() {
   )
   |> tree.child(child: tree.root("test"))
   |> tree.render(spruce.no_color(), _)
-  |> expect.to_equal("app\n├─ src\n│  └─ main.gleam\n└─ test")
+  |> should.equal("app\n├─ src\n│  └─ main.gleam\n└─ test")
 }
 
 pub fn render_color_uses_unicode_branches_test() {
@@ -21,7 +21,7 @@ pub fn render_color_uses_unicode_branches_test() {
   )
   |> tree.child(child: tree.root("test"))
   |> tree.render(spruce.with_color_level(spruce.TrueColor), _)
-  |> expect.to_equal("app\n├─ src\n│  └─ main.gleam\n└─ test")
+  |> should.equal("app\n├─ src\n│  └─ main.gleam\n└─ test")
 }
 
 pub fn render_preserves_child_insertion_order_test() {
@@ -30,14 +30,14 @@ pub fn render_preserves_child_insertion_order_test() {
   |> tree.child(child: tree.root("second"))
   |> tree.child(child: tree.root("third"))
   |> tree.render(spruce.no_color(), _)
-  |> expect.to_equal("root\n├─ first\n├─ second\n└─ third")
+  |> should.equal("root\n├─ first\n├─ second\n└─ third")
 }
 
 pub fn render_multiline_labels_indent_subsequent_lines_test() {
   tree.root("root")
   |> tree.child(child: tree.root("line one\nline two"))
   |> tree.render(spruce.no_color(), _)
-  |> expect.to_equal("root\n└─ line one\n   line two")
+  |> should.equal("root\n└─ line one\n   line two")
 }
 
 pub fn render_multiline_non_last_label_keeps_unicode_guide_test() {
@@ -45,7 +45,7 @@ pub fn render_multiline_non_last_label_keeps_unicode_guide_test() {
   |> tree.child(child: tree.root("line one\nline two"))
   |> tree.child(child: tree.root("sibling"))
   |> tree.render(spruce.with_color_level(spruce.TrueColor), _)
-  |> expect.to_equal("root\n├─ line one\n│  line two\n└─ sibling")
+  |> should.equal("root\n├─ line one\n│  line two\n└─ sibling")
 }
 
 pub fn render_multiline_non_last_label_keeps_ascii_guide_test() {
@@ -54,7 +54,7 @@ pub fn render_multiline_non_last_label_keeps_ascii_guide_test() {
   |> tree.child(child: tree.root("sibling"))
   |> tree.ascii()
   |> tree.render(spruce.with_color_level(spruce.TrueColor), _)
-  |> expect.to_equal("root\n|- line one\n|  line two\n`- sibling")
+  |> should.equal("root\n|- line one\n|  line two\n`- sibling")
 }
 
 pub fn unicode_overrides_ascii_branches_test() {
@@ -63,7 +63,7 @@ pub fn unicode_overrides_ascii_branches_test() {
   |> tree.ascii()
   |> tree.unicode()
   |> tree.render(spruce.no_color(), _)
-  |> expect.to_equal("root\n└─ child")
+  |> should.equal("root\n└─ child")
 }
 
 pub fn custom_branches_preserve_ancestor_guides_test() {
@@ -80,7 +80,7 @@ pub fn custom_branches_preserve_ancestor_guides_test() {
     blank: "   ",
   ))
   |> tree.render(spruce.no_color(), _)
-  |> expect.to_equal("root\n+- first\n:  \\- nested\n\\- last")
+  |> should.equal("root\n+- first\n:  \\- nested\n\\- last")
 }
 
 pub fn render_with_receives_layout_information_test() {
@@ -96,7 +96,7 @@ pub fn render_with_receives_layout_information_test() {
     <> " "
     <> label
   })
-  |> expect.to_equal("0:0:True root\n├─ 3:1:False first\n└─ 3:1:True last")
+  |> should.equal("0:0:True root\n├─ 3:1:False first\n└─ 3:1:True last")
 }
 
 pub fn render_table_aligns_tree_labels_and_columns_test() {
@@ -112,7 +112,7 @@ pub fn render_table_aligns_tree_labels_and_columns_test() {
   )
   |> tree.child(child: tree.root("glint") |> tree.columns(["1.3.0", "MIT"]))
   |> tree.render_table(spruce.no_color(), _)
-  |> expect.to_equal(
+  |> should.equal(
     "PACKAGE          VERSION  LICENCE\n"
     <> "├─ gleam_stdlib  1.0.0    Apache-2.0\n"
     <> "│  └─ gleam_otp  0.10.0   Apache-2.0\n"

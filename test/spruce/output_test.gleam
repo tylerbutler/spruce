@@ -1,13 +1,13 @@
+import gleeunit/should
 import spruce
 import spruce/message
 import spruce/output
-import startest/expect
 
 pub fn new_is_empty_test() {
   spruce.no_color()
   |> output.new
   |> output.to_string
-  |> expect.to_equal("")
+  |> should.equal("")
 }
 
 pub fn append_threads_context_test() {
@@ -16,7 +16,7 @@ pub fn append_threads_context_test() {
   |> output.append(message.success(_, "done"))
   |> output.append(message.info(_, "next"))
   |> output.to_string
-  |> expect.to_equal("✔ success done\nℹ︎ info next")
+  |> should.equal("✔ success done\nℹ︎ info next")
 }
 
 pub fn text_appends_raw_test() {
@@ -26,7 +26,7 @@ pub fn text_appends_raw_test() {
   |> output.blank
   |> output.text("after blank")
   |> output.to_string
-  |> expect.to_equal("plain\n\nafter blank")
+  |> should.equal("plain\n\nafter blank")
 }
 
 pub fn group_indents_body_test() {
@@ -36,7 +36,7 @@ pub fn group_indents_body_test() {
     buffer |> output.append(message.info(_, "running"))
   })
   |> output.to_string
-  |> expect.to_equal("▸ Tests\n  ℹ︎ info running")
+  |> should.equal("▸ Tests\n  ℹ︎ info running")
 }
 
 pub fn group_restores_outer_depth_test() {
@@ -47,7 +47,7 @@ pub fn group_restores_outer_depth_test() {
   })
   |> output.append(message.success(_, "done"))
   |> output.to_string
-  |> expect.to_equal("▸ Build\n  ◐ start x\n✔ success done")
+  |> should.equal("▸ Build\n  ◐ start x\n✔ success done")
 }
 
 pub fn nested_groups_test() {
@@ -61,7 +61,7 @@ pub fn nested_groups_test() {
     })
   })
   |> output.to_string
-  |> expect.to_equal("▸ Outer\n  ℹ︎ info a\n  ▸ Inner\n    ℹ︎ info b")
+  |> should.equal("▸ Outer\n  ℹ︎ info a\n  ▸ Inner\n    ℹ︎ info b")
 }
 
 pub fn context_reflects_group_depth_test() {
@@ -69,28 +69,28 @@ pub fn context_reflects_group_depth_test() {
   |> output.new
   |> output.group("G", fn(buffer) {
     spruce.depth(output.context(buffer))
-    |> expect.to_equal(1)
+    |> should.equal(1)
     buffer
   })
   |> output.to_string
-  |> expect.to_equal("▸ G")
+  |> should.equal("▸ G")
 }
 
 pub fn stream_group_passes_deeper_context_test() {
   output.stream_group(spruce.no_color(), "Build", fn(inner) {
     spruce.depth(inner)
   })
-  |> expect.to_equal(1)
+  |> should.equal(1)
 }
 
 pub fn stream_group_returns_body_result_test() {
   output.stream_group(spruce.no_color(), "Build", fn(_inner) { 42 })
-  |> expect.to_equal(42)
+  |> should.equal(42)
 }
 
 pub fn title_is_indented_and_marked_test() {
   spruce.no_color()
   |> spruce.indented
   |> output.title("Build")
-  |> expect.to_equal("  ▸ Build")
+  |> should.equal("  ▸ Build")
 }

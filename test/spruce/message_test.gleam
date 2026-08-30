@@ -1,60 +1,60 @@
 import gleam/string
+import gleeunit/should
 import spruce
 import spruce/message
-import startest/expect
 
 pub fn success_no_color_test() {
   spruce.no_color()
   |> message.success("done")
-  |> expect.to_equal("✔ success done")
+  |> should.equal("✔ success done")
 }
 
 pub fn fail_no_color_test() {
   spruce.no_color()
   |> message.fail("nope")
-  |> expect.to_equal("✖ fail nope")
+  |> should.equal("✖ fail nope")
 }
 
 pub fn start_no_color_test() {
   spruce.no_color()
   |> message.start("compiling")
-  |> expect.to_equal("◐ start compiling")
+  |> should.equal("◐ start compiling")
 }
 
 pub fn ready_no_color_test() {
   spruce.no_color()
   |> message.ready("listening")
-  |> expect.to_equal("✔ ready listening")
+  |> should.equal("✔ ready listening")
 }
 
 pub fn info_no_color_test() {
   spruce.no_color()
   |> message.info("noted")
-  |> expect.to_equal("ℹ︎ info noted")
+  |> should.equal("ℹ︎ info noted")
 }
 
 pub fn warn_indented_test() {
   spruce.no_color()
   |> spruce.indented
   |> message.warn("careful")
-  |> expect.to_equal("  ⚠ warn careful")
+  |> should.equal("  ⚠ warn careful")
 }
 
 pub fn error_no_color_test() {
   spruce.no_color()
   |> message.error("broken")
-  |> expect.to_equal("✖ error broken")
+  |> should.equal("✖ error broken")
 }
 
 pub fn success_color_has_escapes_test() {
   let rendered =
     message.success(spruce.with_color_level(spruce.TrueColor), "done")
-  expect.to_be_true(string.contains(rendered, "\u{001b}"))
-  expect.to_be_true(string.contains(rendered, "success"))
+  should.be_true(string.contains(rendered, "\u{001b}"))
+  should.be_true(string.contains(rendered, "success"))
 }
 
 pub fn label_is_bold_and_colored_test() {
   let rendered = message.warn(spruce.with_color_level(spruce.Basic), "careful")
-  expect.to_be_true(string.contains(rendered, "\u{001b}[1m"))
-  expect.to_be_true(string.contains(rendered, "\u{001b}[33m"))
+  should.be_true(string.contains(rendered, "\u{001b}[1m"))
+  should.be_true(string.contains(rendered, "\u{001b}[33m"))
 }

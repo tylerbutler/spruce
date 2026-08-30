@@ -1,49 +1,49 @@
 import gleam/list
 import gleam/string
+import gleeunit/should
 import spruce
 import spruce/severity
 import spruce/symbol
-import startest/expect
 
 pub fn label_formatter_no_color_test() {
   severity.render(spruce.no_color(), severity.label(), severity.Info)
-  |> expect.to_equal("ℹ︎ info")
+  |> should.equal("ℹ︎ info")
 }
 
 pub fn label_formatter_ascii_no_color_test() {
   let formatter = severity.label() |> severity.mode(symbol.Ascii)
 
   severity.render(spruce.no_color(), formatter, severity.Warn)
-  |> expect.to_equal("! warn")
+  |> should.equal("! warn")
 }
 
 pub fn label_formatter_without_icons_test() {
   let formatter = severity.label() |> severity.icons(False)
 
   severity.render(spruce.no_color(), formatter, severity.Critical)
-  |> expect.to_equal("critical")
+  |> should.equal("critical")
 }
 
 pub fn label_formatter_without_icons_target_width_test() {
   severity.label()
   |> severity.icons(False)
   |> severity.target_width
-  |> expect.to_equal(8)
+  |> should.equal(8)
 }
 
 pub fn badge_formatter_no_color_test() {
   severity.render(spruce.no_color(), severity.badge(), severity.Warn)
-  |> expect.to_equal("[WARN]")
+  |> should.equal("[WARN]")
 }
 
 pub fn simple_formatter_no_color_test() {
   severity.render(spruce.no_color(), severity.simple(), severity.Debug)
-  |> expect.to_equal("DEBUG")
+  |> should.equal("DEBUG")
 }
 
 pub fn padded_label_formatter_uses_visual_width_test() {
   severity.render_padded(spruce.no_color(), severity.label(), severity.Info)
-  |> expect.to_equal("ℹ︎ info    ")
+  |> should.equal("ℹ︎ info    ")
 }
 
 pub fn color_formatter_emits_escapes_test() {
@@ -54,8 +54,8 @@ pub fn color_formatter_emits_escapes_test() {
       severity.Err,
     )
 
-  expect.to_be_true(string.contains(rendered, "\u{001b}"))
-  expect.to_be_true(string.contains(rendered, "error"))
+  should.be_true(string.contains(rendered, "\u{001b}"))
+  should.be_true(string.contains(rendered, "error"))
 }
 
 pub fn notice_label_uses_cyan_test() {
@@ -66,8 +66,8 @@ pub fn notice_label_uses_cyan_test() {
       severity.Notice,
     )
 
-  expect.to_be_true(string.contains(rendered, "\u{001b}[36m"))
-  expect.to_be_false(string.contains(rendered, "\u{001b}[34m"))
+  should.be_true(string.contains(rendered, "\u{001b}[36m"))
+  should.be_false(string.contains(rendered, "\u{001b}[34m"))
 }
 
 pub fn alert_label_uses_bright_red_test() {
@@ -78,8 +78,8 @@ pub fn alert_label_uses_bright_red_test() {
       severity.Alert,
     )
 
-  expect.to_be_true(string.contains(rendered, "\u{001b}[91m"))
-  expect.to_be_false(string.contains(rendered, "\u{001b}[35m"))
+  should.be_true(string.contains(rendered, "\u{001b}[91m"))
+  should.be_false(string.contains(rendered, "\u{001b}[35m"))
 }
 
 pub fn colored_badge_is_bold_test() {
@@ -90,8 +90,8 @@ pub fn colored_badge_is_bold_test() {
       severity.Warn,
     )
 
-  expect.to_be_true(string.contains(rendered, "\u{001b}[1m"))
-  expect.to_be_true(string.contains(rendered, "[WARN]"))
+  should.be_true(string.contains(rendered, "\u{001b}[1m"))
+  should.be_true(string.contains(rendered, "[WARN]"))
 }
 
 pub fn all_rfc5424_levels_are_retained_test() {
@@ -107,7 +107,7 @@ pub fn all_rfc5424_levels_are_retained_test() {
     severity.Fatal,
   ]
   |> list.map(severity.to_string)
-  |> expect.to_equal([
+  |> should.equal([
     "TRACE",
     "DEBUG",
     "INFO",
@@ -122,11 +122,11 @@ pub fn all_rfc5424_levels_are_retained_test() {
 
 pub fn rfc5424_level_order_is_retained_test() {
   severity.to_int(severity.Trace)
-  |> expect.to_equal(0)
+  |> should.equal(0)
   severity.to_int(severity.Err)
-  |> expect.to_equal(5)
+  |> should.equal(5)
   severity.to_int(severity.Fatal)
-  |> expect.to_equal(8)
+  |> should.equal(8)
 }
 
 pub fn custom_formatter_test() {
@@ -142,5 +142,5 @@ pub fn custom_formatter_test() {
     )
 
   severity.render_padded(spruce.no_color(), formatter, severity.Warn)
-  |> expect.to_equal("heads-up")
+  |> should.equal("heads-up")
 }
