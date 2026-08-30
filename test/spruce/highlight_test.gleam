@@ -1,3 +1,4 @@
+import gleam/list
 import gleam/string
 import gleeunit/should
 import spruce
@@ -34,6 +35,35 @@ pub fn language_aliases_resolve_test() {
   should.be_true(result_is_ok(highlight.language("c++")))
   should.be_true(result_is_ok(highlight.language("rs")))
   should.equal(highlight.language("bogus"), Error(Nil))
+}
+
+pub fn language_name_returns_canonical_name_test() {
+  let assert Ok(language) = highlight.language("JS")
+
+  highlight.language_name(language)
+  |> should.equal("javascript")
+}
+
+pub fn languages_lists_canonical_names_and_aliases_test() {
+  let languages = highlight.languages()
+
+  should.equal(list.first(languages), Ok(#("bash", ["sh", "shell", "zsh"])))
+  should.equal(list.last(languages), Ok(#("zig", [])))
+  should.be_true(list.contains(languages, #("python", ["py"])))
+  should.be_true(list.contains(languages, #("typescript", ["ts"])))
+
+  languages
+  |> list.each(fn(entry) {
+    let #(name, aliases) = entry
+    let assert Ok(language) = highlight.language(name)
+    should.equal(highlight.language_name(language), name)
+
+    aliases
+    |> list.each(fn(alias) {
+      let assert Ok(language) = highlight.language(alias)
+      should.equal(highlight.language_name(language), name)
+    })
+  })
 }
 
 pub fn no_color_preserves_multiline_whitespace_test() {
