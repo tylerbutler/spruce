@@ -47,6 +47,9 @@ jobs:
       - name: Check workbench facade
         run: npm run check:gleam --prefix website
 
+      - name: Check terminal snapshots
+        run: npm run check:terminal --prefix website
+
       - name: Test website
         run: npm test --prefix website
 

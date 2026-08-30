@@ -49,6 +49,7 @@ from the same typed state.
 Every terminal panel on the page is **genuine spruce output**, not a mockup.
 `npm run generate:terminal` runs `dev/spruce_landing_demo.gleam` on both targets,
 checks that their output matches, and converts the ANSI output span-for-span
-into `src/data/terminalBlocks.ts`. Run it locally after output changes and
-commit the result; deployment builds use the checked-in snapshot and do not
-require Gleam. The root `just build` recipe also regenerates this snapshot.
+into `src/data/terminalBlocks.ts`. It writes the file only when the output
+changes. Run it locally after output changes and commit the result.
+`npm run check:terminal` makes CI fail when the checked-in snapshot is stale.
+The root `just build` recipe and website deployment builds regenerate it.

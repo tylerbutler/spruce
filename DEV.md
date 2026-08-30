@@ -14,6 +14,7 @@
 - `just lint` — check formatting and run glinter
 - `just docs` — build the Hex documentation
 - `just ci` — run the full validation workflow
+- `npm run build --prefix website` — regenerate examples and build the website
 
 ## Release workflow
 
