@@ -13,7 +13,7 @@ Tests run on both targets and must stay green on both:
 - `gleam test --target erlang`
 - `gleam test --target javascript`
 
-Tests use [`startest`](https://hex.pm/packages/startest): the runner is
+Tests use [`gleeunit`](https://hex.pm/packages/gleeunit): the runner is
 `test/spruce_test.gleam`; test functions end in `_test` and are discovered by
 reflection. Linting uses [`glinter`](https://hex.pm/packages/glinter).
 
