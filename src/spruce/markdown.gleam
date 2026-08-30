@@ -828,10 +828,10 @@ fn render_table(
     table.new()
     |> table.headers(render_table_headers(context, headers, options))
     |> table.rows(render_table_rows(context, rows, options))
-    |> table.style_fn(fn(row, _column) {
-      case row {
-        -1 -> options.theme.table_header
-        _ -> style.new()
+    |> table.style_fn(fn(row_context, _column) {
+      case row_context {
+        table.Header -> options.theme.table_header
+        table.Body(_) -> style.new()
       }
     })
 

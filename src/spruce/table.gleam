@@ -10,13 +10,21 @@ import spruce/align
 import spruce/border.{type Border, type BorderChars}
 import spruce/style
 
+/// Identifies the row kind passed to a `style_fn`.
+pub type RowContext {
+  /// The header row.
+  Header
+  /// A zero-based body row.
+  Body(index: Int)
+}
+
 /// A table of string cells with an optional header row. Build one with `new`
 /// and the configuration functions in this module, then render it with `render`.
 pub opaque type Table {
   Table(
     headers: List(String),
     rows: List(List(String)),
-    style_fn: Option(fn(Int, Int) -> style.Style),
+    style_fn: Option(fn(RowContext, Int) -> style.Style),
     width: Option(Int),
     column_widths: Option(List(Int)),
     border: Border,
@@ -60,8 +68,12 @@ pub fn rows(table: Table, rows: List(List(String))) -> Table {
 
 /// Set a per-cell style function.
 ///
-/// Body rows are passed zero-based row indexes. Header cells are passed row `-1`.
-pub fn style_fn(table: Table, style_fn: fn(Int, Int) -> style.Style) -> Table {
+/// The `RowContext` argument is `Header` for header cells and `Body(index)` for
+/// zero-based body row cells.
+pub fn style_fn(
+  table: Table,
+  style_fn: fn(RowContext, Int) -> style.Style,
+) -> Table {
   Table(..table, style_fn: Some(style_fn))
 }
 
@@ -110,6 +122,10 @@ pub fn render(context: Spruce, table: Table) -> String {
           table.column_widths,
         )
       let chars = grid_chars(table.border)
+      let hidden = case table.border {
+        border.Hidden -> True
+        _ -> False
+      }
       let body =
         render_body_rows(
           context,
@@ -117,22 +133,33 @@ pub fn render(context: Spruce, table: Table) -> String {
           widths,
           table.style_fn,
           chars,
-          table.row_separators,
+          table.row_separators && !hidden,
           0,
         )
 
-      let lines =
-        [render_top(widths, chars)]
-        |> list.append(render_header(
-          context,
-          table.headers,
-          widths,
-          table.style_fn,
-          chars,
-          body,
-        ))
-        |> list.append(body)
-        |> list.append([render_bottom(widths, chars)])
+      let lines = case hidden {
+        True ->
+          render_header_plain(
+            context,
+            table.headers,
+            widths,
+            table.style_fn,
+            chars,
+          )
+          |> list.append(body)
+        False ->
+          [render_top(widths, chars)]
+          |> list.append(render_header(
+            context,
+            table.headers,
+            widths,
+            table.style_fn,
+            chars,
+            body,
+          ))
+          |> list.append(body)
+          |> list.append([render_bottom(widths, chars)])
+      }
 
       lines
       |> list.map(fn(line) { spruce.indent_prefix(context) <> line })
@@ -249,14 +276,15 @@ fn render_header(
   context: Spruce,
   headers: List(String),
   widths: List(Int),
-  maybe_style: Option(fn(Int, Int) -> style.Style),
+  maybe_style: Option(fn(RowContext, Int) -> style.Style),
   chars: GridChars,
   body: List(String),
 ) -> List(String) {
   case headers {
     [] -> []
     _ -> {
-      let header = render_row(context, headers, widths, maybe_style, -1, chars)
+      let header =
+        render_row(context, headers, widths, maybe_style, Header, chars)
 
       case body {
         [] -> header
@@ -266,11 +294,24 @@ fn render_header(
   }
 }
 
+fn render_header_plain(
+  context: Spruce,
+  headers: List(String),
+  widths: List(Int),
+  maybe_style: Option(fn(RowContext, Int) -> style.Style),
+  chars: GridChars,
+) -> List(String) {
+  case headers {
+    [] -> []
+    _ -> render_row(context, headers, widths, maybe_style, Header, chars)
+  }
+}
+
 fn render_body_rows(
   context: Spruce,
   rows: List(List(String)),
   widths: List(Int),
-  maybe_style: Option(fn(Int, Int) -> style.Style),
+  maybe_style: Option(fn(RowContext, Int) -> style.Style),
   chars: GridChars,
   row_separators: Bool,
   row_index: Int,
@@ -279,7 +320,7 @@ fn render_body_rows(
     [] -> []
     [row, ..rest] -> {
       let rendered =
-        render_row(context, row, widths, maybe_style, row_index, chars)
+        render_row(context, row, widths, maybe_style, Body(row_index), chars)
       let tail =
         render_body_rows(
           context,
@@ -306,11 +347,12 @@ fn render_row(
   context: Spruce,
   row: List(String),
   widths: List(Int),
-  maybe_style: Option(fn(Int, Int) -> style.Style),
-  row_index: Int,
+  maybe_style: Option(fn(RowContext, Int) -> style.Style),
+  row_context: RowContext,
   chars: GridChars,
 ) -> List(String) {
-  let cells = render_cell_lines(context, row, widths, maybe_style, row_index, 0)
+  let cells =
+    render_cell_lines(context, row, widths, maybe_style, row_context, 0)
   let height = max_cell_height(cells, 1)
 
   render_row_lines(cells, widths, chars, height, 0, [])
@@ -320,8 +362,8 @@ fn render_cell_lines(
   context: Spruce,
   row: List(String),
   widths: List(Int),
-  maybe_style: Option(fn(Int, Int) -> style.Style),
-  row_index: Int,
+  maybe_style: Option(fn(RowContext, Int) -> style.Style),
+  row_context: RowContext,
   col_index: Int,
 ) -> List(List(String)) {
   case widths {
@@ -331,7 +373,7 @@ fn render_cell_lines(
         cell_at(row, col_index)
         |> wrap_cell(width)
         |> string.split("\n")
-        |> list.map(apply_style(_, context, maybe_style, row_index, col_index))
+        |> list.map(apply_style(_, context, maybe_style, row_context, col_index))
 
       [
         lines,
@@ -340,7 +382,7 @@ fn render_cell_lines(
           row,
           rest,
           maybe_style,
-          row_index,
+          row_context,
           col_index + 1,
         )
       ]
@@ -412,14 +454,14 @@ fn render_cell_line(
 fn apply_style(
   content: String,
   context: Spruce,
-  maybe_style: Option(fn(Int, Int) -> style.Style),
-  row_index: Int,
+  maybe_style: Option(fn(RowContext, Int) -> style.Style),
+  row_context: RowContext,
   col_index: Int,
 ) -> String {
   case maybe_style {
     None -> content
     Some(style_fn) ->
-      style.render(context, style_fn(row_index, col_index), content)
+      style.render(context, style_fn(row_context, col_index), content)
   }
 }
 

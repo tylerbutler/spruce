@@ -275,10 +275,10 @@ fn table_section(context: spruce.Spruce) -> Nil {
     ["table", "180", "both"],
     ["tree", "90", "both"],
   ])
-  |> table.style_fn(fn(row, _col) {
-    case row {
-      -1 -> style.new() |> style.bold |> style.fg(style.BrightYellow)
-      _ -> style.new()
+  |> table.style_fn(fn(row_context, _col) {
+    case row_context {
+      table.Header -> style.new() |> style.bold |> style.fg(style.BrightYellow)
+      table.Body(_) -> style.new()
     }
   })
   |> table.render(context, _)
