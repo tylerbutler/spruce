@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Added"
+body = "Add per-column left, center, and right alignment to spruce/table, and honor GFM table alignment markers in spruce/markdown."
