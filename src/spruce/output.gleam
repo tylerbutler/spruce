@@ -2,9 +2,9 @@
 ////
 //// An `Output` threads a `Spruce` context and a buffer of rendered blocks
 //// through a pipeline, so several renderers compose with `|>` and emit
-//// together. It stays pure: nothing is printed until `print`, and the context
-//// is threaded for you so each renderer sees the right color level and indent
-//// depth.
+//// together. It stays pure: nothing is printed until `print` or `print_with`,
+//// and the context is threaded for you so each renderer sees the right color
+//// level and indent depth.
 ////
 //// ```gleam
 //// import spruce
@@ -25,8 +25,8 @@
 ////
 //// `append` accepts any `Spruce -> String` renderer via a `_` capture, so it
 //// works with every spruce module without per-type variants. For eager,
-//// streaming grouping that prints as work happens and can return a value, use
-//// `stream_group` instead.
+//// streaming grouping that writes as work happens and can return a value, use
+//// `stream_group` or `stream_group_with` instead.
 
 import gleam/io
 import gleam/list
@@ -100,6 +100,21 @@ pub fn stream_group(
   body(spruce.indented(context))
 }
 
+/// Write a group title with `sink`, then run `body` with a context indented one
+/// level deeper, returning its result unchanged.
+///
+/// The sink receives the rendered title without a trailing newline. Use
+/// `io.println_error` to stream a group to stderr.
+pub fn stream_group_with(
+  context: Spruce,
+  heading: String,
+  sink: fn(String) -> Nil,
+  body: fn(Spruce) -> result,
+) -> result {
+  sink(title(context, heading))
+  body(spruce.indented(context))
+}
+
 /// Render a group title line (indent prefix + styled marker + title), the same
 /// line that `group` and `stream_group` emit.
 pub fn title(context: Spruce, heading: String) -> String {
@@ -125,4 +140,12 @@ pub fn to_string(output: Output) -> String {
 /// Print the accumulated output to stdout.
 pub fn print(output: Output) -> Nil {
   io.println(to_string(output))
+}
+
+/// Write the accumulated output with `sink`, returning the sink's result.
+///
+/// The sink receives the rendered output without a trailing newline. Use
+/// `io.println_error` to write to stderr.
+pub fn print_with(output: Output, sink: fn(String) -> result) -> result {
+  sink(to_string(output))
 }
