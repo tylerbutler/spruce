@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Breaking Change"
+body = "severity.Severity now matches the eight Erlang/OTP Logger and RFC 5424 levels exactly: Emergency (0), Alert (1), Critical (2), Error (3), Warning (4), Notice (5), Info (6), Debug (7). The previous variants Trace, Warn, Err, and Fatal are removed. Rename Warn to Warning, Err to Error, and remove any uses of Trace or Fatal. to_string now returns \"EMERGENCY\", \"WARNING\", and \"ERROR\" for the affected variants."

@@ -146,7 +146,7 @@ fn message_section(context: spruce.Spruce) -> Nil {
     |> detail.add(key: "since", value: "0.4.0")
 
   line.new("Deprecated option in config")
-  |> line.severity(severity.Warn)
+  |> line.severity(severity.Warning)
   |> line.severity_formatter(severity.badge())
   |> line.details(deprecation)
   |> line.render(context, _)
@@ -172,7 +172,7 @@ fn formatter_section(context: spruce.Spruce) -> Nil {
 
   io.println(
     "  "
-    <> severity.render(context, severity.badge(), severity.Warn)
+    <> severity.render(context, severity.badge(), severity.Warning)
     <> " "
     <> "Configuration uses deprecated option",
   )

@@ -1,4 +1,4 @@
-//// Generic RFC 5424 severity/status formatting.
+//// Erlang/OTP Logger and RFC 5424 severity formatting.
 
 import gleam/bool
 import gleam/string
@@ -7,17 +7,16 @@ import spruce/align
 import spruce/style
 import spruce/symbol
 
-/// RFC 5424 severity levels, in ascending order.
+/// RFC 5424 / Erlang OTP Logger severity levels, in descending order of urgency.
 pub type Severity {
-  Trace
-  Debug
-  Info
-  Notice
-  Warn
-  Err
-  Critical
+  Emergency
   Alert
-  Fatal
+  Critical
+  Error
+  Warning
+  Notice
+  Info
+  Debug
 }
 
 /// Controls how a `Severity` is rendered: its style (label, badge, simple, or
@@ -108,30 +107,28 @@ pub fn render_padded(
 /// Convert a severity to its RFC 5424 ordering integer.
 pub fn to_int(severity: Severity) -> Int {
   case severity {
-    Trace -> 0
-    Debug -> 1
-    Info -> 2
-    Notice -> 3
-    Warn -> 4
-    Err -> 5
-    Critical -> 6
-    Alert -> 7
-    Fatal -> 8
+    Emergency -> 0
+    Alert -> 1
+    Critical -> 2
+    Error -> 3
+    Warning -> 4
+    Notice -> 5
+    Info -> 6
+    Debug -> 7
   }
 }
 
 /// Convert a severity to its uppercase label.
 pub fn to_string(severity: Severity) -> String {
   case severity {
-    Trace -> "TRACE"
-    Debug -> "DEBUG"
-    Info -> "INFO"
-    Notice -> "NOTICE"
-    Warn -> "WARN"
-    Err -> "ERROR"
-    Critical -> "CRITICAL"
+    Emergency -> "EMERGENCY"
     Alert -> "ALERT"
-    Fatal -> "FATAL"
+    Critical -> "CRITICAL"
+    Error -> "ERROR"
+    Warning -> "WARNING"
+    Notice -> "NOTICE"
+    Info -> "INFO"
+    Debug -> "DEBUG"
   }
 }
 
@@ -181,29 +178,27 @@ fn render_simple(context: Spruce, severity: Severity) -> String {
 
 fn status(severity: Severity) -> symbol.Status {
   case severity {
-    Trace -> symbol.Trace
-    Debug -> symbol.Debug
-    Info -> symbol.Info
-    Notice -> symbol.Notice
-    Warn -> symbol.Warn
-    Err -> symbol.Error
-    Critical -> symbol.Error
+    Emergency -> symbol.Alert
     Alert -> symbol.Alert
-    Fatal -> symbol.Error
+    Critical -> symbol.Error
+    Error -> symbol.Error
+    Warning -> symbol.Warn
+    Notice -> symbol.Notice
+    Info -> symbol.Info
+    Debug -> symbol.Debug
   }
 }
 
 fn label_color(severity: Severity) -> style.Color {
   case severity {
-    Trace -> style.Gray
-    Debug -> style.Gray
-    Info -> style.Cyan
-    Notice -> style.Cyan
-    Warn -> style.Yellow
-    Err -> style.Red
-    Critical -> style.BrightRed
+    Emergency -> style.BrightRed
     Alert -> style.BrightRed
-    Fatal -> style.BrightRed
+    Critical -> style.BrightRed
+    Error -> style.Red
+    Warning -> style.Yellow
+    Notice -> style.Cyan
+    Info -> style.Cyan
+    Debug -> style.Gray
   }
 }
 
@@ -215,7 +210,7 @@ fn bool_width(enabled: Bool) -> Int {
 fn simple_color(severity: Severity) -> style.Color {
   case severity {
     Debug -> style.Blue
-    Trace | Info | Notice | Warn | Err | Critical | Alert | Fatal ->
+    Emergency | Alert | Critical | Error | Warning | Notice | Info ->
       label_color(severity)
   }
 }
