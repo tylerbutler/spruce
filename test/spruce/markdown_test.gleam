@@ -246,6 +246,22 @@ pub fn gfm_table_grid_test() {
   should.be_true(string.contains(rendered, "│ 1 │ 2 │"))
 }
 
+pub fn gfm_table_column_alignment_test() {
+  markdown.render(
+    spruce.no_color(),
+    "| Left | Center | Right |\n"
+      <> "| :--- | :----: | ----: |\n"
+      <> "| x | y | z |",
+  )
+  |> should.equal(
+    "┌──────┬────────┬───────┐\n"
+    <> "│ Left │ Center │ Right │\n"
+    <> "├──────┼────────┼───────┤\n"
+    <> "│ x    │   y    │     z │\n"
+    <> "└──────┴────────┴───────┘",
+  )
+}
+
 pub fn thematic_break_rule_test() {
   markdown.render(spruce.no_color(), "---")
   |> should.equal("────────────────────────────────────────")

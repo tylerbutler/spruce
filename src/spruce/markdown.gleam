@@ -33,9 +33,6 @@
 //// - **Footnotes**: a `[^1]` reference renders as literal `[^1]` and the
 ////   definition body is dropped. Footnote bodies are not yet implemented
 ////   upstream, and inline footnotes (`^[...]`) are unsupported.
-//// - **GFM table column alignment** (`:--`, `:-:`, `--:`) is parsed by `mork`
-////   but ignored here: every cell is left-aligned, because `spruce/table`
-////   does not expose per-column alignment.
 //// - **Heading ID attributes** (`## Title {#id}`) are stripped from the
 ////   rendered text (via `mork.heading_ids`), since a terminal has no anchors
 ////   to link to. The id itself is parsed but not rendered.
@@ -833,6 +830,7 @@ fn render_table(
     table.new()
     |> table.headers(render_table_headers(context, headers, options))
     |> table.rows(render_table_rows(context, rows, options))
+    |> table.column_alignments(render_table_alignments(headers))
     |> table.style_fn(fn(row_context, _column) {
       case row_context {
         table.Header -> options.theme.table_header
@@ -845,6 +843,17 @@ fn render_table(
       table.render(context, table.width(table_, width))
     Some(_) | None -> table.render(context, table_)
   }
+}
+
+fn render_table_alignments(headers: List(document.THead)) -> List(table.Align) {
+  list.map(headers, fn(header) {
+    let document.THead(alignment, _, _) = header
+    case alignment {
+      document.Left -> table.Left
+      document.Center -> table.Center
+      document.Right -> table.Right
+    }
+  })
 }
 
 fn render_table_headers(

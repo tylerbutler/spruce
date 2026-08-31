@@ -70,7 +70,7 @@ escape-free, deterministic strings.
 - `spruce/align` — ANSI-aware length, padding, wrapping, and multi-line block composition
 - `spruce/border` — border styles and glyphs shared by boxes and tables
 - `spruce/box` — boxed and styled blocks: title, padding, margin, sizing, alignment, per-side borders and colors
-- `spruce/table` — tables with widths, borders, separators, and cell wrapping
+- `spruce/table` — tables with widths, per-column alignment, borders, separators, and cell wrapping
 - `spruce/item` — bulleted/ordered lists with arbitrary nesting
 - `spruce/tree` — tree-structured output
 - `spruce/severity` — RFC 5424 severity labels, badges, and the status `Formatter`
