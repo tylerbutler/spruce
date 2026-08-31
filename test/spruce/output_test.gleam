@@ -88,6 +88,31 @@ pub fn stream_group_returns_body_result_test() {
   |> should.equal(42)
 }
 
+pub fn stream_group_with_writes_title_and_preserves_body_error_test() {
+  output.stream_group_with(
+    spruce.no_color(),
+    "Build",
+    fn(line) { should.equal(line, "▸ Build") },
+    fn(inner) {
+      spruce.depth(inner)
+      |> should.equal(1)
+      Error("body failed")
+    },
+  )
+  |> should.equal(Error("body failed"))
+}
+
+pub fn print_with_writes_output_and_returns_sink_result_test() {
+  spruce.no_color()
+  |> output.new
+  |> output.text("hello")
+  |> output.print_with(fn(rendered) {
+    should.equal(rendered, "hello")
+    Error("write failed")
+  })
+  |> should.equal(Error("write failed"))
+}
+
 pub fn title_is_indented_and_marked_test() {
   spruce.no_color()
   |> spruce.indented
