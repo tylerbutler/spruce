@@ -1,4 +1,7 @@
 //// Syntax highlighting for source code using spruce styles.
+////
+//// Use `language` to resolve a canonical name or alias, `language_name` to
+//// inspect the result, and `languages` to discover all supported names.
 
 import gleam/list
 import gleam/string
@@ -146,45 +149,29 @@ pub fn adaptive_theme() -> Theme {
 
 /// Resolve a language name or alias to a smalto-backed language.
 pub fn language(name: String) -> Result(Language, Nil) {
-  case string.lowercase(name) {
-    "bash" | "sh" | "shell" | "zsh" -> ok("bash", lang_bash.grammar())
-    "c" -> ok("c", lang_c.grammar())
-    "cpp" | "c++" -> ok("cpp", lang_cpp.grammar())
-    "csharp" | "c#" | "cs" -> ok("csharp", lang_csharp.grammar())
-    "css" -> ok("css", lang_css.grammar())
-    "dart" -> ok("dart", lang_dart.grammar())
-    "dockerfile" | "docker" -> ok("dockerfile", lang_dockerfile.grammar())
-    "elixir" -> ok("elixir", lang_elixir.grammar())
-    "erlang" -> ok("erlang", lang_erlang.grammar())
-    "fsharp" -> ok("fsharp", lang_fsharp.grammar())
-    "gleam" -> ok("gleam", lang_gleam.grammar())
-    "go" | "golang" -> ok("go", lang_go.grammar())
-    "haskell" -> ok("haskell", lang_haskell.grammar())
-    "html" -> ok("html", lang_html.grammar())
-    "java" -> ok("java", lang_java.grammar())
-    "javascript" | "js" -> ok("javascript", lang_javascript.grammar())
-    "json" -> ok("json", lang_json.grammar())
-    "kotlin" | "kt" -> ok("kotlin", lang_kotlin.grammar())
-    "lua" -> ok("lua", lang_lua.grammar())
-    "markdown" | "md" -> ok("markdown", lang_markdown.grammar())
-    "nginx" -> ok("nginx", lang_nginx.grammar())
-    "php" -> ok("php", lang_php.grammar())
-    "python" | "py" -> ok("python", lang_python.grammar())
-    "razor" -> ok("razor", lang_razor.grammar())
-    "reactjsx" | "jsx" -> ok("reactjsx", lang_reactjsx.grammar())
-    "reacttsx" | "tsx" -> ok("reacttsx", lang_reacttsx.grammar())
-    "ruby" | "rb" -> ok("ruby", lang_ruby.grammar())
-    "rust" | "rs" -> ok("rust", lang_rust.grammar())
-    "scala" -> ok("scala", lang_scala.grammar())
-    "sql" -> ok("sql", lang_sql.grammar())
-    "swift" -> ok("swift", lang_swift.grammar())
-    "toml" -> ok("toml", lang_toml.grammar())
-    "typescript" | "ts" -> ok("typescript", lang_typescript.grammar())
-    "xml" -> ok("xml", lang_xml.grammar())
-    "yaml" | "yml" -> ok("yaml", lang_yaml.grammar())
-    "zig" -> ok("zig", lang_zig.grammar())
-    _ -> Error(Nil)
+  let name = string.lowercase(name)
+  case
+    language_definitions()
+    |> list.find(fn(definition) {
+      name == definition.name || list.contains(definition.aliases, name)
+    })
+  {
+    Ok(definition) -> ok(definition.name, definition.grammar())
+    Error(Nil) -> Error(Nil)
   }
+}
+
+/// Return the canonical name for a resolved language.
+pub fn language_name(language: Language) -> String {
+  language.name
+}
+
+/// Return all supported canonical language names and their aliases.
+///
+/// Canonical names and aliases are in deterministic alphabetical order.
+pub fn languages() -> List(#(String, List(String))) {
+  language_definitions()
+  |> list.map(fn(definition) { #(definition.name, definition.aliases) })
 }
 
 /// Highlight code with the default adaptive theme, or return code unchanged for
@@ -224,6 +211,55 @@ pub fn highlight_with(
 
 fn ok(name: String, grammar: Grammar) -> Result(Language, Nil) {
   Ok(Language(name:, grammar:))
+}
+
+type LanguageDefinition {
+  LanguageDefinition(
+    name: String,
+    aliases: List(String),
+    grammar: fn() -> Grammar,
+  )
+}
+
+fn language_definitions() -> List(LanguageDefinition) {
+  [
+    LanguageDefinition("bash", ["sh", "shell", "zsh"], lang_bash.grammar),
+    LanguageDefinition("c", [], lang_c.grammar),
+    LanguageDefinition("cpp", ["c++"], lang_cpp.grammar),
+    LanguageDefinition("csharp", ["c#", "cs"], lang_csharp.grammar),
+    LanguageDefinition("css", [], lang_css.grammar),
+    LanguageDefinition("dart", [], lang_dart.grammar),
+    LanguageDefinition("dockerfile", ["docker"], lang_dockerfile.grammar),
+    LanguageDefinition("elixir", [], lang_elixir.grammar),
+    LanguageDefinition("erlang", [], lang_erlang.grammar),
+    LanguageDefinition("fsharp", [], lang_fsharp.grammar),
+    LanguageDefinition("gleam", [], lang_gleam.grammar),
+    LanguageDefinition("go", ["golang"], lang_go.grammar),
+    LanguageDefinition("haskell", [], lang_haskell.grammar),
+    LanguageDefinition("html", [], lang_html.grammar),
+    LanguageDefinition("java", [], lang_java.grammar),
+    LanguageDefinition("javascript", ["js"], lang_javascript.grammar),
+    LanguageDefinition("json", [], lang_json.grammar),
+    LanguageDefinition("kotlin", ["kt"], lang_kotlin.grammar),
+    LanguageDefinition("lua", [], lang_lua.grammar),
+    LanguageDefinition("markdown", ["md"], lang_markdown.grammar),
+    LanguageDefinition("nginx", [], lang_nginx.grammar),
+    LanguageDefinition("php", [], lang_php.grammar),
+    LanguageDefinition("python", ["py"], lang_python.grammar),
+    LanguageDefinition("razor", [], lang_razor.grammar),
+    LanguageDefinition("reactjsx", ["jsx"], lang_reactjsx.grammar),
+    LanguageDefinition("reacttsx", ["tsx"], lang_reacttsx.grammar),
+    LanguageDefinition("ruby", ["rb"], lang_ruby.grammar),
+    LanguageDefinition("rust", ["rs"], lang_rust.grammar),
+    LanguageDefinition("scala", [], lang_scala.grammar),
+    LanguageDefinition("sql", [], lang_sql.grammar),
+    LanguageDefinition("swift", [], lang_swift.grammar),
+    LanguageDefinition("toml", [], lang_toml.grammar),
+    LanguageDefinition("typescript", ["ts"], lang_typescript.grammar),
+    LanguageDefinition("xml", [], lang_xml.grammar),
+    LanguageDefinition("yaml", ["yml"], lang_yaml.grammar),
+    LanguageDefinition("zig", [], lang_zig.grammar),
+  ]
 }
 
 fn render_token(context: Spruce, token: Token, theme: Theme) -> String {
