@@ -70,7 +70,7 @@ escape-free, deterministic strings.
 - `spruce/align` — ANSI-aware length, padding, wrapping, and multi-line block composition
 - `spruce/border` — border styles and glyphs shared by boxes and tables
 - `spruce/box` — boxed and styled blocks: title, padding, margin, sizing, alignment, per-side borders and colors
-- `spruce/table` — tables with widths, borders, separators, and cell wrapping
+- `spruce/table` — tables with widths, per-column alignment, borders, separators, and cell wrapping
 - `spruce/item` — bulleted/ordered lists with arbitrary nesting
 - `spruce/tree` — tree-structured output
 - `spruce/severity` — RFC 5424 severity labels, badges, and the status `Formatter`
@@ -252,7 +252,9 @@ pub fn report() {
 ```
 
 For eager, streaming grouping that prints as work happens and can return a value
-from the body, reach for `output.stream_group` instead.
+from the body, use `output.stream_group`. To write buffered output or a streaming
+group to another sink, such as stderr, use `output.print_with(_, io.println_error)`
+or `output.stream_group_with(_, _, io.println_error, _)`.
 
 ## Development
 

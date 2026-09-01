@@ -59,6 +59,10 @@ lint: format-check
 docs:
     trellis run docs
 
+# Verify checked-in website terminal examples
+terminal-check:
+    npm --prefix website run check:terminal
+
 # === DEMO ===
 
 # Run the feature showcase demo (TARGET defaults to erlang)
@@ -113,6 +117,6 @@ clean:
 # === CI ===
 
 # Full validation workflow (no file mutation)
-ci: lint check build-strict test docs
+ci: lint check build-strict test docs terminal-check
 
 alias pr := ci

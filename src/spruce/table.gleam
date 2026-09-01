@@ -18,6 +18,13 @@ pub type RowContext {
   Body(index: Int)
 }
 
+/// Horizontal alignment for a table column.
+pub type Align {
+  Left
+  Center
+  Right
+}
+
 /// A table of string cells with an optional header row. Build one with `new`
 /// and the configuration functions in this module, then render it with `render`.
 pub opaque type Table {
@@ -27,6 +34,7 @@ pub opaque type Table {
     style_fn: Option(fn(RowContext, Int) -> style.Style),
     width: Option(Int),
     column_widths: Option(List(Int)),
+    alignments: List(Align),
     border: Border,
     row_separators: Bool,
   )
@@ -51,6 +59,7 @@ pub fn new() -> Table {
     style_fn: None,
     width: None,
     column_widths: None,
+    alignments: [],
     border: border.Normal,
     row_separators: False,
   )
@@ -93,6 +102,13 @@ pub fn column_widths(table: Table, widths: List(Int)) -> Table {
   Table(..table, column_widths: Some(widths), width: None)
 }
 
+/// Set horizontal alignment by column.
+///
+/// Columns without a corresponding alignment are left-aligned.
+pub fn column_alignments(table: Table, alignments: List(Align)) -> Table {
+  Table(..table, alignments: alignments)
+}
+
 /// Set the table border style.
 ///
 /// Junctions are exact for Normal, Rounded, Thick, and Double. Other border
@@ -131,6 +147,7 @@ pub fn render(context: Spruce, table: Table) -> String {
           context,
           table.rows,
           widths,
+          table.alignments,
           table.style_fn,
           chars,
           table.row_separators && !hidden,
@@ -143,6 +160,7 @@ pub fn render(context: Spruce, table: Table) -> String {
             context,
             table.headers,
             widths,
+            table.alignments,
             table.style_fn,
             chars,
           )
@@ -153,6 +171,7 @@ pub fn render(context: Spruce, table: Table) -> String {
             context,
             table.headers,
             widths,
+            table.alignments,
             table.style_fn,
             chars,
             body,
@@ -276,6 +295,7 @@ fn render_header(
   context: Spruce,
   headers: List(String),
   widths: List(Int),
+  alignments: List(Align),
   maybe_style: Option(fn(RowContext, Int) -> style.Style),
   chars: GridChars,
   body: List(String),
@@ -284,7 +304,15 @@ fn render_header(
     [] -> []
     _ -> {
       let header =
-        render_row(context, headers, widths, maybe_style, Header, chars)
+        render_row(
+          context,
+          headers,
+          widths,
+          alignments,
+          maybe_style,
+          Header,
+          chars,
+        )
 
       case body {
         [] -> header
@@ -298,12 +326,22 @@ fn render_header_plain(
   context: Spruce,
   headers: List(String),
   widths: List(Int),
+  alignments: List(Align),
   maybe_style: Option(fn(RowContext, Int) -> style.Style),
   chars: GridChars,
 ) -> List(String) {
   case headers {
     [] -> []
-    _ -> render_row(context, headers, widths, maybe_style, Header, chars)
+    _ ->
+      render_row(
+        context,
+        headers,
+        widths,
+        alignments,
+        maybe_style,
+        Header,
+        chars,
+      )
   }
 }
 
@@ -311,6 +349,7 @@ fn render_body_rows(
   context: Spruce,
   rows: List(List(String)),
   widths: List(Int),
+  alignments: List(Align),
   maybe_style: Option(fn(RowContext, Int) -> style.Style),
   chars: GridChars,
   row_separators: Bool,
@@ -320,12 +359,21 @@ fn render_body_rows(
     [] -> []
     [row, ..rest] -> {
       let rendered =
-        render_row(context, row, widths, maybe_style, Body(row_index), chars)
+        render_row(
+          context,
+          row,
+          widths,
+          alignments,
+          maybe_style,
+          Body(row_index),
+          chars,
+        )
       let tail =
         render_body_rows(
           context,
           rest,
           widths,
+          alignments,
           maybe_style,
           chars,
           row_separators,
@@ -347,6 +395,7 @@ fn render_row(
   context: Spruce,
   row: List(String),
   widths: List(Int),
+  alignments: List(Align),
   maybe_style: Option(fn(RowContext, Int) -> style.Style),
   row_context: RowContext,
   chars: GridChars,
@@ -355,7 +404,7 @@ fn render_row(
     render_cell_lines(context, row, widths, maybe_style, row_context, 0)
   let height = max_cell_height(cells, 1)
 
-  render_row_lines(cells, widths, chars, height, 0, [])
+  render_row_lines(cells, widths, alignments, chars, height, 0, [])
 }
 
 fn render_cell_lines(
@@ -404,6 +453,7 @@ fn max_cell_height(cells: List(List(String)), minimum: Int) -> Int {
 fn render_row_lines(
   cells: List(List(String)),
   widths: List(Int),
+  alignments: List(Align),
   chars: GridChars,
   height: Int,
   index: Int,
@@ -414,10 +464,20 @@ fn render_row_lines(
     False -> {
       let line =
         chars.border.left
-        <> render_cell_line(cells, widths, chars.border.right, index, 0)
+        <> render_cell_line(
+          cells,
+          widths,
+          alignments,
+          chars.border.right,
+          index,
+          0,
+        )
         <> chars.border.right
 
-      render_row_lines(cells, widths, chars, height, index + 1, [line, ..acc])
+      render_row_lines(cells, widths, alignments, chars, height, index + 1, [
+        line,
+        ..acc
+      ])
     }
   }
 }
@@ -425,6 +485,7 @@ fn render_row_lines(
 fn render_cell_line(
   cells: List(List(String)),
   widths: List(Int),
+  alignments: List(Align),
   separator: String,
   line_index: Int,
   col_index: Int,
@@ -435,7 +496,7 @@ fn render_cell_line(
       let content =
         cell_lines_at(cells, col_index)
         |> line_at(line_index)
-        |> align.pad_right(width)
+        |> align_cell(width, alignment_at(alignments, col_index))
 
       let inner_separator = case rest {
         [] -> ""
@@ -446,8 +507,31 @@ fn render_cell_line(
       <> content
       <> " "
       <> inner_separator
-      <> render_cell_line(cells, rest, separator, line_index, col_index + 1)
+      <> render_cell_line(
+        cells,
+        rest,
+        alignments,
+        separator,
+        line_index,
+        col_index + 1,
+      )
     }
+  }
+}
+
+fn alignment_at(alignments: List(Align), index: Int) -> Align {
+  case alignments, index {
+    [], _ -> Left
+    [alignment, ..], 0 -> alignment
+    [_, ..rest], _ -> alignment_at(rest, index - 1)
+  }
+}
+
+fn align_cell(content: String, width: Int, alignment: Align) -> String {
+  case alignment {
+    Left -> align.pad_right(content, width)
+    Center -> align.pad_center(content, width)
+    Right -> align.pad_left(content, width)
   }
 }
 

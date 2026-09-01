@@ -143,6 +143,59 @@ pub fn table_width_distributes_column_caps_test() {
   )
 }
 
+pub fn table_column_alignments_apply_with_explicit_widths_test() {
+  table.new()
+  |> table.headers(["Left", "Center", "Right"])
+  |> table.rows([["a", "b", "c"]])
+  |> table.column_widths([5, 6, 5])
+  |> table.column_alignments([table.Left, table.Center, table.Right])
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(
+    "┌──────┬────────┬───────┐\n"
+    <> "│ Left │ Center │ Right │\n"
+    <> "├──────┼────────┼───────┤\n"
+    <> "│ a    │   b    │     c │\n"
+    <> "└──────┴────────┴───────┘",
+  )
+}
+
+pub fn table_missing_column_alignments_default_to_left_test() {
+  table.new()
+  |> table.rows([["long", "wide"], ["x", "y"]])
+  |> table.column_alignments([table.Right])
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(
+    "┌──────┬──────┐\n"
+    <> "│ long │ wide │\n"
+    <> "│    x │ y    │\n"
+    <> "└──────┴──────┘",
+  )
+}
+
+pub fn table_extra_column_alignments_are_ignored_test() {
+  table.new()
+  |> table.rows([["long"], ["x"]])
+  |> table.column_alignments([table.Center, table.Right])
+  |> table.render(spruce.no_color(), _)
+  |> should.equal("┌──────┐\n" <> "│ long │\n" <> "│  x   │\n" <> "└──────┘")
+}
+
+pub fn table_alignment_is_ansi_aware_after_styling_test() {
+  table.new()
+  |> table.rows([["long"], ["x"]])
+  |> table.column_alignments([table.Right])
+  |> table.style_fn(fn(_row_context, _column) {
+    style.new() |> style.fg(style.Red)
+  })
+  |> table.render(spruce.with_color_level(spruce.TrueColor), _)
+  |> should.equal(
+    "┌──────┐\n"
+    <> "│ \u{001b}[31mlong\u{001b}[39m │\n"
+    <> "│    \u{001b}[31mx\u{001b}[39m │\n"
+    <> "└──────┘",
+  )
+}
+
 pub fn table_rounded_border_style_test() {
   table.new()
   |> table.headers(["A", "B"])
