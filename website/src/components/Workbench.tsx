@@ -240,8 +240,8 @@ export function Workbench({
         <div className="section-head">
           <h2>Shape the output, then take the code.</h2>
           <p className="lead">
-            Choose one focused spruce capability. Every control updates real
-            Gleam-rendered ANSI output and the public source beside it.
+            Pick a spruce capability. Every control updates the Gleam-rendered
+            ANSI output and the source beside it.
           </p>
         </div>
         <div className="workbench">

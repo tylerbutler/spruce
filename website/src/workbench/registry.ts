@@ -130,7 +130,7 @@ export const workbenchPresets = [
   {
     id: "message",
     label: "Semantic messages",
-    summary: "Render one semantic line with the bounded message constructors.",
+    summary: "Render one semantic status line.",
     docsHref: `${WORKBENCH_DOCS_ROOT}spruce/message.html`,
     supportedControls: ["capability", "message", "text"],
     controlMetadata: {
@@ -144,7 +144,7 @@ export const workbenchPresets = [
   {
     id: "style",
     label: "Styled text",
-    summary: "Compose bounded foreground, background, and text attributes.",
+    summary: "Compose foreground, background, and text attributes.",
     docsHref: `${WORKBENCH_DOCS_ROOT}spruce/style.html`,
     supportedControls: [
       "capability",
@@ -178,7 +178,7 @@ export const workbenchPresets = [
   {
     id: "box",
     label: "Boxed blocks",
-    summary: "Tune the bounded box builder without exposing the full API.",
+    summary: "Tune padding, borders, alignment, and the title of a box.",
     docsHref: `${WORKBENCH_DOCS_ROOT}spruce/box.html`,
     supportedControls: [
       "capability",

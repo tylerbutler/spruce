@@ -1,9 +1,9 @@
 //// Semantic one-line status messages: success, fail, start, ready, info,
 //// warn, and error.
 ////
-//// Each function returns one line — a colored icon, a bold label, and the
-//// text — indented to the context's depth and plain when the context does not
-//// support color. They are sugar for the common cases; for timestamps,
+//// Each function returns one line: a colored icon, a bold label, and the
+//// text. Lines are indented to the context's depth, and plain when the
+//// context does not support color. They are sugar for the common cases; for timestamps,
 //// scopes, key-value details, RFC 5424 severities, or badge/simple prefixes,
 //// compose a `spruce/line` instead. Print with `gleam/io` (or collect lines
 //// with `spruce/output`).
