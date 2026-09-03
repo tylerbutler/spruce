@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Added"
-body = "spruce.indent_prefix, which returns the context's indentation; output.title, which renders a styled group heading; and output.stream_group, which prints a group heading and runs its body immediately."
