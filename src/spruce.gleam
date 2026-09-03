@@ -1,9 +1,9 @@
-//// spruce — a terminal-UI kit for Gleam.
+//// spruce, a terminal-UI kit for Gleam.
 ////
-//// spruce renders styled terminal output — colors, boxes, semantic message
-//// lines, icons, deterministic hash-colors, ANSI-aware alignment, and
-//// grouped/indented output — that automatically respects the terminal's color
-//// support. It is logging-agnostic and targets both Erlang and JavaScript.
+//// spruce renders styled terminal output that automatically respects the
+//// terminal's color support: colors, boxes, semantic message lines, icons,
+//// deterministic hash-colors, ANSI-aware alignment, and grouped/indented
+//// output. It is logging-agnostic and targets both Erlang and JavaScript.
 ////
 //// ## The `Spruce` context
 ////
