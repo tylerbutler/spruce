@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "tree.enumerator is replaced by tree.branches and BranchChars, which customize branch, last-branch, pipe, and blank tokens without losing ancestor guides."

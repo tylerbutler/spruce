@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "spruce.indent_prefix(context) returns the indentation for the context's depth (two spaces per level), and every block renderer uses it. group.indent is removed; prefix lines with spruce.indent_prefix or string.repeat instead."

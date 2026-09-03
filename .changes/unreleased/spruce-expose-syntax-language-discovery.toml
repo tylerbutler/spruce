@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Added"
-body = "Expose syntax language discovery and canonical names."

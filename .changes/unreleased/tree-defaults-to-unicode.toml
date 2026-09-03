@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "spruce/tree branch glyphs no longer depend on color support. Default branches follow the context symbol mode (spruce.Unicode unless the context sets spruce.Ascii), and explicit tree.unicode, tree.ascii, or custom branches still override the context."

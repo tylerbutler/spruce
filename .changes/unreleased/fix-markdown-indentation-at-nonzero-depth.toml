@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Markdown blocks (paragraphs, headings, lists, blockquotes, alerts, code blocks, tables, rules, HTML blocks) now receive the context indentation exactly once when rendered at nonzero depth. Previously, content inside containers was double-indented."
