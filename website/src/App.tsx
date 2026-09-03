@@ -53,7 +53,7 @@ const moduleGroups: Array<{
 }> = [
   {
     title: "Render context",
-    summary: "Detect once, then thread pure render state everywhere.",
+    summary: "Detect once, then thread pure render state through your code.",
     modules: [
       ["spruce", "Color level, background, and indent depth."],
       ["spruce/output", "Pipeable, buffered composition and grouping."],
@@ -87,7 +87,7 @@ const moduleGroups: Array<{
   },
   {
     title: "Status and diagnostics",
-    summary: "Give developer-facing lines consistent meaning and detail.",
+    summary: "Status lines with severity, scope, and key/value detail.",
     modules: [
       ["spruce/severity", "RFC 5424 severity labels, badges, and formatters."],
       ["spruce/message", "Semantic one-liners: success, fail, start, and more."],
@@ -194,7 +194,7 @@ function Hero({
             />
           </Tabs>
           <p className="hero-proof">
-            Same Gleam code. The nearest supported color, automatically.
+            The same Gleam code picks the nearest supported color automatically.
           </p>
         </div>
       </div>
@@ -207,10 +207,10 @@ function Runtimes() {
     <section className="runtimes" aria-labelledby="runtimes-title">
       <div className="wrap runtime-proof">
         <div className="runtime-proof-copy">
-          <h2 id="runtimes-title">Same render. Both runtimes.</h2>
+          <h2 id="runtimes-title">The same render on both runtimes.</h2>
           <p>
-            No native extensions. The same pure Gleam path produces the same
-            output on Erlang and JavaScript.
+            The same pure Gleam path produces the same output on Erlang and
+            JavaScript, with no native extensions.
           </p>
           <a className="runtime-ci" href={CI}>
             See the test matrix <ArrowIcon />
@@ -241,7 +241,7 @@ function WorkbenchInvite() {
         <Reveal className="workbench-invite-panel">
           <div className="workbench-invite-copy">
             <h2 id="workbench-invite-title">
-              Shape real output before you write the code.
+              See the output before you write the code.
             </h2>
             <p>
               Adjust messages, styles, boxes, and tables in the browser. The
@@ -276,8 +276,8 @@ function WorkbenchFallback() {
         <div className="section-head">
           <h2>Shape the output, then take the code.</h2>
           <p className="lead">
-            Choose one focused spruce capability. Every control updates real
-            Gleam-rendered ANSI output and the public source beside it.
+            Pick a spruce capability. Every control updates the Gleam-rendered
+            ANSI output and the source beside it.
           </p>
         </div>
         <div className="workbench">
@@ -304,8 +304,7 @@ function WorkbenchFallback() {
                 <div>
                   <h3>Semantic messages</h3>
                   <p>
-                    Render one semantic line with the bounded message
-                    constructors.
+                    Render one semantic status line.
                   </p>
                 </div>
               </div>
@@ -377,7 +376,7 @@ function Modules() {
     <section className="section" id="modules" style={{ paddingTop: 0 }}>
       <div className="wrap">
         <Reveal className="section-head">
-          <h2>Focused modules for every terminal job.</h2>
+          <h2>One module per terminal job.</h2>
           <p className="lead">
             Start with <code>message</code> for status lines, <code>box</code>{" "}
             for framed blocks, or <code>output</code> to compose a complete
