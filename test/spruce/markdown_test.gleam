@@ -2,7 +2,9 @@ import gleam/list
 import gleam/string
 import gleeunit/should
 import spruce
+import spruce/highlight
 import spruce/markdown
+import spruce/style
 import spruce/symbol
 
 pub fn heading_no_color_test() {
@@ -295,6 +297,73 @@ pub fn render_with_options_wraps_and_themes_test() {
     markdown.render_with(spruce.no_color(), "alpha beta gamma", options)
 
   should.equal(rendered, "alpha\nbeta\ngamma")
+}
+
+pub fn theme_fields_can_be_overridden_test() {
+  let theme =
+    markdown.Theme(
+      ..markdown.dark_theme(),
+      h1: style.new() |> style.fg(style.Red),
+    )
+  let rendered =
+    markdown.render_with(
+      spruce.with_color_level(spruce.Basic),
+      "# Hello",
+      markdown.default_options() |> markdown.with_theme(theme),
+    )
+
+  should.equal(rendered, "\u{001b}[31m# Hello\u{001b}[39m")
+}
+
+pub fn custom_theme_can_be_constructed_test() {
+  let plain = style.new()
+  let theme =
+    markdown.Theme(
+      h1: plain,
+      h2: plain,
+      h3: plain,
+      h4: plain,
+      h5: plain,
+      h6: plain,
+      emphasis: plain,
+      strong: plain,
+      strikethrough: plain,
+      highlight: plain,
+      code_span: plain,
+      link: plain,
+      link_target: plain,
+      html: plain,
+      code: highlight.Theme(
+        keyword: plain,
+        string: plain,
+        number: plain,
+        comment: plain,
+        function: plain,
+        operator: plain,
+        punctuation: plain,
+        type_: plain,
+        module_: plain,
+        variable: plain,
+        constant: plain,
+        builtin: plain,
+        tag: plain,
+        attribute: plain,
+        selector: plain,
+        property: plain,
+        regex: plain,
+      ),
+      code_border: style.Black,
+      quote_border: style.Black,
+      rule: plain,
+      table_header: plain,
+    )
+
+  markdown.render_with(
+    spruce.with_color_level(spruce.TrueColor),
+    "# Hello",
+    markdown.default_options() |> markdown.with_theme(theme),
+  )
+  |> should.equal("# Hello")
 }
 
 pub fn heading_theme_adapts_to_background_test() {

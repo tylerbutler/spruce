@@ -3,6 +3,7 @@ import gleam/string
 import gleeunit/should
 import spruce
 import spruce/highlight
+import spruce/style
 
 pub fn no_color_round_trips_gleam_test() {
   let code = "pub fn main() {}"
@@ -97,6 +98,55 @@ pub fn named_custom_theme_path_works_test() {
     theme: highlight.dark_theme(),
   )
   |> should.equal(code)
+}
+
+pub fn theme_fields_can_be_overridden_test() {
+  let theme =
+    highlight.Theme(
+      ..highlight.dark_theme(),
+      keyword: style.new() |> style.fg(style.Red),
+    )
+  let rendered =
+    highlight.highlight_named_with(
+      spruce.with_color_level(spruce.Basic),
+      code: "pub",
+      name: "gleam",
+      theme:,
+    )
+
+  should.equal(rendered, "\u{001b}[31mpub\u{001b}[39m")
+}
+
+pub fn custom_theme_can_be_constructed_test() {
+  let plain = style.new()
+  let theme =
+    highlight.Theme(
+      keyword: plain,
+      string: plain,
+      number: plain,
+      comment: plain,
+      function: plain,
+      operator: plain,
+      punctuation: plain,
+      type_: plain,
+      module_: plain,
+      variable: plain,
+      constant: plain,
+      builtin: plain,
+      tag: plain,
+      attribute: plain,
+      selector: plain,
+      property: plain,
+      regex: plain,
+    )
+
+  highlight.highlight_named_with(
+    spruce.with_color_level(spruce.TrueColor),
+    code: "pub fn main() {}",
+    name: "gleam",
+    theme:,
+  )
+  |> should.equal("pub fn main() {}")
 }
 
 fn result_is_ok(result: Result(a, b)) -> Bool {

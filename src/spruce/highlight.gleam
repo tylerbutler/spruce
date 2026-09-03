@@ -48,7 +48,18 @@ import spruce.{type Spruce}
 import spruce/style
 
 /// A syntax highlighting theme for styled smalto token kinds.
-pub opaque type Theme {
+///
+/// Use a built-in theme as a base and replace selected fields:
+///
+/// ```gleam
+/// highlight.Theme(
+///   ..highlight.dark_theme(),
+///   keyword: style.new() |> style.bold |> style.fg(style.Hex(0xff6b6b)),
+/// )
+/// ```
+///
+/// The public constructor also supports defining every style from scratch.
+pub type Theme {
   Theme(
     keyword: style.Style,
     string: style.Style,
