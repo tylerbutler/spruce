@@ -1,11 +1,11 @@
 lockfile_version: '1'
-generated_at: '2026-08-25T02:36:46.996237+00:00'
-apm_version: 0.28.0
+generated_at: '2026-09-09T04:32:22.932679+00:00'
+apm_version: 0.29.1
 dependencies:
 - repo_url: tylerbutler/agent-marketplace
   name: gleam
   host: github.com
-  resolved_commit: 97c5a4c9ad88a76c2d50e591b0003e2d1b9930ca
+  resolved_commit: 0cab3a67d0d7568186a40cd2d2417c5816685d88
   version: 0.1.0
   virtual_path: plugins/gleam
   is_virtual: true
@@ -36,32 +36,50 @@ dependencies:
     .claude/skills/gleam-reference-docs/evals/evals.json: sha256:9da907b7e7c07b3529d20d3ee2cf80b6d7f4bc8794ad151b550896268f1f29db
     .claude/skills/gleam-review/SKILL.md: sha256:285a54a75346349ff12f6579c184847a6b35bbcecd2842b5065117a5d91ff071
     .claude/skills/gleam-review/references/conventions.md: sha256:cd0b6dee401eff48c7afcb83db73ee5971e2563989f266dfd58bd93b997fe6ed
-  content_hash: sha256:a05a8fc860c44cb33ab8f4a4a29556aa79ce92f3ae0dede093e0ab2de4c1e5a5
+  content_hash: sha256:95258fcb546aa40b45bd2adc412c4c408864c3e8678ec9bf84db02f0b6e2b5d9
 - repo_url: tylerbutler/apm-base
   name: apm-base
   host: github.com
-  resolved_commit: a810769689c28268488834cfacb0f704ecbc1f9d
+  resolved_commit: 743b113df676ccfc19ce346a39d991902fb17754
   version: 0.2.2
   package_type: apm_package
   deployed_files:
+  - .agents/skills/humanizer
+  - .agents/skills/humanizer/LICENSE
+  - .agents/skills/humanizer/SKILL.md
   - .agents/skills/prose-banlist
   - .agents/skills/prose-banlist/SKILL.md
+  - .claude/commands/create-pr.md
+  - .claude/commands/merge-upstream.md
   - .claude/rules/use-ste.md
+  - .claude/skills/humanizer
+  - .claude/skills/humanizer/LICENSE
+  - .claude/skills/humanizer/SKILL.md
   - .claude/skills/prose-banlist
   - .claude/skills/prose-banlist/SKILL.md
   - .github/instructions/use-ste.instructions.md
+  - .github/prompts/create-pr.prompt.md
+  - .github/prompts/merge-upstream.prompt.md
   deployed_file_hashes:
+    .agents/skills/humanizer/LICENSE: sha256:4ac4810254ab36d45419141aeb8e69bf50652cfafe5b2dab947d06d44e5cbf96
+    .agents/skills/humanizer/SKILL.md: sha256:14fc8a965b6e0a8dc100ba4dffeab55cb94bbac112abbde7e014d5c15a35c202
     .agents/skills/prose-banlist/SKILL.md: sha256:48330781d0d69dc91cf4ef295fadc04d6d14f5a195d82b293d31677829e6f2b0
+    .claude/commands/create-pr.md: sha256:f60319bef36ed8d7159543f774f196f2ab90df55d3538c1723da6b81295d02ff
+    .claude/commands/merge-upstream.md: sha256:f8c97a3085cc2b603cd34428aa28d17c55b5411ba526871ae599cede372d3f89
     .claude/rules/use-ste.md: sha256:6bfec65cbeaf6e78cf7885d6119fb868ad789db4a34a7dd28c2e71abfe69f803
+    .claude/skills/humanizer/LICENSE: sha256:4ac4810254ab36d45419141aeb8e69bf50652cfafe5b2dab947d06d44e5cbf96
+    .claude/skills/humanizer/SKILL.md: sha256:14fc8a965b6e0a8dc100ba4dffeab55cb94bbac112abbde7e014d5c15a35c202
     .claude/skills/prose-banlist/SKILL.md: sha256:48330781d0d69dc91cf4ef295fadc04d6d14f5a195d82b293d31677829e6f2b0
     .github/instructions/use-ste.instructions.md: sha256:c4512aac8ae85c13578effb80b704cc72a14a6a13a3c5f3db036ca2e899513de
-  content_hash: sha256:b10858094b9c569b54852cc3f84556cf28bc1662d9cf6d8316753e2018cf1791
+    .github/prompts/create-pr.prompt.md: sha256:5fcb1b64247130aec3a0ebd114ae6d127de44f7e824087033c468d8debb593a2
+    .github/prompts/merge-upstream.prompt.md: sha256:bf990755d11f1e73610d9cde3b656aa175c7f63cdd8d069158302c6496a5b77e
+  content_hash: sha256:a2dedce4ff236e1fd7eedab6877f0faf5264cdc33021615e719452770bba68c3
 - repo_url: dietrichgebert/ponytail
   materialization_repo_url: DietrichGebert/ponytail
   name: ponytail
   host: github.com
-  resolved_commit: 2ed6c52c9d7e5e56942508591085fd45dea277d3
-  version: 2ed6c52
+  resolved_commit: 356918eba965ee1eac64bd3a7f0dd02108350de5
+  version: 356918e
   depth: 2
   resolved_by: tylerbutler/apm-base
   package_type: marketplace_plugin
@@ -139,7 +157,7 @@ dependencies:
     .github/hooks/scripts/ponytail/hooks/ponytail-statusline.ps1: sha256:6138f15bc7651ee7e5ced2a2a2280f5c810d58cad3e9f3252c628f4c923e48c9
     .github/hooks/scripts/ponytail/hooks/ponytail-statusline.sh: sha256:f1dbfa5997a5d4b5339619709053eff557ab16d71af75eb3041c3d3e3dca42ec
     .github/hooks/scripts/ponytail/hooks/ponytail-subagent.js: sha256:7f6bee86702a488d29ef0dcaabf424bbe2aca345a6a642319d43a1fe0276792e
-  content_hash: sha256:17a5d405c7a1b9ef17969bc14deacaa78ae420fb453c0f2b1f7170d530e55b26
+  content_hash: sha256:d9a6e37da46ac25d0346d41edd352f3e356d2c8cac699ef63f9a25d2da571f3c
 - repo_url: hardikpandya/stop-slop
   name: stop-slop
   host: github.com
@@ -185,7 +203,7 @@ dependencies:
   materialization_repo_url: JuliusBrussee/caveman
   name: caveman-commit
   host: github.com
-  resolved_commit: 7bb71309e8749a4f112aacd3a54b3941d8689905
+  resolved_commit: 15581d14007fd01fb3f132016741962f34936ca2
   version: unknown
   virtual_path: skills/caveman-commit
   is_virtual: true
@@ -201,11 +219,29 @@ dependencies:
   - .claude/skills/caveman-commit/SKILL.md
   deployed_file_hashes:
     .agents/skills/caveman-commit/README.md: sha256:a2e82924b487fc1845114c247b47c2d3c2d1bd60f90bbfa60e9831319eb964fa
-    .agents/skills/caveman-commit/SKILL.md: sha256:58db7b8efab911a629c26e7132517d9076e4e3645009eb604cb8c25663477841
+    .agents/skills/caveman-commit/SKILL.md: sha256:c788a282fc75b981b421dfdad5d84ea7f83f946c126daa39cfc7d3f97845e193
     .claude/skills/caveman-commit/README.md: sha256:a2e82924b487fc1845114c247b47c2d3c2d1bd60f90bbfa60e9831319eb964fa
-    .claude/skills/caveman-commit/SKILL.md: sha256:58db7b8efab911a629c26e7132517d9076e4e3645009eb604cb8c25663477841
-  content_hash: sha256:790a4eeace0be35c6691faf923518ba5bd50f1f1305d1101d09dd4971be94e00
+    .claude/skills/caveman-commit/SKILL.md: sha256:c788a282fc75b981b421dfdad5d84ea7f83f946c126daa39cfc7d3f97845e193
+  content_hash: sha256:b416cf134b0f33ddadeca7977aebdbb2d3db79a166d0fce2e1aabeec98132766
 deployments:
+- kind: project-relative
+  target: claude
+  value: .claude/commands/create-pr.md
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: sha256:f60319bef36ed8d7159543f774f196f2ab90df55d3538c1723da6b81295d02ff
+- kind: project-relative
+  target: claude
+  value: .claude/commands/merge-upstream.md
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: sha256:f8c97a3085cc2b603cd34428aa28d17c55b5411ba526871ae599cede372d3f89
 - kind: project-relative
   target: claude
   value: .claude/hooks/ponytail/hooks/package.json
@@ -322,7 +358,7 @@ deployments:
   owners:
   - juliusbrussee/caveman/skills/caveman-commit
   active_owner: juliusbrussee/caveman/skills/caveman-commit
-  content_hash: sha256:58db7b8efab911a629c26e7132517d9076e4e3645009eb604cb8c25663477841
+  content_hash: sha256:c788a282fc75b981b421dfdad5d84ea7f83f946c126daa39cfc7d3f97845e193
 - kind: project-relative
   target: claude
   value: .claude/skills/gleam-reference-docs
@@ -386,6 +422,33 @@ deployments:
   - tylerbutler/agent-marketplace/plugins/gleam
   active_owner: tylerbutler/agent-marketplace/plugins/gleam
   content_hash: sha256:cd0b6dee401eff48c7afcb83db73ee5971e2563989f266dfd58bd93b997fe6ed
+- kind: project-relative
+  target: claude
+  value: .claude/skills/humanizer
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/humanizer/LICENSE
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: sha256:4ac4810254ab36d45419141aeb8e69bf50652cfafe5b2dab947d06d44e5cbf96
+- kind: project-relative
+  target: claude
+  value: .claude/skills/humanizer/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: sha256:14fc8a965b6e0a8dc100ba4dffeab55cb94bbac112abbde7e014d5c15a35c202
 - kind: project-relative
   target: claude
   value: .claude/skills/ponytail
@@ -610,7 +673,7 @@ deployments:
   owners:
   - juliusbrussee/caveman/skills/caveman-commit
   active_owner: juliusbrussee/caveman/skills/caveman-commit
-  content_hash: sha256:58db7b8efab911a629c26e7132517d9076e4e3645009eb604cb8c25663477841
+  content_hash: sha256:c788a282fc75b981b421dfdad5d84ea7f83f946c126daa39cfc7d3f97845e193
 - kind: project-relative
   target: copilot
   value: .agents/skills/gleam-reference-docs
@@ -674,6 +737,33 @@ deployments:
   - tylerbutler/agent-marketplace/plugins/gleam
   active_owner: tylerbutler/agent-marketplace/plugins/gleam
   content_hash: sha256:cd0b6dee401eff48c7afcb83db73ee5971e2563989f266dfd58bd93b997fe6ed
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/humanizer
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/humanizer/LICENSE
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: sha256:4ac4810254ab36d45419141aeb8e69bf50652cfafe5b2dab947d06d44e5cbf96
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/humanizer/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: sha256:14fc8a965b6e0a8dc100ba4dffeab55cb94bbac112abbde7e014d5c15a35c202
 - kind: project-relative
   target: copilot
   value: .agents/skills/ponytail
@@ -962,3 +1052,21 @@ deployments:
   - tylerbutler/apm-base
   active_owner: tylerbutler/apm-base
   content_hash: sha256:c4512aac8ae85c13578effb80b704cc72a14a6a13a3c5f3db036ca2e899513de
+- kind: project-relative
+  target: copilot
+  value: .github/prompts/create-pr.prompt.md
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: sha256:5fcb1b64247130aec3a0ebd114ae6d127de44f7e824087033c468d8debb593a2
+- kind: project-relative
+  target: copilot
+  value: .github/prompts/merge-upstream.prompt.md
+  runtime: null
+  scope: project
+  owners:
+  - tylerbutler/apm-base
+  active_owner: tylerbutler/apm-base
+  content_hash: sha256:bf990755d11f1e73610d9cde3b656aa175c7f63cdd8d069158302c6496a5b77e
