@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "spruce/layout is merged into spruce/align. Pos (Start, Center, and End), join_vertical, join_horizontal, and place are unchanged apart from the module name."

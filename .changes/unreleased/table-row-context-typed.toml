@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Changed"
-body = "table.style_fn now receives a RowContext (Header | Body(index: Int)) instead of the -1 sentinel integer for header rows. Update callers to pattern-match on table.Header and table.Body(_)."
