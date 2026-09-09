@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Added"
-body = "The public `highlight.Theme` and `markdown.Theme` constructors now support custom themes and field updates based on the built-in dark, light, and adaptive themes."

@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "Rename spruce/items to spruce/item to follow Gleam's singular module naming convention. Import spruce/item instead; the Items type and functions are unchanged."

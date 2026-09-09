@@ -19,7 +19,7 @@ packages = [
   { name = "simplifile", version = "2.7.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "A2727627B063E87351934C7F7F008F2D1FDB16F6DE0B8C79F9E46459CFC9C164" },
   { name = "smalto", version = "3.0.0", build_tools = ["gleam"], requirements = ["gleam_community_ansi", "gleam_stdlib", "houdini"], otp_app = "smalto", source = "hex", outer_checksum = "13EA8935A9E60A770E326FB850F5A5B3612A62E0A6C62C3F850AD04C842E3769" },
   { name = "splitter", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "splitter", source = "hex", outer_checksum = "3DFD6B6C49E61EDAF6F7B27A42054A17CFF6CA2135FF553D0CB61C234D281DD0" },
-  { name = "spruce", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_community_ansi", "gleam_stdlib", "mork", "smalto", "tty"], source = "local", path = "../.." },
+  { name = "spruce", version = "2.0.0", build_tools = ["gleam"], requirements = ["gleam_community_ansi", "gleam_stdlib", "mork", "smalto", "tty"], source = "local", path = "../.." },
   { name = "tom", version = "2.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gleam_time"], otp_app = "tom", source = "hex", outer_checksum = "DCF04CB7AB35D58CFC598C66EA2E1816D160759802C89B2BA6238780D59BC256" },
   { name = "tty", version = "1.1.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "tty", source = "hex", outer_checksum = "07E644384E648C511232E0D87DEFCDE200E0D48D2787EB02E4FBE2D43D3E137B" },
 ]
