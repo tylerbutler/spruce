@@ -88,8 +88,9 @@ pub fn style_fn(
 
 /// Constrain the overall table to a maximum visual width.
 ///
-/// The available cell content width is distributed evenly across columns. Cells
-/// that exceed their column width are wrapped with `spruce/align.wrap`.
+/// The available width after visible borders and cell padding is distributed
+/// evenly across columns. Cells that exceed their column width are wrapped with
+/// `spruce/align.wrap`.
 pub fn width(table: Table, width: Int) -> Table {
   Table(..table, width: Some(non_negative(width)), column_widths: None)
 }
@@ -129,6 +130,10 @@ pub fn render(context: Spruce, table: Table) -> String {
   case column_count {
     0 -> ""
     _ -> {
+      let hidden = case table.border {
+        border.Hidden -> True
+        _ -> False
+      }
       let widths =
         resolved_column_widths(
           column_count,
@@ -136,12 +141,9 @@ pub fn render(context: Spruce, table: Table) -> String {
           table.rows,
           table.width,
           table.column_widths,
+          hidden,
         )
       let chars = grid_chars(table.border)
-      let hidden = case table.border {
-        border.Hidden -> True
-        _ -> False
-      }
       let body =
         render_body_rows(
           context,
@@ -231,6 +233,7 @@ fn resolved_column_widths(
   rows: List(List(String)),
   table_width: Option(Int),
   max_widths: Option(List(Int)),
+  hidden: Bool,
 ) -> List(Int) {
   let natural = natural_column_widths(column_count, headers, rows)
 
@@ -239,7 +242,7 @@ fn resolved_column_widths(
     None ->
       case table_width {
         Some(width) ->
-          cap_widths(natural, distributed_widths(column_count, width))
+          cap_widths(natural, distributed_widths(column_count, width, hidden))
         None -> natural
       }
   }
@@ -262,8 +265,17 @@ fn cap_widths(natural: List(Int), caps: List(Int)) -> List(Int) {
   }
 }
 
-fn distributed_widths(column_count: Int, table_width: Int) -> List(Int) {
-  let total_cell_width = int.max(1, table_width - { column_count * 3 + 1 })
+fn distributed_widths(
+  column_count: Int,
+  table_width: Int,
+  hidden: Bool,
+) -> List(Int) {
+  let border_width = case hidden {
+    True -> 0
+    False -> column_count + 1
+  }
+  let total_cell_width =
+    int.max(1, table_width - { column_count * 2 + border_width })
   let base = int.max(1, total_cell_width / column_count)
   let extra = total_cell_width - { base * column_count }
 

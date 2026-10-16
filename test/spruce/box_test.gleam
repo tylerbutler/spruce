@@ -180,6 +180,35 @@ pub fn plain_box_no_color_is_bare_content_test() {
   |> should.equal("hi")
 }
 
+pub fn plain_box_hidden_title_does_not_widen_content_test() {
+  box.render(spruce.no_color(), "x", box.plain() |> box.title("Long title"))
+  |> should.equal("x")
+}
+
+pub fn hidden_box_title_preserves_explicit_spacing_test() {
+  let options =
+    box.new()
+    |> box.border(border.Hidden)
+    |> box.title("Long title")
+    |> box.width(3)
+    |> box.padding(top: 0, right: 1, bottom: 0, left: 1)
+    |> box.margin(top: 0, right: 1, bottom: 0, left: 1)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("  x    ")
+}
+
+pub fn box_hidden_top_title_does_not_widen_other_sides_test() {
+  let options =
+    box.plain()
+    |> box.border(border.Rounded)
+    |> box.title("Long title")
+    |> box.border_sides(top: False, right: True, bottom: True, left: True)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("│x│\n╰─╯")
+}
+
 pub fn plain_box_padding_adds_inner_space_test() {
   let options = box.plain() |> box.padding(top: 1, right: 2, bottom: 1, left: 2)
 
