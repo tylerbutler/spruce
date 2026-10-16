@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "Syntax highlighting now returns source text immediately when color is disabled, without resolving a grammar or tokenizing the input."
