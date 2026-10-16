@@ -24,13 +24,8 @@ type Enumerator {
   Custom(fn(Int, Int) -> String)
 }
 
-type Entries {
-  Empty
-  Cons(Entry, Entries)
-}
-
 type Entry {
-  Entry(label: String, children: Entries)
+  Entry(label: String, children: List(Entry))
 }
 
 /// The marker style used by the default enumerator.
@@ -41,31 +36,25 @@ pub type Kind {
 
 /// A list of labelled items.
 pub opaque type Items {
-  Items(entries: Entries, kind: Kind, enumerator: Enumerator)
+  Items(entries: List(Entry), kind: Kind, enumerator: Enumerator)
 }
 
 /// Build an empty bullet list.
 pub fn new() -> Items {
-  Items(entries: Empty, kind: Bullet, enumerator: Auto)
+  Items(entries: [], kind: Bullet, enumerator: Auto)
 }
 
 /// Add a top-level item, preserving insertion order.
 pub fn item(items: Items, label: String) -> Items {
-  Items(
-    ..items,
-    entries: append_entry(items.entries, Entry(label: label, children: Empty)),
-  )
+  Items(..items, entries: [Entry(label: label, children: []), ..items.entries])
 }
 
 /// Add a top-level item with one level of child labels.
 pub fn child(items: Items, label: String, children: List(String)) -> Items {
-  Items(
-    ..items,
-    entries: append_entry(
-      items.entries,
-      Entry(label: label, children: labels_to_entries(children)),
-    ),
-  )
+  Items(..items, entries: [
+    Entry(label: label, children: labels_to_entries(children)),
+    ..items.entries
+  ])
 }
 
 /// Add a top-level item whose children come from another list.
@@ -73,13 +62,10 @@ pub fn child(items: Items, label: String, children: List(String)) -> Items {
 /// The nested list's item tree is preserved, while the parent list's kind and
 /// enumerator control rendering at every depth.
 pub fn nested(items: Items, label: String, children: Items) -> Items {
-  Items(
-    ..items,
-    entries: append_entry(
-      items.entries,
-      Entry(label: label, children: children.entries),
-    ),
-  )
+  Items(..items, entries: [
+    Entry(label: label, children: children.entries),
+    ..items.entries
+  ])
 }
 
 /// Set the default marker style for the list.
@@ -100,21 +86,32 @@ pub fn enumerator(items: Items, enumerate: fn(Int, Int) -> String) -> Items {
 pub fn render(context: Spruce, items: Items) -> String {
   let base = spruce.indent_prefix(context)
 
-  render_entries(
-    context,
-    items.entries,
-    items.kind,
-    items.enumerator,
-    base,
-    1,
-    1,
-  )
+  render_entries(context, items.entries, items.kind, items.enumerator, base, 1)
   |> string.join("\n")
 }
 
 fn render_entries(
   context: Spruce,
-  entries: Entries,
+  entries: List(Entry),
+  kind: Kind,
+  enumerator: Enumerator,
+  base: String,
+  depth: Int,
+) -> List(String) {
+  render_ordered_entries(
+    context,
+    list.reverse(entries),
+    kind,
+    enumerator,
+    base,
+    depth,
+    1,
+  )
+}
+
+fn render_ordered_entries(
+  context: Spruce,
+  entries: List(Entry),
   kind: Kind,
   enumerator: Enumerator,
   base: String,
@@ -122,10 +119,10 @@ fn render_entries(
   index: Int,
 ) -> List(String) {
   case entries {
-    Empty -> []
-    Cons(first, rest) ->
+    [] -> []
+    [first, ..rest] ->
       render_entry(context, first, kind, enumerator, base, depth, index)
-      |> list.append(render_entries(
+      |> list.append(render_ordered_entries(
         context,
         rest,
         kind,
@@ -160,7 +157,6 @@ fn render_entry(
     enumerator,
     base,
     depth + 1,
-    1,
   ))
 }
 
@@ -174,19 +170,10 @@ fn render_label(prefix: String, follow: String, label: String) -> List(String) {
   }
 }
 
-fn append_entry(entries: Entries, entry: Entry) -> Entries {
-  case entries {
-    Empty -> Cons(entry, Empty)
-    Cons(first, rest) -> Cons(first, append_entry(rest, entry))
-  }
-}
-
-fn labels_to_entries(labels: List(String)) -> Entries {
-  case labels {
-    [] -> Empty
-    [first, ..rest] ->
-      Cons(Entry(label: first, children: Empty), labels_to_entries(rest))
-  }
+fn labels_to_entries(labels: List(String)) -> List(Entry) {
+  list.fold(labels, [], fn(entries, label) {
+    [Entry(label: label, children: []), ..entries]
+  })
 }
 
 fn marker(

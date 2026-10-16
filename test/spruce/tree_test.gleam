@@ -1,5 +1,7 @@
 import gleam/bool
 import gleam/int
+import gleam/list
+import gleam/string
 import gleeunit/should
 import spruce
 import spruce/tree
@@ -134,4 +136,24 @@ pub fn render_unicode_override_ignores_ascii_context_test() {
   |> tree.unicode()
   |> tree.render(spruce.no_color() |> spruce.with_symbol_mode(spruce.Ascii), _)
   |> should.equal("app\n└─ src")
+}
+
+pub fn render_many_siblings_preserves_order_and_count_test() {
+  let lines =
+    add_children(tree.root("root"), 1, 2048)
+    |> tree.render(spruce.no_color(), _)
+    |> string.split("\n")
+
+  list.length(lines) |> should.equal(2049)
+  lines |> list.drop(1) |> list.first |> should.equal(Ok("├─ 1"))
+  list.last(lines) |> should.equal(Ok("└─ 2048"))
+}
+
+fn add_children(parent: tree.Tree, index: Int, last: Int) -> tree.Tree {
+  use <- bool.guard(when: index > last, return: parent)
+  add_children(
+    tree.child(parent, child: tree.root(int.to_string(index))),
+    index + 1,
+    last,
+  )
 }
