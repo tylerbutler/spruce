@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Changed"
-body = "Website terminal examples use matching spruce output from Erlang and JavaScript, including plain, basic, 256-color, and truecolor variants."

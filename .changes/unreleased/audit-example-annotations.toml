@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Changed"
-body = "The website Gleam example now shows an explicit Nil return annotation on main."

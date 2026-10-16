@@ -1,3 +1,0 @@
-package = 'spruce'
-kind = 'Fixed'
-body = 'Preserve whitespace, ANSI styles, and hyperlinks across wrapping and truncation, including existing line breaks; improve terminal escape parsing and emoji widths.'

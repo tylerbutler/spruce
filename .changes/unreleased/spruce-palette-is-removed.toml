@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "Remove spruce/palette. Replace palette.hash(context, text) with style.hashed(text) from spruce/style; the new function no longer takes a Spruce context. The new style.Hashed(key) Color constructor resolves hash colors at render time, so callers can reuse the same style or color across color levels without reconstruction."
