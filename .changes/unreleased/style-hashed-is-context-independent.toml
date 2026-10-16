@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "Add the public style.Hashed(key) Color constructor to resolve hash colors at render time. Callers can reuse the same style or color across color levels without reconstruction."
