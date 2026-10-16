@@ -143,6 +143,60 @@ pub fn table_width_distributes_column_caps_test() {
   )
 }
 
+pub fn hidden_table_width_uses_borderless_overhead_test() {
+  table.new()
+  |> table.rows([["abcdef", "uvwxyz"]])
+  |> table.border(border.Hidden)
+  |> table.width(16)
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(" abcdef  uvwxyz ")
+}
+
+pub fn hidden_table_width_handles_one_column_test() {
+  table.new()
+  |> table.rows([["abcdef"]])
+  |> table.border(border.Hidden)
+  |> table.width(8)
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(" abcdef ")
+}
+
+pub fn hidden_table_width_applies_to_headers_and_body_test() {
+  table.new()
+  |> table.headers(["abcdef", "uvwxyz"])
+  |> table.rows([["ghijkl", "mnopqr"]])
+  |> table.border(border.Hidden)
+  |> table.width(16)
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(" abcdef  uvwxyz \n ghijkl  mnopqr ")
+}
+
+pub fn hidden_table_width_matches_explicit_column_widths_test() {
+  let with_width =
+    table.new()
+    |> table.rows([["abcdef", "uvwxyz"]])
+    |> table.border(border.Hidden)
+    |> table.width(16)
+    |> table.render(spruce.no_color(), _)
+  let with_column_widths =
+    table.new()
+    |> table.rows([["abcdef", "uvwxyz"]])
+    |> table.border(border.Hidden)
+    |> table.column_widths([6, 6])
+    |> table.render(spruce.no_color(), _)
+
+  should.equal(with_width, with_column_widths)
+}
+
+pub fn hidden_table_width_clamps_narrow_values_test() {
+  table.new()
+  |> table.rows([["ab", "cd"]])
+  |> table.border(border.Hidden)
+  |> table.width(0)
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(" a  c \n b  d ")
+}
+
 pub fn table_column_alignments_apply_with_explicit_widths_test() {
   table.new()
   |> table.headers(["Left", "Center", "Right"])

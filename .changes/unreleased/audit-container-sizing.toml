@@ -1,0 +1,3 @@
+[[changes]]
+kind = "Fixed"
+body = "Hidden table borders now use all available width for cell padding and content, and box titles no longer widen content when the top border is not visible."

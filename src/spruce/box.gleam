@@ -112,7 +112,8 @@ pub fn plain() -> Box {
 }
 
 /// Set the title shown in the top border. Newlines are replaced by spaces.
-/// An empty title (the default) draws an unbroken top border.
+/// An empty title (the default) draws an unbroken top border. A hidden border
+/// or top side does not affect content width.
 pub fn title(box: Box, title: String) -> Box {
   Box(..box, title: title)
 }
@@ -274,7 +275,7 @@ fn content_region(
     [
       option.unwrap(box.width, 0),
       find_max_width(lines),
-      title_min_width(title) - box.padding_left - box.padding_right,
+      title_min_width(box, title) - box.padding_left - box.padding_right,
     ]
     |> list.fold(0, int.max)
   let region_height = option.unwrap(box.height, list.length(lines))
@@ -296,10 +297,10 @@ fn content_region(
   })
 }
 
-fn title_min_width(title: String) -> Int {
-  case title {
-    "" -> 0
-    _ -> align.visual_length(title) + 3
+fn title_min_width(box: Box, title: String) -> Int {
+  case box.border, box.border_top, title {
+    border.Hidden, _, _ | _, False, _ | _, _, "" -> 0
+    _, True, _ -> align.visual_length(title) + 3
   }
 }
 
