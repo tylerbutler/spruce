@@ -115,8 +115,9 @@ pub fn stream_group_with(
   body(spruce.indented(context))
 }
 
-/// Render a group title line (indent prefix + styled marker + title), the same
-/// line that `group` and `stream_group` emit.
+/// Render a group title block (styled marker + title), the same block that
+/// `group` and `stream_group` emit. Every non-empty line uses the context
+/// indentation.
 pub fn title(context: Spruce, heading: String) -> String {
   let marker = symbol.status(spruce.symbol_mode(context), symbol.Arrow)
   let line = case spruce.supports_color(context) {
@@ -127,7 +128,7 @@ pub fn title(context: Spruce, heading: String) -> String {
       <> style.render(context, style.new() |> style.bold, heading)
   }
 
-  spruce.indent_prefix(context) <> line
+  indent_rendered(line, spruce.indent_prefix(context))
 }
 
 /// Render the accumulated output to a single string, blocks joined by newlines.
@@ -148,4 +149,20 @@ pub fn print(output: Output) -> Nil {
 /// `io.println_error` to write to stderr.
 pub fn print_with(output: Output, sink: fn(String) -> result) -> result {
   sink(to_string(output))
+}
+
+fn indent_rendered(text: String, prefix: String) -> String {
+  case prefix {
+    "" -> text
+    _ ->
+      text
+      |> string.split("\n")
+      |> list.map(fn(line) {
+        case line {
+          "" -> ""
+          _ -> prefix <> line
+        }
+      })
+      |> string.join("\n")
+  }
 }

@@ -1,12 +1,12 @@
 //// Semantic one-line status messages: success, fail, start, ready, info,
 //// warn, and error.
 ////
-//// Each function returns one line: a colored icon, a bold label, and the
-//// text. Lines are indented to the context's depth, and plain when the
-//// context does not support color. They are sugar for the common cases; for timestamps,
-//// scopes, key-value details, RFC 5424 severities, or badge/simple prefixes,
-//// compose a `spruce/line` instead. Print with `gleam/io` (or collect lines
-//// with `spruce/output`).
+//// Each function returns a block with a colored icon, a bold label, and the
+//// text. Every non-empty line is indented to the context's depth, and output
+//// is plain when the context does not support color. They are sugar for the
+//// common cases; for timestamps, scopes, key-value details, RFC 5424
+//// severities, or badge/simple prefixes, compose a `spruce/line` instead.
+//// Print with `gleam/io` (or collect blocks with `spruce/output`).
 ////
 //// ```gleam
 //// import gleam/io
@@ -20,6 +20,8 @@
 //// }
 //// ```
 
+import gleam/list
+import gleam/string
 import spruce.{type Spruce}
 import spruce/style
 import spruce/symbol
@@ -78,5 +80,21 @@ fn render(
     }
   }
 
-  spruce.indent_prefix(context) <> prefix <> " " <> text
+  indent_rendered(prefix <> " " <> text, spruce.indent_prefix(context))
+}
+
+fn indent_rendered(text: String, prefix: String) -> String {
+  case prefix {
+    "" -> text
+    _ ->
+      text
+      |> string.split("\n")
+      |> list.map(fn(line) {
+        case line {
+          "" -> ""
+          _ -> prefix <> line
+        }
+      })
+      |> string.join("\n")
+  }
 }

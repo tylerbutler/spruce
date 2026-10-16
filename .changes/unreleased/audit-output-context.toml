@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "Multiline messages, compact lines, and output titles now apply the context indentation to every non-empty line without changing blank or trailing lines. Empty timestamps are treated as absent before styling."
