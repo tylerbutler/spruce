@@ -474,12 +474,76 @@ pub fn impossible_width_omits_frames_and_excess_indentation_test() {
   should.equal(table, "A\nB\n1\n2")
   should.be_false(string.contains(table, "┌"))
 
-  markdown.render_with(
-    spruce.no_color() |> spruce.indented(),
-    "text",
-    markdown.default_options() |> markdown.with_width(2),
+  let deeply_indented =
+    markdown.render_with(
+      spruce.no_color() |> spruce.indented() |> spruce.indented(),
+      "hello world",
+      markdown.default_options() |> markdown.with_width(3),
+    )
+  should.equal(
+    deeply_indented,
+    "  h\n  e\n  l\n  l\n  o\n  w\n  o\n  r\n  l\n  d",
   )
-  |> should.equal("")
+}
+
+pub fn narrow_width_preserves_wide_graphemes_test() {
+  let rendered =
+    markdown.render_with(
+      spruce.no_color(),
+      "🌲 hello",
+      markdown.default_options() |> markdown.with_width(1),
+    )
+
+  should.equal(rendered, "🌲\nh\ne\nl\nl\no")
+  should.be_true(align.visual_length("🌲") > 1)
+
+  let indented =
+    markdown.render_with(
+      spruce.no_color() |> spruce.indented() |> spruce.indented(),
+      "🌲 hello",
+      markdown.default_options() |> markdown.with_width(3),
+    )
+  should.equal(indented, " 🌲\n h\n e\n l\n l\n o")
+  assert_max_width(indented, 3)
+}
+
+pub fn tiny_table_uses_complete_frame_or_unframed_fallback_test() {
+  let input = "| a | b |\n| - | - |\n| x | y |"
+  let too_narrow =
+    markdown.render_with(
+      spruce.no_color(),
+      input,
+      markdown.default_options() |> markdown.with_width(7),
+    )
+  let minimum =
+    markdown.render_with(
+      spruce.no_color(),
+      input,
+      markdown.default_options() |> markdown.with_width(9),
+    )
+
+  should.equal(too_narrow, "a\nb\nx\ny")
+  should.equal(
+    minimum,
+    "┌───┬───┐\n"
+      <> "│ a │ b │\n"
+      <> "├───┼───┤\n"
+      <> "│ x │ y │\n"
+      <> "└───┴───┘",
+  )
+}
+
+pub fn narrow_nested_blocks_preserve_user_text_test() {
+  let rendered =
+    markdown.render_with(
+      spruce.no_color(),
+      "> - 🌲 hello",
+      markdown.default_options() |> markdown.with_width(3),
+    )
+
+  rendered
+  |> string.replace(each: "\n", with: "")
+  |> should.equal("🌲hello")
 }
 
 pub fn theme_fields_can_be_overridden_test() {

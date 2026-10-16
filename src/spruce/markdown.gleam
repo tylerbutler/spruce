@@ -195,8 +195,9 @@ pub fn with_theme(options: Options, theme: Theme) -> Options {
 
 /// Wrap rendered output to a maximum visual width, including context
 /// indentation and structural markers. Negative values clamp to 0, and 0 keeps
-/// the output unconstrained. Structural markers and frames are omitted when the
-/// width cannot fit them.
+/// the output unconstrained. Indentation, structural markers, and frames are
+/// reduced or omitted when the width cannot fit them. A single grapheme that is
+/// wider than the limit is preserved.
 pub fn with_width(options: Options, width: Int) -> Options {
   Options(..options, width: Some(int.max(0, width)))
 }
@@ -225,15 +226,13 @@ pub fn render_with(
   // that apply their own indentation do not double-indent nested content.
   // The context's indent prefix is applied once here at the boundary.
   let inner = spruce.flat(context)
-  let prefix = spruce.indent_prefix(context)
+  let requested_width = options.width
+  let #(options, prefix) =
+    width_after_prefix(options, spruce.indent_prefix(context))
+  let rendered = render_blocks(inner, blocks, parsed, options)
+  let prefix = fit_rendered_prefix(requested_width, prefix, rendered)
 
-  case width_after_prefix(options, prefix) {
-    Error(Nil) -> ""
-    Ok(options) ->
-      render_blocks(inner, blocks, parsed, options)
-      |> constrain_lines(options.width)
-      |> indent_rendered(prefix)
-  }
+  indent_rendered(rendered, prefix)
 }
 
 /// Render Markdown with the default options and print it to stdout.
@@ -306,13 +305,18 @@ fn render_heading(
   let prefix = marker <> " "
   let prefix_width = align.visual_length(prefix)
   let text = string.trim(text)
-  let line = case options.width {
+  let line_with_marker = case options.width {
     Some(width) if width > prefix_width ->
       text
       |> align.wrap(width - prefix_width)
       |> prefix_lines(prefix)
     Some(width) if width > 0 -> align.wrap(text, width)
     Some(_) | None -> prefix <> text
+  }
+  let marked_width = max_line_width(line_with_marker)
+  let line = case options.width {
+    Some(width) if width > 0 && marked_width > width -> align.wrap(text, width)
+    Some(_) | None -> line_with_marker
   }
 
   spruce.indent_prefix(context)
@@ -345,17 +349,28 @@ fn render_code(
       theme: options.theme.code,
     )
 
-  let code_box =
-    box.new()
-    |> box.title(code_title(title, options.width))
-    |> box.border_color(options.theme.code_border)
-    |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
-
   case options.width {
-    Some(width) if width > 2 ->
-      box.render(context, highlighted, box.width(code_box, width - 2))
+    Some(width) if width > 2 -> {
+      let inner_width = width - 2
+      let wrapped = align.wrap(highlighted, inner_width)
+      case max_line_width(wrapped) > inner_width {
+        True -> align.wrap(highlighted, width)
+        False ->
+          box.new()
+          |> box.title(code_title(title, options.width))
+          |> box.border_color(options.theme.code_border)
+          |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
+          |> box.width(inner_width)
+          |> box.render(context, wrapped, _)
+      }
+    }
     Some(width) if width > 0 -> align.wrap(highlighted, width)
-    Some(_) | None -> box.render(context, highlighted, code_box)
+    Some(_) | None ->
+      box.new()
+      |> box.title(title)
+      |> box.border_color(options.theme.code_border)
+      |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
+      |> box.render(context, highlighted, _)
   }
 }
 
@@ -388,6 +403,10 @@ fn render_plain_quote(
       style.new() |> style.italic,
       render_blocks(context, blocks, parsed, inner_options),
     )
+  use <- bool.guard(
+    when: !fits_within(content, options.width, 2),
+    return: render_blocks(context, blocks, parsed, options),
+  )
 
   let quote_box =
     box.plain()
@@ -529,6 +548,13 @@ fn render_admonition(
     "" -> header
     body_text -> header <> "\n\n" <> body_text
   }
+  use <- bool.guard(
+    when: !fits_within(content, options.width, 2),
+    return: case render_blocks(context, body, parsed, options) {
+      "" -> wrap(header, options.width)
+      body_text -> wrap(header, options.width) <> "\n\n" <> body_text
+    },
+  )
 
   let admonition_box =
     box.plain()
@@ -849,7 +875,7 @@ fn render_list(
     labels
     |> list.fold(item.new(), fn(list_, label) { item.item(list_, label) })
 
-  case start {
+  let rendered = case start {
     None -> item.render(context, list_)
     Some(start) -> {
       let list_ =
@@ -861,6 +887,12 @@ fn render_list(
 
       item.render(context, list_)
     }
+  }
+  case fits_within(rendered, options.width, 0) {
+    True -> rendered
+    False ->
+      render_list_labels(entries, pack, context, parsed, options)
+      |> string.join("\n")
   }
 }
 
@@ -919,10 +951,14 @@ fn render_table(
       }
     })
 
-  case options.width {
+  let rendered = case options.width {
     Some(width) if width > 0 ->
       table.render(context, table.width(table_, width))
     Some(_) | None -> table.render(context, table_)
+  }
+  case fits_within(rendered, options.width, 0) {
+    True -> rendered
+    False -> render_table_without_frame(context, headers, rows, parsed, options)
   }
 }
 
@@ -1209,7 +1245,7 @@ fn table_minimum_width(
     |> list.map(list.length)
     |> list.fold(list.length(headers), int.max)
 
-  column_count * 3 + 1
+  column_count * 4 + 1
 }
 
 fn render_table_without_frame(
@@ -1238,31 +1274,46 @@ fn subtract_width(options: Options, amount: Int) -> Options {
   }
 }
 
-fn width_after_prefix(
-  options: Options,
-  prefix: String,
-) -> Result(Options, Nil) {
+fn width_after_prefix(options: Options, prefix: String) -> #(Options, String) {
   case options.width {
     Some(width) if width > 0 -> {
+      let prefix =
+        align.truncate(prefix, width: int.max(0, width - 1), ellipsis: "")
       let available = width - align.visual_length(prefix)
-      case available > 0 {
-        True -> Ok(Options(..options, width: Some(available)))
-        False -> Error(Nil)
-      }
+      #(Options(..options, width: Some(available)), prefix)
     }
-    Some(_) | None -> Ok(options)
+    Some(_) | None -> #(options, prefix)
   }
 }
 
-fn constrain_lines(text: String, width: Option(Int)) -> String {
+fn fit_rendered_prefix(
+  width: Option(Int),
+  prefix: String,
+  rendered: String,
+) -> String {
   case width {
     Some(width) if width > 0 ->
-      text
-      |> string.split("\n")
-      |> list.map(fn(line) { align.truncate(line, width:, ellipsis: "") })
-      |> string.join("\n")
-    Some(_) | None -> text
+      align.truncate(
+        prefix,
+        width: int.max(0, width - max_line_width(rendered)),
+        ellipsis: "",
+      )
+    Some(_) | None -> prefix
   }
+}
+
+fn fits_within(text: String, width: Option(Int), frame_width: Int) -> Bool {
+  case width {
+    Some(width) if width > 0 -> max_line_width(text) + frame_width <= width
+    Some(_) | None -> True
+  }
+}
+
+fn max_line_width(text: String) -> Int {
+  text
+  |> string.split("\n")
+  |> list.map(align.visual_length)
+  |> list.fold(0, int.max)
 }
 
 fn code_title(title: String, width: Option(Int)) -> String {
