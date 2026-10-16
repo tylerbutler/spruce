@@ -29,6 +29,14 @@
 6. When the `release/pending` PR closes, Trellis creates the tag and GitHub release.
 7. The `Publish` workflow runs on tag push and publishes the package to Hex.
 
+Both release workflows use the release app token for Git authentication and
+GitHub API calls. Keep that token in the checkout step: GitHub does not start
+the tag-triggered `Publish` workflow for pushes made with `GITHUB_TOKEN`.
+
+The website workbench uses Trellis's `workspace` lifecycle. It remains part of
+the workspace but does not receive version bumps, tags, GitHub releases, or
+Hex publications.
+
 ## Public API expectations
 
 - Keep the README-documented public modules (`spruce` and `spruce/*`) stable across minor releases.

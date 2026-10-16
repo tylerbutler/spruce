@@ -38,6 +38,9 @@ needs_deps = true
 exact_tag_format = "v{version}"
 package_tags = ["exact"]
 
+[tools.trellis.publish.lifecycle]
+packages = { "website/workbench" = "workspace" }
+
 [tools.trellis.changelog]
 header_format = """# Changelog
 
