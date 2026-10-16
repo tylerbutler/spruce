@@ -1,0 +1,3 @@
+package = 'spruce'
+kind = 'Fixed'
+body = 'Preserve ANSI styles and hyperlinks across wrapping and truncation, improve terminal escape parsing and emoji widths, and make long-word wrapping linear.'

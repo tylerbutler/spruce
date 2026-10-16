@@ -1,0 +1,3 @@
+package = 'spruce'
+kind = 'Performance'
+body = 'Wrap long unbroken text in one pass instead of repeatedly rescanning the remaining input.'
