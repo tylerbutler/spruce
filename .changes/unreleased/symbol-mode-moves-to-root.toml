@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "Remove symbol.Mode; use spruce.SymbolMode (spruce.Unicode / spruce.Ascii) instead. The Spruce context defaults to Unicode. Messages, severity labels, item bullets, output titles, tree branches, and Markdown alerts use the context symbol mode instead of color support to choose glyphs. Set the mode with spruce.with_symbol_mode(context, spruce.Ascii) and read it with spruce.symbol_mode(context). Explicit tree.unicode, tree.ascii, or custom branches still override the context."

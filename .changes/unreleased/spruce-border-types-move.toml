@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "Move the Border and BorderChars types from spruce/box to spruce/border, which boxes and tables share. Replace box.Rounded, box.Custom(...), and the other box border constructors with their spruce/border equivalents, including in calls to table.border. Use border.chars to look up the glyphs for a border style."

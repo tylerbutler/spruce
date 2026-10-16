@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Added"
-body = "Add an interactive website workbench for messages, styles, boxes, and tables, with color-capability controls and runnable Gleam examples."

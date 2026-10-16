@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Added"
-body = "output.print_with and output.stream_group_with allow buffered output and streaming groups to write to stderr or any other string sink while the existing stdout helpers remain unchanged."

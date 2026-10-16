@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "RGB colors now use the actual ANSI 256-color cube values, and nested foreground and background resets restore the outer color."

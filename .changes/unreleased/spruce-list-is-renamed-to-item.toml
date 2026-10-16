@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Major Release"
-body = "Rename the 1.x spruce/list module to spruce/item and its opaque List type to Items. Replace imports of spruce/list with spruce/item and references to its List type with item.Items. The builder and rendering functions keep their names."
