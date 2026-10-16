@@ -8,7 +8,7 @@ erlang = "28"
 gleam = "1.16.0"
 just = "latest"
 node = "22.22.3"
-"github:tylerbutler/trellis" = "0.11.2"
+"github:tylerbutler/trellis" = "1.0.0"
 # licence_audit: CycloneDX SBOM + Hex licence auditing, installed from GitHub
 # releases via mise's github backend. Run `just sbom` to generate an SBOM.
 "github:tylerbutler/licence_audit" = "0.2.0"
