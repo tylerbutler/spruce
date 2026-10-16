@@ -24,7 +24,7 @@ import spruce/symbol
 import spruce/table
 import spruce/tree
 
-pub fn main() {
+pub fn main() -> Nil {
   // Force truecolor so the demo is vivid even when stdout is not a TTY.
   let context = spruce.with_color_level(spruce.TrueColor)
 

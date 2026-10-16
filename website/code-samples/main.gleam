@@ -4,7 +4,7 @@ import spruce/box
 import spruce/message
 import spruce/output
 
-pub fn main() {
+pub fn main() -> Nil {
   let context = spruce.detect()
   let rendered =
     output.new(context)
