@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Performance"
+body = "Build item and tree siblings in linear time while preserving insertion and render order."

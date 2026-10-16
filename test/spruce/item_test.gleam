@@ -1,4 +1,6 @@
+import gleam/bool
 import gleam/int
+import gleam/list
 import gleam/string
 import gleeunit/should
 import spruce
@@ -126,4 +128,20 @@ pub fn render_child_default_behavior_unchanged_test() {
   |> item.item("sibling")
   |> item.render(spruce.no_color(), _)
   |> should.equal("1. parent\n  1. child one\n  2. child two\n2. sibling")
+}
+
+pub fn render_many_siblings_preserves_order_and_count_test() {
+  let lines =
+    add_items(item.new(), 1, 2048)
+    |> item.render(spruce.no_color(), _)
+    |> string.split("\n")
+
+  list.length(lines) |> should.equal(2048)
+  list.first(lines) |> should.equal(Ok("• 1"))
+  list.last(lines) |> should.equal(Ok("• 2048"))
+}
+
+fn add_items(items: item.Items, index: Int, last: Int) -> item.Items {
+  use <- bool.guard(when: index > last, return: items)
+  add_items(item.item(items, int.to_string(index)), index + 1, last)
 }

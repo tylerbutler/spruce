@@ -49,7 +49,7 @@ pub fn root(label: String) -> Tree {
 
 /// Add a child to `parent`, preserving insertion order.
 pub fn child(parent: Tree, child child: Tree) -> Tree {
-  Tree(..parent, children: list.append(parent.children, [child]))
+  Tree(..parent, children: [child, ..parent.children])
 }
 
 /// Set cells that `render_table` places after this node's label.
@@ -146,6 +146,24 @@ fn render_children(
   base: String,
   render_label: fn(String, Int, Int, Bool) -> String,
 ) -> List(String) {
+  render_ordered_children(
+    list.reverse(children),
+    branch_style,
+    depth,
+    ancestors,
+    base,
+    render_label,
+  )
+}
+
+fn render_ordered_children(
+  children: List(Tree),
+  branch_style: BranchStyle,
+  depth: Int,
+  ancestors: List(Bool),
+  base: String,
+  render_label: fn(String, Int, Int, Bool) -> String,
+) -> List(String) {
   case children {
     [] -> []
     [last_child] ->
@@ -168,7 +186,7 @@ fn render_children(
         False,
         render_label,
       )
-      |> list.append(render_children(
+      |> list.append(render_ordered_children(
         rest,
         branch_style,
         depth,
@@ -220,13 +238,32 @@ fn table_child_rows(
   ancestors: List(Bool),
   base: String,
 ) -> List(TableRow) {
+  table_ordered_child_rows(
+    list.reverse(children),
+    branch_style,
+    ancestors,
+    base,
+  )
+}
+
+fn table_ordered_child_rows(
+  children: List(Tree),
+  branch_style: BranchStyle,
+  ancestors: List(Bool),
+  base: String,
+) -> List(TableRow) {
   case children {
     [] -> []
     [last_child] ->
       table_node_rows(last_child, branch_style, ancestors, base, True)
     [first, ..rest] ->
       table_node_rows(first, branch_style, ancestors, base, False)
-      |> list.append(table_child_rows(rest, branch_style, ancestors, base))
+      |> list.append(table_ordered_child_rows(
+        rest,
+        branch_style,
+        ancestors,
+        base,
+      ))
   }
 }
 
