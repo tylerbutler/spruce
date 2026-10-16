@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "The Unicode Info symbol includes a text-presentation selector, so terminals do not substitute an emoji. Informational messages and severity labels use the same glyph."
