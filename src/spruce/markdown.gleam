@@ -193,7 +193,11 @@ pub fn with_theme(options: Options, theme: Theme) -> Options {
   Options(..options, theme:)
 }
 
-/// Wrap rendered output to a maximum visual width. Negative values clamp to 0.
+/// Wrap rendered output to a maximum visual width, including context
+/// indentation and structural markers. Negative values clamp to 0, and 0 keeps
+/// the output unconstrained. Indentation, structural markers, and frames are
+/// reduced or omitted when the width cannot fit them. A single grapheme that is
+/// wider than the limit is preserved.
 pub fn with_width(options: Options, width: Int) -> Options {
   Options(..options, width: Some(int.max(0, width)))
 }
@@ -209,20 +213,26 @@ pub fn render_with(
   markdown: String,
   options: Options,
 ) -> String {
-  let document.Document(_, blocks, _, _) =
+  let parsed =
     mork.configure()
     |> mork.tables(True)
     |> mork.tasklists(True)
     |> mork.autolinks(True)
     |> mork.heading_ids(True)
     |> mork.parse_with_options(expand_directives(markdown))
+  let document.Document(_, blocks, _, _) = parsed
 
   // Render all blocks at depth zero so that containers (box, table, item)
   // that apply their own indentation do not double-indent nested content.
   // The context's indent prefix is applied once here at the boundary.
   let inner = spruce.flat(context)
-  render_blocks(inner, blocks, options)
-  |> indent_rendered(spruce.indent_prefix(context))
+  let requested_width = options.width
+  let #(options, prefix) =
+    width_after_prefix(options, spruce.indent_prefix(context))
+  let rendered = render_blocks(inner, blocks, parsed, options)
+  let prefix = fit_rendered_prefix(requested_width, prefix, rendered)
+
+  indent_rendered(rendered, prefix)
 }
 
 /// Render Markdown with the default options and print it to stdout.
@@ -233,10 +243,11 @@ pub fn print(context: Spruce, markdown: String) -> Nil {
 fn render_blocks(
   context: Spruce,
   blocks: List(document.Block),
+  parsed: document.Document,
   options: Options,
 ) -> String {
   blocks
-  |> render_block_list(context, options)
+  |> render_block_list(context, parsed, options)
   |> remove_empty
   |> string.join("\n\n")
 }
@@ -244,38 +255,36 @@ fn render_blocks(
 fn render_block_list(
   blocks: List(document.Block),
   context: Spruce,
+  parsed: document.Document,
   options: Options,
 ) -> List(String) {
-  case blocks {
-    [] -> []
-    [first, ..rest] -> [
-      render_block(context, first, options),
-      ..render_block_list(rest, context, options)
-    ]
-  }
+  list.map(blocks, render_block(context, _, parsed, options))
 }
 
 fn render_block(
   context: Spruce,
   block_: document.Block,
+  parsed: document.Document,
   options: Options,
 ) -> String {
   case block_ {
-    document.BlockQuote(blocks) -> render_quote(context, blocks, options)
+    document.BlockQuote(blocks) ->
+      render_quote(context, blocks, parsed, options)
     document.BulletList(pack, entries) ->
-      render_list(context, pack, entries, None, options)
+      render_list(context, pack, entries, None, parsed, options)
     document.Code(language, text) ->
       render_code(context, language, text, options)
     document.Empty -> ""
     document.Heading(level, _, raw, inlines) ->
-      render_heading(context, level, raw, inlines, options)
-    document.HtmlBlock(raw) -> render_html_block(context, raw, options.theme)
+      render_heading(context, level, raw, inlines, parsed, options)
+    document.HtmlBlock(raw) -> render_html_block(context, raw, options)
     document.Newline -> ""
     document.OrderedList(pack, entries, start) ->
-      render_list(context, pack, entries, start, options)
+      render_list(context, pack, entries, start, parsed, options)
     document.Paragraph(_, inlines) ->
-      render_paragraph(context, inlines, options)
-    document.Table(header, rows) -> render_table(context, header, rows, options)
+      render_paragraph(context, inlines, parsed, options)
+    document.Table(header, rows) ->
+      render_table(context, header, rows, parsed, options)
     document.ThematicBreak -> render_rule(context, options)
   }
 }
@@ -285,14 +294,30 @@ fn render_heading(
   level: Int,
   raw: String,
   inlines: List(document.Inline),
+  parsed: document.Document,
   options: Options,
 ) -> String {
-  let text = case render_inlines(context, inlines, options) {
+  let text = case render_inlines(context, inlines, parsed, options) {
     "" -> raw
     text -> text
   }
   let marker = string.repeat("#", int.clamp(level, min: 1, max: 6))
-  let line = marker <> " " <> string.trim(text)
+  let prefix = marker <> " "
+  let prefix_width = align.visual_length(prefix)
+  let text = string.trim(text)
+  let line_with_marker = case options.width {
+    Some(width) if width > prefix_width ->
+      text
+      |> align.wrap(width - prefix_width)
+      |> prefix_lines(prefix)
+    Some(width) if width > 0 -> align.wrap(text, width)
+    Some(_) | None -> prefix <> text
+  }
+  let marked_width = max_line_width(line_with_marker)
+  let line = case options.width {
+    Some(width) if width > 0 && marked_width > width -> align.wrap(text, width)
+    Some(_) | None -> line_with_marker
+  }
 
   spruce.indent_prefix(context)
   <> style.render(context, heading_style(options.theme, level), line)
@@ -301,9 +326,10 @@ fn render_heading(
 fn render_paragraph(
   context: Spruce,
   inlines: List(document.Inline),
+  parsed: document.Document,
   options: Options,
 ) -> String {
-  render_inlines(context, inlines, options)
+  render_inlines(context, inlines, parsed, options)
   |> wrap(options.width)
   |> prefix_lines(spruce.indent_prefix(context))
 }
@@ -323,36 +349,64 @@ fn render_code(
       theme: options.theme.code,
     )
 
-  let code_box =
-    box.new()
-    |> box.title(title)
-    |> box.border_color(options.theme.code_border)
-    |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
-  box.render(context, highlighted, code_box)
+  case options.width {
+    Some(width) if width > 2 -> {
+      let inner_width = width - 2
+      let wrapped = align.wrap(highlighted, inner_width)
+      case max_line_width(wrapped) > inner_width {
+        True -> align.wrap(highlighted, width)
+        False ->
+          box.new()
+          |> box.title(code_title(title, options.width))
+          |> box.border_color(options.theme.code_border)
+          |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
+          |> box.width(inner_width)
+          |> box.render(context, wrapped, _)
+      }
+    }
+    Some(width) if width > 0 -> align.wrap(highlighted, width)
+    Some(_) | None ->
+      box.new()
+      |> box.title(title)
+      |> box.border_color(options.theme.code_border)
+      |> box.padding(top: 1, right: 0, bottom: 0, left: 0)
+      |> box.render(context, highlighted, _)
+  }
 }
 
 fn render_quote(
   context: Spruce,
   blocks: List(document.Block),
+  parsed: document.Document,
   options: Options,
 ) -> String {
   case detect_alert(blocks) {
-    Some(alert) -> render_admonition(context, alert, options)
-    None -> render_plain_quote(context, blocks, options)
+    Some(alert) -> render_admonition(context, alert, parsed, options)
+    None -> render_plain_quote(context, blocks, parsed, options)
   }
 }
 
 fn render_plain_quote(
   context: Spruce,
   blocks: List(document.Block),
+  parsed: document.Document,
   options: Options,
 ) -> String {
+  use <- bool.guard(
+    when: width_cannot_fit(options.width, 3),
+    return: render_blocks(context, blocks, parsed, options),
+  )
+  let inner_options = subtract_width(options, 2)
   let content =
     style.render(
       context,
       style.new() |> style.italic,
-      render_blocks(context, blocks, options),
+      render_blocks(context, blocks, parsed, inner_options),
     )
+  use <- bool.guard(
+    when: !fits_within(content, options.width, 2),
+    return: render_blocks(context, blocks, parsed, options),
+  )
 
   let quote_box =
     box.plain()
@@ -452,6 +506,7 @@ fn take_until_break(
 fn render_admonition(
   context: Spruce,
   alert: Alert,
+  parsed: document.Document,
   options: Options,
 ) -> String {
   let Alert(kind:, title:, body:) = alert
@@ -460,7 +515,7 @@ fn render_admonition(
 
   let title_text = case title {
     Some(inlines) ->
-      case string.trim(render_inlines(context, inlines, options)) {
+      case string.trim(render_inlines(context, inlines, parsed, options)) {
         "" -> default_title
         text -> text
       }
@@ -479,10 +534,27 @@ fn render_admonition(
     False -> icon <> " " <> title_text
   }
 
-  let content = case render_blocks(context, body, options) {
+  use <- bool.guard(
+    when: width_cannot_fit(options.width, 3),
+    return: case render_blocks(context, body, parsed, options) {
+      "" -> wrap(header, options.width)
+      body_text -> wrap(header, options.width) <> "\n\n" <> body_text
+    },
+  )
+
+  let inner_options = subtract_width(options, 2)
+  let header = wrap(header, inner_options.width)
+  let content = case render_blocks(context, body, parsed, inner_options) {
     "" -> header
     body_text -> header <> "\n\n" <> body_text
   }
+  use <- bool.guard(
+    when: !fits_within(content, options.width, 2),
+    return: case render_blocks(context, body, parsed, options) {
+      "" -> wrap(header, options.width)
+      body_text -> wrap(header, options.width) <> "\n\n" <> body_text
+    },
+  )
 
   let admonition_box =
     box.plain()
@@ -537,7 +609,11 @@ fn alert_properties(
 fn expand_directives(markdown: String) -> String {
   markdown
   |> string.split("\n")
-  |> expand_lines(False, None)
+  |> list.fold(
+    DirectiveState(in_directive: False, fence: None, lines: []),
+    expand_directive_line,
+  )
+  |> fn(state) { list.reverse(state.lines) }
   |> string.join("\n")
 }
 
@@ -545,49 +621,56 @@ type Fence {
   Fence(marker: String, length: Int)
 }
 
-fn expand_lines(
-  lines: List(String),
-  in_directive: Bool,
-  fence: Option(Fence),
-) -> List(String) {
-  case lines {
-    [] -> []
-    [line, ..rest] ->
-      case in_directive {
-        True ->
-          case is_directive_close(line) {
-            True -> expand_lines(rest, False, fence)
-            False -> [quote_line(line), ..expand_lines(rest, True, fence)]
-          }
-        False -> expand_line_outside_directive(line, rest, fence)
-      }
-  }
+type DirectiveState {
+  DirectiveState(in_directive: Bool, fence: Option(Fence), lines: List(String))
 }
 
-fn expand_line_outside_directive(
+fn expand_directive_line(
+  state: DirectiveState,
   line: String,
-  rest: List(String),
-  fence: Option(Fence),
-) -> List(String) {
-  case fence {
-    Some(fence) -> {
+) -> DirectiveState {
+  let DirectiveState(in_directive:, fence:, lines:) = state
+  case in_directive, fence {
+    True, Some(fence) -> {
       let next_fence = case closes_fence(line, fence) {
         True -> None
         False -> Some(fence)
       }
-      [line, ..expand_lines(rest, False, next_fence)]
+      DirectiveState(True, next_fence, [quote_line(line), ..lines])
     }
-    None ->
+    True, None ->
+      case is_directive_close(line) {
+        True -> DirectiveState(False, None, lines)
+        False -> {
+          let next_fence = case is_indented_code_line(line) {
+            True -> None
+            False ->
+              case parse_fence_open(line) {
+                Ok(fence) -> Some(fence)
+                Error(Nil) -> None
+              }
+          }
+          DirectiveState(True, next_fence, [quote_line(line), ..lines])
+        }
+      }
+    False, Some(fence) -> {
+      let next_fence = case closes_fence(line, fence) {
+        True -> None
+        False -> Some(fence)
+      }
+      DirectiveState(False, next_fence, [line, ..lines])
+    }
+    False, None ->
       case is_indented_code_line(line) {
-        True -> [line, ..expand_lines(rest, False, None)]
+        True -> DirectiveState(False, None, [line, ..lines])
         False ->
           case parse_fence_open(line) {
-            Ok(fence) -> [line, ..expand_lines(rest, False, Some(fence))]
+            Ok(fence) -> DirectiveState(False, Some(fence), [line, ..lines])
             Error(Nil) ->
               case parse_directive_open(line) {
-                Ok(opener) -> [opener, ..expand_lines(rest, True, None)]
+                Ok(opener) -> DirectiveState(True, None, [opener, ..lines])
                 // nolint: thrown_away_error -- not a directive, keep line as-is
-                Error(_) -> [line, ..expand_lines(rest, False, None)]
+                Error(_) -> DirectiveState(False, None, [line, ..lines])
               }
           }
       }
@@ -599,12 +682,12 @@ fn is_indented_code_line(line: String) -> Bool {
 }
 
 fn parse_fence_open(line: String) -> Result(Fence, Nil) {
-  let trimmed = string.trim(line)
-  case string.pop_grapheme(trimmed) {
+  use candidate <- result.try(trim_fence_candidate(line, 0))
+  case string.pop_grapheme(candidate) {
     Ok(#(marker, _)) ->
       case marker {
         "`" | "~" -> {
-          let length = count_prefix(trimmed, marker, 0)
+          let length = count_prefix(candidate, marker, 0)
           case length >= 3 {
             True -> Ok(Fence(marker:, length:))
             False -> Error(Nil)
@@ -618,24 +701,25 @@ fn parse_fence_open(line: String) -> Result(Fence, Nil) {
 
 fn closes_fence(line: String, fence: Fence) -> Bool {
   let Fence(marker:, length:) = fence
-  case trim_fence_close_candidate(line, 0) {
-    Ok(candidate) -> count_prefix(candidate, marker, 0) >= length
+  case trim_fence_candidate(line, 0) {
+    Ok(candidate) -> {
+      let marker_count = count_prefix(candidate, marker, 0)
+      marker_count >= length
+      && string.trim(string.drop_start(candidate, marker_count)) == ""
+    }
     Error(Nil) -> False
   }
 }
 
-fn trim_fence_close_candidate(
-  line: String,
-  spaces: Int,
-) -> Result(String, Nil) {
+fn trim_fence_candidate(line: String, spaces: Int) -> Result(String, Nil) {
   case string.pop_grapheme(line) {
     Ok(#(" ", rest)) ->
       case spaces < 3 {
-        True -> trim_fence_close_candidate(rest, spaces + 1)
+        True -> trim_fence_candidate(rest, spaces + 1)
         False -> Error(Nil)
       }
     Ok(#("\t", _)) -> Error(Nil)
-    Ok(_) -> Ok(string.trim(line))
+    Ok(_) -> Ok(line)
     Error(_) -> Error(Nil)
   }
 }
@@ -701,15 +785,15 @@ fn parse_directive_title(after: String) -> Result(Option(String), Nil) {
   }
 }
 
-fn take_name(input: String, acc: String) -> #(String, String) {
+fn take_name(input: String, accumulator: String) -> #(String, String) {
   case string.pop_grapheme(input) {
     Ok(#(char, rest)) ->
       case is_name_char(char) {
-        True -> take_name(rest, acc <> char)
-        False -> #(acc, input)
+        True -> take_name(rest, accumulator <> char)
+        False -> #(accumulator, input)
       }
     // nolint: thrown_away_error -- end of input ends the name
-    Error(_) -> #(acc, "")
+    Error(_) -> #(accumulator, "")
   }
 }
 
@@ -776,14 +860,22 @@ fn render_list(
   pack: document.ListPack,
   entries: List(document.ListItem),
   start: Option(Int),
+  parsed: document.Document,
   options: Options,
 ) -> String {
-  let labels = render_list_labels(entries, pack, context, options)
+  let marker_width = list_marker_width(entries, start)
+  use <- bool.guard(
+    when: width_cannot_fit(options.width, marker_width + 1),
+    return: render_list_labels(entries, pack, context, parsed, options)
+      |> string.join("\n"),
+  )
+  let label_options = subtract_width(options, marker_width)
+  let labels = render_list_labels(entries, pack, context, parsed, label_options)
   let list_ =
     labels
     |> list.fold(item.new(), fn(list_, label) { item.item(list_, label) })
 
-  case start {
+  let rendered = case start {
     None -> item.render(context, list_)
     Some(start) -> {
       let list_ =
@@ -796,27 +888,32 @@ fn render_list(
       item.render(context, list_)
     }
   }
+  case fits_within(rendered, options.width, 0) {
+    True -> rendered
+    False ->
+      render_list_labels(entries, pack, context, parsed, options)
+      |> string.join("\n")
+  }
 }
 
 fn render_list_labels(
   entries: List(document.ListItem),
   pack: document.ListPack,
   context: Spruce,
+  parsed: document.Document,
   options: Options,
 ) -> List(String) {
-  case entries {
-    [] -> []
-    [document.ListItem(blocks, _, _), ..rest] -> [
-      render_list_item_blocks(blocks, pack, context, options),
-      ..render_list_labels(rest, pack, context, options)
-    ]
-  }
+  list.map(entries, fn(entry) {
+    let document.ListItem(blocks, _, _) = entry
+    render_list_item_blocks(blocks, pack, context, parsed, options)
+  })
 }
 
 fn render_list_item_blocks(
   blocks: List(document.Block),
   pack: document.ListPack,
   context: Spruce,
+  parsed: document.Document,
   options: Options,
 ) -> String {
   let separator = case pack {
@@ -825,7 +922,7 @@ fn render_list_item_blocks(
   }
 
   blocks
-  |> render_block_list(context, options)
+  |> render_block_list(context, parsed, options)
   |> remove_empty
   |> string.join(separator)
 }
@@ -834,12 +931,18 @@ fn render_table(
   context: Spruce,
   headers: List(document.THead),
   rows: List(List(document.Cell)),
+  parsed: document.Document,
   options: Options,
 ) -> String {
+  use <- bool.guard(
+    when: width_cannot_fit(options.width, table_minimum_width(headers, rows)),
+    return: render_table_without_frame(context, headers, rows, parsed, options),
+  )
+
   let table_ =
     table.new()
-    |> table.headers(render_table_headers(context, headers, options))
-    |> table.rows(render_table_rows(context, rows, options))
+    |> table.headers(render_table_headers(context, headers, parsed, options))
+    |> table.rows(render_table_rows(context, rows, parsed, options))
     |> table.column_alignments(render_table_alignments(headers))
     |> table.style_fn(fn(row_context, _column) {
       case row_context {
@@ -848,10 +951,14 @@ fn render_table(
       }
     })
 
-  case options.width {
+  let rendered = case options.width {
     Some(width) if width > 0 ->
       table.render(context, table.width(table_, width))
     Some(_) | None -> table.render(context, table_)
+  }
+  case fits_within(rendered, options.width, 0) {
+    True -> rendered
+    False -> render_table_without_frame(context, headers, rows, parsed, options)
   }
 }
 
@@ -869,43 +976,34 @@ fn render_table_alignments(headers: List(document.THead)) -> List(table.Align) {
 fn render_table_headers(
   context: Spruce,
   headers: List(document.THead),
+  parsed: document.Document,
   options: Options,
 ) -> List(String) {
-  case headers {
-    [] -> []
-    [document.THead(_, raw, inlines), ..rest] -> [
-      fallback_inline(context, raw, inlines, options) |> string.trim,
-      ..render_table_headers(context, rest, options)
-    ]
-  }
+  list.map(headers, fn(header) {
+    let document.THead(_, raw, inlines) = header
+    fallback_inline(context, raw, inlines, parsed, options) |> string.trim
+  })
 }
 
 fn render_table_rows(
   context: Spruce,
   rows: List(List(document.Cell)),
+  parsed: document.Document,
   options: Options,
 ) -> List(List(String)) {
-  case rows {
-    [] -> []
-    [row, ..rest] -> [
-      render_table_cells(context, row, options),
-      ..render_table_rows(context, rest, options)
-    ]
-  }
+  list.map(rows, render_table_cells(context, _, parsed, options))
 }
 
 fn render_table_cells(
   context: Spruce,
   cells: List(document.Cell),
+  parsed: document.Document,
   options: Options,
 ) -> List(String) {
-  case cells {
-    [] -> []
-    [document.Cell(raw, inlines), ..rest] -> [
-      fallback_inline(context, raw, inlines, options) |> string.trim,
-      ..render_table_cells(context, rest, options)
-    ]
-  }
+  list.map(cells, fn(cell) {
+    let document.Cell(raw, inlines) = cell
+    fallback_inline(context, raw, inlines, parsed, options) |> string.trim
+  })
 }
 
 fn render_rule(context: Spruce, options: Options) -> String {
@@ -918,38 +1016,36 @@ fn render_rule(context: Spruce, options: Options) -> String {
   <> style.render(context, options.theme.rule, string.repeat("─", width))
 }
 
-fn render_html_block(context: Spruce, raw: String, theme: Theme) -> String {
-  style.render(context, theme.html, raw)
+fn render_html_block(context: Spruce, raw: String, options: Options) -> String {
+  style.render(context, options.theme.html, raw)
+  |> wrap(options.width)
   |> prefix_lines(spruce.indent_prefix(context))
 }
 
 fn render_inlines(
   context: Spruce,
   inlines: List(document.Inline),
+  parsed: document.Document,
   options: Options,
 ) -> String {
   inlines
-  |> render_inline_list(context, options)
+  |> render_inline_list(context, parsed, options)
   |> string.join("")
 }
 
 fn render_inline_list(
   inlines: List(document.Inline),
   context: Spruce,
+  parsed: document.Document,
   options: Options,
 ) -> List(String) {
-  case inlines {
-    [] -> []
-    [first, ..rest] -> [
-      render_inline(context, first, options),
-      ..render_inline_list(rest, context, options)
-    ]
-  }
+  list.map(inlines, render_inline(context, _, parsed, options))
 }
 
 fn render_inline(
   context: Spruce,
   inline: document.Inline,
+  parsed: document.Document,
   options: Options,
 ) -> String {
   case inline {
@@ -968,15 +1064,21 @@ fn render_inline(
       style.render(
         context,
         options.theme.emphasis,
-        render_inlines(context, children, options),
+        render_inlines(context, children, parsed, options),
       )
     document.Footnote(number, _) -> "[^" <> int.to_string(number) <> "]"
     document.FullImage(text, data) ->
-      render_image(context, text, destination_string(data.dest), options)
+      render_image(
+        context,
+        text,
+        destination_string(data.dest),
+        parsed,
+        options,
+      )
     document.FullLink(text, data) ->
       render_link(
         context,
-        render_inlines(context, text, options),
+        render_inlines(context, text, parsed, options),
         destination_string(data.dest),
         options.theme,
       )
@@ -985,31 +1087,53 @@ fn render_inline(
       style.render(
         context,
         options.theme.highlight,
-        render_inlines(context, children, options),
+        render_inlines(context, children, parsed, options),
       )
     document.InlineFootnote(number, _) -> "[^" <> int.to_string(number) <> "]"
     document.InlineHtml(tag, _, children) -> {
       case children {
         [] -> style.render(context, options.theme.html, "<" <> tag <> ">")
-        _ -> render_inlines(context, children, options)
+        _ -> render_inlines(context, children, parsed, options)
       }
     }
     document.RawHtml(raw) -> style.render(context, options.theme.html, raw)
     document.RefImage(text, label) ->
-      render_image(context, text, label, options)
-    document.RefLink(text, _) -> render_inlines(context, text, options)
+      case document.lookup_link(parsed, label) {
+        Ok(data) ->
+          render_image(
+            context,
+            text,
+            destination_string(data.dest),
+            parsed,
+            options,
+          )
+        Error(Nil) -> render_inlines(context, text, parsed, options)
+      }
+    document.RefLink(text, label) -> {
+      let visible = render_inlines(context, text, parsed, options)
+      case document.lookup_link(parsed, label) {
+        Ok(data) ->
+          render_link(
+            context,
+            visible,
+            destination_string(data.dest),
+            options.theme,
+          )
+        Error(Nil) -> visible
+      }
+    }
     document.SoftBreak -> " "
     document.Strikethrough(children) ->
       style.render(
         context,
         options.theme.strikethrough,
-        render_inlines(context, children, options),
+        render_inlines(context, children, parsed, options),
       )
     document.Strong(children) ->
       style.render(
         context,
         options.theme.strong,
-        render_inlines(context, children, options),
+        render_inlines(context, children, parsed, options),
       )
     document.Text(text) -> text
     document.Checkbox(True) -> "[x]"
@@ -1037,9 +1161,10 @@ fn render_image(
   context: Spruce,
   text: List(document.Inline),
   target: String,
+  parsed: document.Document,
   options: Options,
 ) -> String {
-  let label = render_inlines(context, text, options)
+  let label = render_inlines(context, text, parsed, options)
 
   case label {
     "" -> target
@@ -1051,9 +1176,10 @@ fn fallback_inline(
   context: Spruce,
   raw: String,
   inlines: List(document.Inline),
+  parsed: document.Document,
   options: Options,
 ) -> String {
-  case render_inlines(context, inlines, options) {
+  case render_inlines(context, inlines, parsed, options) {
     "" -> raw
     text -> text
   }
@@ -1100,10 +1226,116 @@ fn prefix_lines(text: String, prefix: String) -> String {
 }
 
 fn remove_empty(lines: List(String)) -> List(String) {
-  case lines {
-    [] -> []
-    ["", ..rest] -> remove_empty(rest)
-    [line, ..rest] -> [line, ..remove_empty(rest)]
+  list.filter(lines, fn(line) { line != "" })
+}
+
+fn width_cannot_fit(width: Option(Int), minimum: Int) -> Bool {
+  case width {
+    Some(width) -> width > 0 && width < minimum
+    None -> False
+  }
+}
+
+fn table_minimum_width(
+  headers: List(document.THead),
+  rows: List(List(document.Cell)),
+) -> Int {
+  let column_count =
+    rows
+    |> list.map(list.length)
+    |> list.fold(list.length(headers), int.max)
+
+  column_count * 4 + 1
+}
+
+fn render_table_without_frame(
+  context: Spruce,
+  headers: List(document.THead),
+  rows: List(List(document.Cell)),
+  parsed: document.Document,
+  options: Options,
+) -> String {
+  let header_cells = render_table_headers(context, headers, parsed, options)
+  let body_cells =
+    rows
+    |> list.map(render_table_cells(context, _, parsed, options))
+    |> list.flatten
+
+  list.append(header_cells, body_cells)
+  |> string.join("\n")
+  |> wrap(options.width)
+}
+
+fn subtract_width(options: Options, amount: Int) -> Options {
+  case options.width {
+    Some(width) if width > 0 ->
+      Options(..options, width: Some(int.max(1, width - amount)))
+    Some(_) | None -> options
+  }
+}
+
+fn width_after_prefix(options: Options, prefix: String) -> #(Options, String) {
+  case options.width {
+    Some(width) if width > 0 -> {
+      let prefix =
+        align.truncate(prefix, width: int.max(0, width - 1), ellipsis: "")
+      let available = width - align.visual_length(prefix)
+      #(Options(..options, width: Some(available)), prefix)
+    }
+    Some(_) | None -> #(options, prefix)
+  }
+}
+
+fn fit_rendered_prefix(
+  width: Option(Int),
+  prefix: String,
+  rendered: String,
+) -> String {
+  case width {
+    Some(width) if width > 0 ->
+      align.truncate(
+        prefix,
+        width: int.max(0, width - max_line_width(rendered)),
+        ellipsis: "",
+      )
+    Some(_) | None -> prefix
+  }
+}
+
+fn fits_within(text: String, width: Option(Int), frame_width: Int) -> Bool {
+  case width {
+    Some(width) if width > 0 -> max_line_width(text) + frame_width <= width
+    Some(_) | None -> True
+  }
+}
+
+fn max_line_width(text: String) -> Int {
+  text
+  |> string.split("\n")
+  |> list.map(align.visual_length)
+  |> list.fold(0, int.max)
+}
+
+fn code_title(title: String, width: Option(Int)) -> String {
+  case width {
+    Some(width) if width > 5 ->
+      align.truncate(title, width: width - 5, ellipsis: "")
+    Some(width) if width > 0 -> ""
+    Some(_) | None -> title
+  }
+}
+
+fn list_marker_width(
+  entries: List(document.ListItem),
+  start: Option(Int),
+) -> Int {
+  case start {
+    None -> 2
+    Some(start) ->
+      start + int.max(0, list.length(entries) - 1)
+      |> int.to_string
+      |> string.length
+      |> fn(digits) { digits + 2 }
   }
 }
 

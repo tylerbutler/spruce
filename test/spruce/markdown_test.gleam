@@ -2,6 +2,7 @@ import gleam/list
 import gleam/string
 import gleeunit/should
 import spruce
+import spruce/align
 import spruce/highlight
 import spruce/markdown
 import spruce/style
@@ -220,6 +221,42 @@ pub fn astro_directive_inside_fenced_code_with_indented_fence_marker_stays_liter
   should.be_false(string.contains(rendered, "[!NOTE]"))
 }
 
+pub fn fenced_code_close_requires_marker_only_test() {
+  let rendered =
+    markdown.render(
+      spruce.no_color(),
+      "```txt\n```not-a-close\n:::note\nkeep literal\n:::\n```",
+    )
+
+  should.be_true(string.contains(rendered, "```not-a-close"))
+  should.be_true(string.contains(rendered, ":::note"))
+  should.be_true(string.contains(rendered, ":::"))
+  should.be_false(string.contains(rendered, "[!NOTE]"))
+}
+
+pub fn directive_ignores_closing_marker_inside_fenced_code_test() {
+  let rendered =
+    markdown.render(
+      spruce.no_color(),
+      ":::note\n```txt\n:::\n```\nmore body\n:::",
+    )
+
+  should.be_true(string.contains(rendered, "Note"))
+  should.be_true(string.contains(rendered, ":::"))
+  should.be_true(string.contains(rendered, "more body"))
+}
+
+pub fn directive_tilde_fence_ignores_closing_marker_test() {
+  let rendered =
+    markdown.render(
+      spruce.no_color(),
+      ":::note\n~~~txt\n:::\n~~~\nmore body\n:::",
+    )
+
+  should.be_true(string.contains(rendered, ":::"))
+  should.be_true(string.contains(rendered, "more body"))
+}
+
 pub fn astro_directive_inside_indented_code_stays_literal_test() {
   let rendered =
     markdown.render(
@@ -280,6 +317,50 @@ pub fn multi_element_smoke_test() {
   should.be_true(string.contains(rendered, "code"))
 }
 
+pub fn reference_links_match_inline_links_test() {
+  let inline = markdown.render(spruce.no_color(), "[link](https://example.com)")
+  let full =
+    markdown.render(
+      spruce.no_color(),
+      "[link][id]\n\n[id]: https://example.com",
+    )
+  let collapsed =
+    markdown.render(
+      spruce.no_color(),
+      "[link][]\n\n[link]: https://example.com",
+    )
+  let shortcut =
+    markdown.render(spruce.no_color(), "[link]\n\n[link]: https://example.com")
+
+  should.equal(full, inline)
+  should.equal(collapsed, inline)
+  should.equal(shortcut, inline)
+}
+
+pub fn reference_images_match_inline_images_test() {
+  let with_alt =
+    markdown.render(
+      spruce.no_color(),
+      "![diagram][id]\n\n[id]: https://example.com/image.png",
+    )
+  let without_alt =
+    markdown.render(
+      spruce.no_color(),
+      "![][id]\n\n[id]: https://example.com/image.png",
+    )
+
+  should.equal(with_alt, "diagram")
+  should.equal(without_alt, "https://example.com/image.png")
+}
+
+pub fn reference_definition_after_usage_test() {
+  markdown.render(
+    spruce.no_color(),
+    "See [the guide][guide].\n\n[guide]: /guide",
+  )
+  |> should.equal("See the guide (/guide).")
+}
+
 pub fn heading_truecolor_is_styled_test() {
   let rendered =
     markdown.render(spruce.with_color_level(spruce.TrueColor), "# Hello")
@@ -297,6 +378,172 @@ pub fn render_with_options_wraps_and_themes_test() {
     markdown.render_with(spruce.no_color(), "alpha beta gamma", options)
 
   should.equal(rendered, "alpha\nbeta\ngamma")
+}
+
+pub fn plain_three_thousand_lines_is_stack_safe_test() {
+  let input = string.repeat("a\n", 3000)
+  let expected = list.repeat("a", 3000) |> string.join(" ")
+
+  markdown.render(spruce.no_color(), input)
+  |> should.equal(expected)
+  should.equal(string.length(expected), 5999)
+}
+
+pub fn many_flat_blocks_are_stack_safe_test() {
+  let input = list.repeat("block", 3000) |> string.join("\n\n")
+  let rendered = markdown.render(spruce.no_color(), input)
+
+  rendered
+  |> string.split("\n\n")
+  |> list.length
+  |> should.equal(3000)
+}
+
+pub fn width_applies_to_heading_quote_list_and_code_test() {
+  let options = markdown.default_options() |> markdown.with_width(8)
+
+  markdown.render_with(spruce.no_color(), "# abc def ghi", options)
+  |> should.equal("# abc\n# def\n# ghi")
+  markdown.render_with(spruce.no_color(), "> abc def ghi", options)
+  |> should.equal("┃ abc\n┃ def\n┃ ghi")
+  markdown.render_with(spruce.no_color(), "- abc def ghi", options)
+  |> should.equal("• abc\n  def\n  ghi")
+
+  let code =
+    markdown.render_with(spruce.no_color(), "```txt\nabcdef ghi\n```", options)
+  assert_max_width(code, 8)
+  should.be_true(string.contains(code, "abcdef"))
+  should.be_true(string.contains(code, "ghi"))
+}
+
+pub fn width_applies_to_nested_styled_and_indented_blocks_test() {
+  let options = markdown.default_options() |> markdown.with_width(8)
+  let nested =
+    markdown.render_with(spruce.no_color(), "> - abc def ghi", options)
+  assert_max_width(nested, 8)
+
+  let styled =
+    markdown.render_with(
+      spruce.with_color_level(spruce.TrueColor) |> spruce.indented(),
+      "# **abc def ghi**",
+      options,
+    )
+  assert_max_width(styled, 8)
+  should.be_true(string.contains(styled, "\u{001b}"))
+  styled
+  |> string.split("\n")
+  |> list.each(fn(line) { should.be_true(string.starts_with(line, "  ")) })
+}
+
+pub fn zero_and_negative_widths_stay_unconstrained_test() {
+  let input = "# abc def ghi"
+  let unconstrained = markdown.render(spruce.no_color(), input)
+
+  markdown.render_with(
+    spruce.no_color(),
+    input,
+    markdown.default_options() |> markdown.with_width(0),
+  )
+  |> should.equal(unconstrained)
+  markdown.render_with(
+    spruce.no_color(),
+    input,
+    markdown.default_options() |> markdown.with_width(-1),
+  )
+  |> should.equal(unconstrained)
+}
+
+pub fn impossible_width_omits_frames_and_excess_indentation_test() {
+  let width_two = markdown.default_options() |> markdown.with_width(2)
+  let code = markdown.render_with(spruce.no_color(), "```\nabc\n```", width_two)
+  let quote = markdown.render_with(spruce.no_color(), "> abc", width_two)
+  let list = markdown.render_with(spruce.no_color(), "- abc", width_two)
+  let heading = markdown.render_with(spruce.no_color(), "# abc", width_two)
+  let table =
+    markdown.render_with(
+      spruce.no_color(),
+      "| A | B |\n| - | - |\n| 1 | 2 |",
+      width_two,
+    )
+
+  assert_max_width(code, 2)
+  should.be_false(string.contains(code, "╭"))
+  should.equal(quote, "ab\nc")
+  should.equal(list, "ab\nc")
+  should.equal(heading, "ab\nc")
+  should.equal(table, "A\nB\n1\n2")
+  should.be_false(string.contains(table, "┌"))
+
+  let deeply_indented =
+    markdown.render_with(
+      spruce.no_color() |> spruce.indented() |> spruce.indented(),
+      "hello world",
+      markdown.default_options() |> markdown.with_width(3),
+    )
+  should.equal(
+    deeply_indented,
+    "  h\n  e\n  l\n  l\n  o\n  w\n  o\n  r\n  l\n  d",
+  )
+}
+
+pub fn narrow_width_preserves_wide_graphemes_test() {
+  let rendered =
+    markdown.render_with(
+      spruce.no_color(),
+      "🌲 hello",
+      markdown.default_options() |> markdown.with_width(1),
+    )
+
+  should.equal(rendered, "🌲\nh\ne\nl\nl\no")
+  should.be_true(align.visual_length("🌲") > 1)
+
+  let indented =
+    markdown.render_with(
+      spruce.no_color() |> spruce.indented() |> spruce.indented(),
+      "🌲 hello",
+      markdown.default_options() |> markdown.with_width(3),
+    )
+  should.equal(indented, " 🌲\n h\n e\n l\n l\n o")
+  assert_max_width(indented, 3)
+}
+
+pub fn tiny_table_uses_complete_frame_or_unframed_fallback_test() {
+  let input = "| a | b |\n| - | - |\n| x | y |"
+  let too_narrow =
+    markdown.render_with(
+      spruce.no_color(),
+      input,
+      markdown.default_options() |> markdown.with_width(7),
+    )
+  let minimum =
+    markdown.render_with(
+      spruce.no_color(),
+      input,
+      markdown.default_options() |> markdown.with_width(9),
+    )
+
+  should.equal(too_narrow, "a\nb\nx\ny")
+  should.equal(
+    minimum,
+    "┌───┬───┐\n"
+      <> "│ a │ b │\n"
+      <> "├───┼───┤\n"
+      <> "│ x │ y │\n"
+      <> "└───┴───┘",
+  )
+}
+
+pub fn narrow_nested_blocks_preserve_user_text_test() {
+  let rendered =
+    markdown.render_with(
+      spruce.no_color(),
+      "> - 🌲 hello",
+      markdown.default_options() |> markdown.with_width(3),
+    )
+
+  rendered
+  |> string.replace(each: "\n", with: "")
+  |> should.equal("🌲hello")
 }
 
 pub fn theme_fields_can_be_overridden_test() {
@@ -411,6 +658,12 @@ fn assert_indented_matches(depth0: String, depth1: String) -> Nil {
     })
     |> string.join("\n")
   should.equal(depth1, expected)
+}
+
+fn assert_max_width(text: String, width: Int) -> Nil {
+  text
+  |> string.split("\n")
+  |> list.each(fn(line) { should.be_true(align.visual_length(line) <= width) })
 }
 
 pub fn indented_paragraph_test() {

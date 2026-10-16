@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "Markdown rendering is now stack-safe for large flat documents, resolves reference links and images, preserves directive-like text inside fenced code, and applies width limits without clipping user text across headings, quotes, alerts, lists, code blocks, tables, HTML, and context indentation."
