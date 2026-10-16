@@ -352,24 +352,46 @@ pub fn truncate(
 /// Wrap `text` to `width` visual columns.
 ///
 /// ANSI escape sequences do not count toward the width and are never split.
-/// Active SGR styles and OSC 8 hyperlinks are closed and reopened at each
-/// inserted line boundary.
+/// Active SGR styles and OSC 8 hyperlinks are closed and reopened at output
+/// line boundaries.
 /// Words longer than `width` are hard-wrapped at visible column boundaries.
 /// Widths less than or equal to zero return the input unchanged.
 pub fn wrap(text: String, width: Int) -> String {
   use <- bool.guard(when: width <= 0, return: text)
   text
   |> string.split("\n")
-  |> list.map(wrap_line(_, width))
+  |> wrap_lines(width, TerminalState([], ""), [])
   |> string.join("\n")
 }
 
-fn wrap_line(line: String, width: Int) -> String {
-  line
-  |> tokenize
-  |> split_pieces
-  |> wrap_pieces(width, [], 0, TerminalState([], ""), [])
-  |> string.join("\n")
+fn wrap_lines(
+  lines: List(String),
+  width: Int,
+  state: TerminalState,
+  wrapped: List(String),
+) -> List(String) {
+  case lines {
+    [] -> list.reverse(wrapped)
+    [line, ..rest] -> {
+      let #(line, state) = wrap_line(line, width, state)
+      wrap_lines(rest, width, state, [line, ..wrapped])
+    }
+  }
+}
+
+fn wrap_line(
+  line: String,
+  width: Int,
+  state: TerminalState,
+) -> #(String, TerminalState) {
+  let tokens = tokenize(line)
+  let final_state = terminal_state_after(tokens, state)
+  let wrapped =
+    tokens
+    |> split_pieces
+    |> wrap_pieces(width, start_line(state), 0, state, [])
+    |> string.join("\n")
+  #(wrapped, final_state)
 }
 
 fn wrap_pieces(
@@ -384,7 +406,7 @@ fn wrap_pieces(
     [] ->
       case current {
         [] -> list.reverse(lines)
-        _ -> list.reverse([finish_line(current, state), ..lines])
+        _ -> list.reverse([finish_line(current, state, False), ..lines])
       }
 
     [Spaces(tokens, spaces_width), ..rest] -> {
@@ -411,7 +433,7 @@ fn wrap_pieces(
 
             _ -> {
               let #(current, state) = append_controls(tokens, current, state)
-              let lines = [finish_line(current, state), ..lines]
+              let lines = [finish_line(current, state, True), ..lines]
               wrap_pieces(rest, width, start_line(state), 0, state, lines)
             }
           }
@@ -429,7 +451,7 @@ fn wrap_pieces(
             }
 
             _ -> {
-              let lines = [finish_line(current, state), ..lines]
+              let lines = [finish_line(current, state, True), ..lines]
               wrap_pieces(pieces, width, start_line(state), 0, state, lines)
             }
           }
@@ -449,7 +471,7 @@ fn wrap_pieces(
             }
 
             False -> {
-              let lines = [finish_line(current, state), ..lines]
+              let lines = [finish_line(current, state, True), ..lines]
               wrap_pieces(pieces, width, start_line(state), 0, state, lines)
             }
           }
@@ -490,7 +512,7 @@ fn wrap_long_piece_loop(
     [Visible(text, token_width, _), ..rest] ->
       case current_width > 0 && current_width + token_width > width {
         True -> {
-          let lines = [finish_line(current, state), ..lines]
+          let lines = [finish_line(current, state, True), ..lines]
           wrap_long_piece_loop(
             tokens,
             width,
@@ -544,12 +566,17 @@ fn append_controls(
   }
 }
 
-fn finish_line(current: List(String), state: TerminalState) -> String {
-  current
-  |> list.reverse
-  |> chars_to_string
-  |> trim_trailing_spaces
-  |> fn(line) { line <> close_terminal(state) }
+fn finish_line(
+  current: List(String),
+  state: TerminalState,
+  trim_spaces: Bool,
+) -> String {
+  let line = current |> list.reverse |> chars_to_string
+  let line = case trim_spaces {
+    True -> trim_trailing_spaces(line)
+    False -> line
+  }
+  line <> close_terminal(state)
 }
 
 fn close_terminal(state: TerminalState) -> String {
@@ -578,6 +605,18 @@ fn start_line(state: TerminalState) -> List(String) {
   case reopen_terminal(state) {
     "" -> []
     reopening -> [reopening]
+  }
+}
+
+fn terminal_state_after(
+  tokens: List(Token),
+  state: TerminalState,
+) -> TerminalState {
+  case tokens {
+    [] -> state
+    [Visible(_, _, _), ..rest] -> terminal_state_after(rest, state)
+    [Control(control), ..rest] ->
+      terminal_state_after(rest, update_terminal(state, control))
   }
 }
 

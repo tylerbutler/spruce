@@ -227,6 +227,11 @@ pub fn wrap_preserves_spaces_when_no_wrap_is_needed_test() {
   |> should.equal("  hello  world")
 }
 
+pub fn wrap_preserves_trailing_spaces_at_physical_line_end_test() {
+  align.wrap("a  \n   ", 80)
+  |> should.equal("a  \n   ")
+}
+
 pub fn wrap_hard_wraps_long_words_test() {
   align.wrap("abcdefgh", 3)
   |> should.equal("abc\ndef\ngh")
@@ -270,6 +275,59 @@ pub fn wrap_word_boundary_preserves_reset_after_space_test() {
 
   align.wrap(opening <> "abc " <> reset <> "def", 3)
   |> should.equal(opening <> "abc" <> reset <> "\ndef")
+}
+
+pub fn wrap_carries_sgr_across_physical_newline_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[39m"
+
+  align.wrap(opening <> "abc\ndef" <> reset <> "\nplain", 80)
+  |> should.equal(
+    opening <> "abc\u{001b}[0m\n" <> opening <> "def" <> reset <> "\nplain",
+  )
+}
+
+pub fn wrap_carries_osc_hyperlink_across_physical_newline_test() {
+  let open = "\u{001b}]8;;https://example.com\u{001b}\\"
+  let close = "\u{001b}]8;;\u{001b}\\"
+
+  align.wrap(open <> "abc\ndef" <> close <> "\nplain", 80)
+  |> should.equal(
+    open <> "abc" <> close <> "\n" <> open <> "def" <> close <> "\nplain",
+  )
+}
+
+pub fn wrap_carries_sgr_across_empty_physical_line_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[39m"
+
+  align.wrap(opening <> "a\n\nb" <> reset, 80)
+  |> should.equal(
+    opening
+    <> "a\u{001b}[0m\n"
+    <> opening
+    <> "\u{001b}[0m\n"
+    <> opening
+    <> "b"
+    <> reset,
+  )
+}
+
+pub fn wrap_carries_sgr_across_physical_and_inserted_wraps_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[39m"
+
+  align.wrap(opening <> "abcd\nef" <> reset <> "\nplain", 2)
+  |> should.equal(
+    opening
+    <> "ab\u{001b}[0m\n"
+    <> opening
+    <> "cd\u{001b}[0m\n"
+    <> opening
+    <> "ef"
+    <> reset
+    <> "\npl\nai\nn",
+  )
 }
 
 pub fn wrap_preserves_ansi_escape_sequences_test() {
