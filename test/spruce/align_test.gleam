@@ -26,8 +26,28 @@ pub fn visual_length_counts_zero_width_graphemes_as_zero_test() {
   |> should.equal(1)
 }
 
+pub fn visual_length_counts_flag_pair_as_two_columns_test() {
+  align.visual_length("🇺🇸")
+  |> should.equal(2)
+}
+
+pub fn visual_length_counts_emoji_presentation_as_two_columns_test() {
+  align.visual_length("☺️")
+  |> should.equal(2)
+}
+
 pub fn visual_length_terminates_non_sgr_csi_escape_test() {
   align.visual_length("\u{001b}[2Jabc")
+  |> should.equal(3)
+}
+
+pub fn visual_length_ignores_general_escape_sequence_test() {
+  align.visual_length("\u{001b}(Babc")
+  |> should.equal(3)
+}
+
+pub fn visual_length_ignores_st_control_string_test() {
+  align.visual_length("\u{001b}Pignored\u{001b}\\abc")
   |> should.equal(3)
 }
 
@@ -144,6 +164,45 @@ pub fn truncate_closes_unclosed_sgr_before_ellipsis_test() {
   |> should.equal(opening <> "abc\u{001b}[0m…")
 }
 
+pub fn truncate_does_not_treat_truecolor_zero_as_reset_test() {
+  let opening = "\u{001b}[38;2;0;0;0m"
+
+  align.truncate(opening <> "abcdef", width: 4, ellipsis: "…")
+  |> should.equal(opening <> "abc\u{001b}[0m…")
+}
+
+pub fn truncate_preserves_partial_sgr_reset_test() {
+  let bold_red = "\u{001b}[1;31m"
+  let foreground_reset = "\u{001b}[39m"
+
+  align.truncate(
+    bold_red <> "ab" <> foreground_reset <> "cdef",
+    width: 4,
+    ellipsis: "…",
+  )
+  |> should.equal(bold_red <> "ab" <> foreground_reset <> "c\u{001b}[0m…")
+}
+
+pub fn truncate_preserves_explicit_trailing_foreground_reset_test() {
+  let opening = "\u{001b}[31m"
+  let foreground_reset = "\u{001b}[39m"
+
+  align.truncate(
+    opening <> "abcdef" <> foreground_reset,
+    width: 4,
+    ellipsis: "…",
+  )
+  |> should.equal(opening <> "abc" <> foreground_reset <> "…")
+}
+
+pub fn truncate_closes_unclosed_osc_hyperlink_test() {
+  let open = "\u{001b}]8;;https://example.com\u{001b}\\"
+  let close = "\u{001b}]8;;\u{001b}\\"
+
+  align.truncate(open <> "abcdef", width: 4, ellipsis: "…")
+  |> should.equal(open <> "abc" <> close <> "…")
+}
+
 pub fn truncate_osc_hyperlink_counts_only_visible_text_test() {
   let open = "\u{001b}]8;;https://example.com\u{001b}\\"
   let close = "\u{001b}]8;;\u{001b}\\"
@@ -168,6 +227,11 @@ pub fn wrap_preserves_spaces_when_no_wrap_is_needed_test() {
   |> should.equal("  hello  world")
 }
 
+pub fn wrap_preserves_trailing_spaces_at_physical_line_end_test() {
+  align.wrap("a  \n   ", 80)
+  |> should.equal("a  \n   ")
+}
+
 pub fn wrap_hard_wraps_long_words_test() {
   align.wrap("abcdefgh", 3)
   |> should.equal("abc\ndef\ngh")
@@ -182,7 +246,88 @@ pub fn wrap_closes_unclosed_sgr_before_inserted_newline_test() {
   let opening = "\u{001b}[31m"
 
   align.wrap(opening <> "abcdef", 3)
-  |> should.equal(opening <> "abc\u{001b}[0m\ndef")
+  |> should.equal(opening <> "abc\u{001b}[0m\n" <> opening <> "def\u{001b}[0m")
+}
+
+pub fn wrap_reopens_sgr_after_hard_wrap_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[0m"
+
+  align.wrap(opening <> "abcdef" <> reset, 3)
+  |> should.equal(
+    opening <> "abc" <> reset <> "\n" <> opening <> "def" <> reset,
+  )
+}
+
+pub fn wrap_reopens_sgr_after_word_wrap_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[0m"
+
+  align.wrap(opening <> "abc def" <> reset, 3)
+  |> should.equal(
+    opening <> "abc" <> reset <> "\n" <> opening <> "def" <> reset,
+  )
+}
+
+pub fn wrap_word_boundary_preserves_reset_after_space_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[0m"
+
+  align.wrap(opening <> "abc " <> reset <> "def", 3)
+  |> should.equal(opening <> "abc" <> reset <> "\ndef")
+}
+
+pub fn wrap_carries_sgr_across_physical_newline_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[39m"
+
+  align.wrap(opening <> "abc\ndef" <> reset <> "\nplain", 80)
+  |> should.equal(
+    opening <> "abc\u{001b}[0m\n" <> opening <> "def" <> reset <> "\nplain",
+  )
+}
+
+pub fn wrap_carries_osc_hyperlink_across_physical_newline_test() {
+  let open = "\u{001b}]8;;https://example.com\u{001b}\\"
+  let close = "\u{001b}]8;;\u{001b}\\"
+
+  align.wrap(open <> "abc\ndef" <> close <> "\nplain", 80)
+  |> should.equal(
+    open <> "abc" <> close <> "\n" <> open <> "def" <> close <> "\nplain",
+  )
+}
+
+pub fn wrap_carries_sgr_across_empty_physical_line_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[39m"
+
+  align.wrap(opening <> "a\n\nb" <> reset, 80)
+  |> should.equal(
+    opening
+    <> "a\u{001b}[0m\n"
+    <> opening
+    <> "\u{001b}[0m\n"
+    <> opening
+    <> "b"
+    <> reset,
+  )
+}
+
+pub fn wrap_carries_sgr_across_physical_and_inserted_wraps_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[39m"
+
+  align.wrap(opening <> "abcd\nef" <> reset <> "\nplain", 2)
+  |> should.equal(
+    opening
+    <> "ab\u{001b}[0m\n"
+    <> opening
+    <> "cd\u{001b}[0m\n"
+    <> opening
+    <> "ef"
+    <> reset
+    <> "\npl\nai\nn",
+  )
 }
 
 pub fn wrap_preserves_ansi_escape_sequences_test() {
@@ -197,8 +342,8 @@ pub fn wrap_osc_hyperlink_counts_only_visible_text_test() {
   let close = "\u{001b}]8;;\u{001b}\\"
   let wrapped = align.wrap(open <> "abcdef" <> close, 3)
 
-  should.be_true(string.contains(wrapped, open))
-  should.be_true(string.contains(wrapped, close))
+  wrapped
+  |> should.equal(open <> "abc" <> close <> "\n" <> open <> "def" <> close)
   strip_terminal_escapes(wrapped)
   |> should.equal("abc\ndef")
 
@@ -209,6 +354,19 @@ pub fn wrap_osc_hyperlink_counts_only_visible_text_test() {
 pub fn wrap_width_zero_returns_input_test() {
   align.wrap("hello world", 0)
   |> should.equal("hello world")
+}
+
+pub fn wrap_large_unbroken_word_in_one_pass_test() {
+  let text = string.repeat("a", 40_000)
+  let wrapped = align.wrap(text, 80)
+
+  wrapped
+  |> string.replace("\n", "")
+  |> should.equal(text)
+  wrapped
+  |> string.split("\n")
+  |> list.length
+  |> should.equal(500)
 }
 
 // Hard-wrapping a single styled token that is longer than the width (as happens
@@ -257,9 +415,12 @@ fn escapes_well_formed(chars: List(String), in_escape: Bool) -> Bool {
 type EscapeState {
   NormalText
   EscapeStart
+  EscapeIntermediate
   CsiEscape
   OscEscape
   OscEscapeAfterEsc
+  StEscape
+  StEscapeAfterEsc
 }
 
 fn strip_terminal_escapes(text: String) -> String {
@@ -285,8 +446,21 @@ fn strip_terminal_escapes_loop(
           case char {
             "[" -> strip_terminal_escapes_loop(rest, CsiEscape, acc)
             "]" -> strip_terminal_escapes_loop(rest, OscEscape, acc)
+            "P" | "X" | "^" | "_" ->
+              strip_terminal_escapes_loop(rest, StEscape, acc)
             "\u{001b}" -> strip_terminal_escapes_loop(rest, EscapeStart, acc)
-            _ -> strip_terminal_escapes_loop(rest, NormalText, acc)
+            _ ->
+              case is_escape_intermediate(char) {
+                True ->
+                  strip_terminal_escapes_loop(rest, EscapeIntermediate, acc)
+                False -> strip_terminal_escapes_loop(rest, NormalText, acc)
+              }
+          }
+
+        EscapeIntermediate ->
+          case is_escape_final_byte(char) {
+            True -> strip_terminal_escapes_loop(rest, NormalText, acc)
+            False -> strip_terminal_escapes_loop(rest, EscapeIntermediate, acc)
           }
 
         CsiEscape ->
@@ -311,6 +485,21 @@ fn strip_terminal_escapes_loop(
               strip_terminal_escapes_loop(rest, OscEscapeAfterEsc, acc)
             _ -> strip_terminal_escapes_loop(rest, OscEscape, acc)
           }
+
+        StEscape ->
+          case char {
+            "\u{001b}" ->
+              strip_terminal_escapes_loop(rest, StEscapeAfterEsc, acc)
+            _ -> strip_terminal_escapes_loop(rest, StEscape, acc)
+          }
+
+        StEscapeAfterEsc ->
+          case char {
+            "\\" -> strip_terminal_escapes_loop(rest, NormalText, acc)
+            "\u{001b}" ->
+              strip_terminal_escapes_loop(rest, StEscapeAfterEsc, acc)
+            _ -> strip_terminal_escapes_loop(rest, StEscape, acc)
+          }
       }
   }
 }
@@ -321,6 +510,24 @@ fn is_csi_final(grapheme: String) -> Bool {
     [codepoint, ..] -> {
       let codepoint = string.utf_codepoint_to_int(codepoint)
       codepoint >= 0x40 && codepoint <= 0x7e
+    }
+  }
+}
+
+fn is_escape_intermediate(grapheme: String) -> Bool {
+  codepoint_in_range(grapheme, 0x20, 0x2f)
+}
+
+fn is_escape_final_byte(grapheme: String) -> Bool {
+  codepoint_in_range(grapheme, 0x30, 0x7e)
+}
+
+fn codepoint_in_range(grapheme: String, first: Int, last: Int) -> Bool {
+  case string.to_utf_codepoints(grapheme) {
+    [] -> False
+    [codepoint, ..] -> {
+      let codepoint = string.utf_codepoint_to_int(codepoint)
+      codepoint >= first && codepoint <= last
     }
   }
 }
