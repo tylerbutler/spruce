@@ -1,7 +1,7 @@
-//// Compact single-line message composition.
+//// Compact message composition.
 ////
 //// A `Line` wraps a main message with an optional timestamp, severity, scope,
-//// and key-value details, rendered to one styled line via `render`. Build one
+//// and key-value details, rendered to one styled block via `render`. Build one
 //// with `new` and the combinators in this module.
 
 import gleam/list
@@ -12,7 +12,7 @@ import spruce/detail.{type Details}
 import spruce/severity as severity_module
 import spruce/style
 
-/// A composable single-line message with optional prefixes and details.
+/// A composable message with optional prefixes and details.
 pub opaque type Line {
   Line(
     text: String,
@@ -64,9 +64,8 @@ pub fn details(line: Line, details: Details) -> Line {
   Line(..line, details: Some(details))
 }
 
-/// Render the compact line.
+/// Render the compact message, indenting every non-empty line.
 pub fn render(context: Spruce, line: Line) -> String {
-  let prefix = spruce.indent_prefix(context)
   let prefix_parts =
     []
     |> maybe_append(render_timestamp(context, line.timestamp))
@@ -83,7 +82,10 @@ pub fn render(context: Spruce, line: Line) -> String {
     _ -> string.join(prefix_parts, " ") <> " " <> line.text
   }
 
-  prefix <> head <> render_details_part(context, line.details)
+  indent_rendered(
+    head <> render_details_part(context, line.details),
+    spruce.indent_prefix(context),
+  )
 }
 
 fn maybe_append(items: List(String), item: Option(String)) -> List(String) {
@@ -100,8 +102,25 @@ fn render_timestamp(
 ) -> Option(String) {
   case timestamp {
     None -> None
+    Some("") -> None
     Some(timestamp) ->
       Some(style.render(context, style.new() |> style.dim, timestamp))
+  }
+}
+
+fn indent_rendered(text: String, prefix: String) -> String {
+  case prefix {
+    "" -> text
+    _ ->
+      text
+      |> string.split("\n")
+      |> list.map(fn(line) {
+        case line {
+          "" -> ""
+          _ -> prefix <> line
+        }
+      })
+      |> string.join("\n")
   }
 }
 

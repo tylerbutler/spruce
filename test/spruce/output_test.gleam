@@ -1,3 +1,4 @@
+import gleam/string
 import gleeunit/should
 import spruce
 import spruce/message
@@ -64,6 +65,23 @@ pub fn nested_groups_test() {
   |> should.equal("▸ Outer\n  ℹ︎ info a\n  ▸ Inner\n    ℹ︎ info b")
 }
 
+pub fn nested_groups_indent_multiline_blocks_test() {
+  spruce.no_color()
+  |> output.new
+  |> output.group("Outer\nmore", fn(buffer) {
+    buffer
+    |> output.append(message.info(_, "a\nb"))
+    |> output.group("Inner\nmore", fn(buffer) {
+      buffer |> output.append(message.info(_, "c\nd"))
+    })
+  })
+  |> output.append(message.success(_, "done"))
+  |> output.to_string
+  |> should.equal(
+    "▸ Outer\nmore\n  ℹ︎ info a\n  b\n  ▸ Inner\n  more\n    ℹ︎ info c\n    d\n✔ success done",
+  )
+}
+
 pub fn context_reflects_group_depth_test() {
   spruce.no_color()
   |> output.new
@@ -102,6 +120,20 @@ pub fn stream_group_with_writes_title_and_preserves_body_error_test() {
   |> should.equal(Error("body failed"))
 }
 
+pub fn stream_group_with_indents_multiline_title_and_body_test() {
+  let context = spruce.no_color() |> spruce.indented
+
+  output.stream_group_with(
+    context,
+    "Build\nmore",
+    fn(rendered) { should.equal(rendered, "  ▸ Build\n  more") },
+    fn(inner) {
+      message.success(inner, "a\n\nb\n")
+      |> should.equal("    ✔ success a\n\n    b\n")
+    },
+  )
+}
+
 pub fn print_with_writes_output_and_returns_sink_result_test() {
   spruce.no_color()
   |> output.new
@@ -118,6 +150,23 @@ pub fn title_is_indented_and_marked_test() {
   |> spruce.indented
   |> output.title("Build")
   |> should.equal("  ▸ Build")
+}
+
+pub fn title_preserves_blank_and_trailing_lines_test() {
+  spruce.no_color()
+  |> spruce.indented
+  |> output.title("Build\n\nmore\n")
+  |> should.equal("  ▸ Build\n\n  more\n")
+}
+
+pub fn colored_multiline_title_uses_context_indent_test() {
+  let rendered =
+    spruce.with_color_level(spruce.Basic)
+    |> spruce.indented
+    |> output.title("Build\nmore")
+
+  should.be_true(string.contains(rendered, "\n  more"))
+  should.be_true(string.contains(rendered, "\u{001b}"))
 }
 
 pub fn title_uses_ascii_arrow_in_ascii_mode_test() {

@@ -40,6 +40,20 @@ pub fn warn_indented_test() {
   |> should.equal("  ⚠ warn careful")
 }
 
+pub fn multiline_message_uses_context_indent_test() {
+  spruce.no_color()
+  |> spruce.indented
+  |> message.success("a\nb")
+  |> should.equal("  ✔ success a\n  b")
+}
+
+pub fn multiline_message_preserves_blank_and_trailing_lines_test() {
+  spruce.no_color()
+  |> spruce.indented
+  |> message.success("a\n\nb\n")
+  |> should.equal("  ✔ success a\n\n  b\n")
+}
+
 pub fn error_no_color_test() {
   spruce.no_color()
   |> message.error("broken")
@@ -57,6 +71,16 @@ pub fn label_is_bold_and_colored_test() {
   let rendered = message.warn(spruce.with_color_level(spruce.Basic), "careful")
   should.be_true(string.contains(rendered, "\u{001b}[1m"))
   should.be_true(string.contains(rendered, "\u{001b}[33m"))
+}
+
+pub fn colored_multiline_message_uses_context_indent_test() {
+  let rendered =
+    spruce.with_color_level(spruce.Basic)
+    |> spruce.indented
+    |> message.success("a\nb")
+
+  should.be_true(string.contains(rendered, "\n  b"))
+  should.be_true(string.contains(rendered, "\u{001b}"))
 }
 
 pub fn ascii_mode_uses_ascii_icons_test() {

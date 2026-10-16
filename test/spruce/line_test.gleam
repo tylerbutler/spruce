@@ -45,6 +45,34 @@ pub fn line_uses_context_indent_test() {
   |> should.equal("  nested")
 }
 
+pub fn multiline_line_uses_context_indent_test() {
+  spruce.no_color()
+  |> spruce.indented
+  |> line.render(line.new("a\nb"))
+  |> should.equal("  a\n  b")
+}
+
+pub fn multiline_line_preserves_blank_and_trailing_lines_test() {
+  spruce.no_color()
+  |> spruce.indented
+  |> line.render(line.new("a\n\nb\n"))
+  |> should.equal("  a\n\n  b\n")
+}
+
+pub fn empty_timestamp_is_absent_at_all_color_levels_test() {
+  assert_empty_timestamp(spruce.no_color())
+  assert_empty_timestamp(spruce.with_color_level(spruce.Basic))
+  assert_empty_timestamp(spruce.with_color_level(spruce.Ansi256))
+  assert_empty_timestamp(spruce.with_color_level(spruce.TrueColor))
+}
+
+pub fn real_timestamp_is_preserved_with_color_test() {
+  line.new("x")
+  |> line.timestamp("now")
+  |> line.render(spruce.with_color_level(spruce.Basic), _)
+  |> should.equal("\u{001b}[2mnow\u{001b}[22m x")
+}
+
 pub fn colored_line_dims_timestamp_scope_and_details_test() {
   let rendered =
     line.new("Request complete")
@@ -56,4 +84,11 @@ pub fn colored_line_dims_timestamp_scope_and_details_test() {
   should.be_true(string.contains(rendered, "\u{001b}"))
   should.be_true(string.contains(rendered, "[api]"))
   should.be_true(string.contains(rendered, "status=200"))
+}
+
+fn assert_empty_timestamp(context: spruce.Spruce) -> Nil {
+  let absent = line.new("x") |> line.render(context, _)
+  let empty = line.new("x") |> line.timestamp("") |> line.render(context, _)
+
+  should.equal(empty, absent)
 }
