@@ -406,12 +406,18 @@ fn render_bg_ansi256(
 
 fn render_fg_ansi256_sequence(text: String, index: Int) -> String {
   let index = clamp_ansi256_index(index)
-  "\u{001b}[38;5;" <> int.to_string(index) <> "m" <> text <> "\u{001b}[39m"
+  let open = "\u{001b}[38;5;" <> int.to_string(index) <> "m"
+  render_ansi_sequence(text, open, "\u{001b}[39m")
 }
 
 fn render_bg_ansi256_sequence(text: String, index: Int) -> String {
   let index = clamp_ansi256_index(index)
-  "\u{001b}[48;5;" <> int.to_string(index) <> "m" <> text <> "\u{001b}[49m"
+  let open = "\u{001b}[48;5;" <> int.to_string(index) <> "m"
+  render_ansi_sequence(text, open, "\u{001b}[49m")
+}
+
+fn render_ansi_sequence(text: String, open: String, close: String) -> String {
+  open <> string.replace(text, close, open) <> close
 }
 
 fn clamp_ansi256_index(index: Int) -> Int {
@@ -621,7 +627,15 @@ fn rgb_to_ansi256_grayscale_index(rgb: RgbValue) -> Int {
 }
 
 fn quantize_ansi256_cube_channel(value: Int) -> Int {
-  { clamp_component(value) * 5 + 127 } / 255
+  // The ANSI cube channels are 0, 95, 135, 175, 215, and 255.
+  case clamp_component(value) {
+    value if value <= 47 -> 0
+    value if value <= 115 -> 1
+    value if value <= 155 -> 2
+    value if value <= 195 -> 3
+    value if value <= 235 -> 4
+    _ -> 5
+  }
 }
 
 fn render_bold(text: String, enabled: Bool) -> String {

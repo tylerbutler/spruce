@@ -1,5 +1,6 @@
 import gleam/list
 import gleam/string
+import gleam_community/ansi
 import gleeunit/should
 import spruce
 import spruce/style
@@ -207,7 +208,7 @@ pub fn render_ansi256_rgb_uses_nearest_256_color_sequence_test() {
     style.new() |> style.fg(style.Rgb(135, 75, 253)),
     "x",
   )
-  |> should.equal("\u{001b}[38;5;135mx\u{001b}[39m")
+  |> should.equal("\u{001b}[38;5;99mx\u{001b}[39m")
 }
 
 pub fn render_ansi256_hex_uses_nearest_256_color_sequence_test() {
@@ -216,7 +217,136 @@ pub fn render_ansi256_hex_uses_nearest_256_color_sequence_test() {
     style.new() |> style.fg(style.Hex(0x874BFD)),
     "x",
   )
-  |> should.equal("\u{001b}[38;5;135mx\u{001b}[39m")
+  |> should.equal("\u{001b}[38;5;99mx\u{001b}[39m")
+}
+
+pub fn render_ansi256_rgb_uses_exact_cube_channel_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.fg(style.Rgb(95, 0, 0)),
+    "x",
+  )
+  |> should.equal("\u{001b}[38;5;52mx\u{001b}[39m")
+}
+
+pub fn render_ansi256_hex_bg_uses_exact_cube_channels_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.bg(style.Hex(0x5F87AF)),
+    "x",
+  )
+  |> should.equal("\u{001b}[48;5;67mx\u{001b}[49m")
+}
+
+pub fn render_ansi256_rgb_cube_channel_tie_uses_lower_channel_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.fg(style.Rgb(115, 0, 0)),
+    "x",
+  )
+  |> should.equal("\u{001b}[38;5;52mx\u{001b}[39m")
+}
+
+pub fn render_ansi256_rgb_cube_grayscale_tie_uses_cube_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.fg(style.Rgb(0, 0, 12)),
+    "x",
+  )
+  |> should.equal("\u{001b}[38;5;16mx\u{001b}[39m")
+}
+
+pub fn render_ansi256_rgb_uses_exact_grayscale_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.fg(style.Rgb(128, 128, 128)),
+    "x",
+  )
+  |> should.equal("\u{001b}[38;5;244mx\u{001b}[39m")
+}
+
+pub fn render_ansi256_rgb_clamps_components_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.fg(style.Rgb(-20, 300, 0)),
+    "x",
+  )
+  |> should.equal("\u{001b}[38;5;46mx\u{001b}[39m")
+}
+
+pub fn render_ansi256_hex_clamps_value_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.bg(style.Hex(0x1000000)),
+    "x",
+  )
+  |> should.equal("\u{001b}[48;5;231mx\u{001b}[49m")
+}
+
+pub fn render_basic_outer_color_survives_inner_reset_test() {
+  style.render(
+    spruce.with_color_level(spruce.Basic),
+    style.new() |> style.fg(style.Ansi256(200)),
+    "before " <> ansi.red("inner") <> " after",
+  )
+  |> should.equal(
+    "\u{001b}[95mbefore \u{001b}[31minner\u{001b}[95m after\u{001b}[39m",
+  )
+}
+
+pub fn render_ansi256_outer_fg_survives_inner_reset_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.fg(style.Ansi256(200)) |> style.bold,
+    "before " <> ansi.red("inner") <> " after",
+  )
+  |> should.equal(
+    "\u{001b}[1m\u{001b}[38;5;200mbefore \u{001b}[31minner\u{001b}[38;5;200m after\u{001b}[39m\u{001b}[22m",
+  )
+}
+
+pub fn render_ansi256_outer_bg_survives_inner_reset_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.bg(style.Ansi256(200)) |> style.underline,
+    "before " <> ansi.bg_red("inner") <> " after",
+  )
+  |> should.equal(
+    "\u{001b}[4m\u{001b}[48;5;200mbefore \u{001b}[41minner\u{001b}[48;5;200m after\u{001b}[49m\u{001b}[24m",
+  )
+}
+
+pub fn render_truecolor_outer_color_survives_inner_reset_test() {
+  style.render(
+    spruce.with_color_level(spruce.TrueColor),
+    style.new() |> style.fg(style.Ansi256(200)),
+    "before " <> ansi.red("inner") <> " after",
+  )
+  |> should.equal(
+    "\u{001b}[38;2;255;0;215mbefore \u{001b}[31minner\u{001b}[38;2;255;0;215m after\u{001b}[39m",
+  )
+}
+
+pub fn render_ansi256_rgb_outer_fg_survives_inner_reset_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.fg(style.Rgb(95, 0, 0)),
+    "before " <> ansi.red("inner") <> " after",
+  )
+  |> should.equal(
+    "\u{001b}[38;5;52mbefore \u{001b}[31minner\u{001b}[38;5;52m after\u{001b}[39m",
+  )
+}
+
+pub fn render_ansi256_hex_outer_bg_survives_inner_reset_test() {
+  style.render(
+    spruce.with_color_level(spruce.Ansi256),
+    style.new() |> style.bg(style.Hex(0x5F87AF)),
+    "before " <> ansi.bg_red("inner") <> " after",
+  )
+  |> should.equal(
+    "\u{001b}[48;5;67mbefore \u{001b}[41minner\u{001b}[48;5;67m after\u{001b}[49m",
+  )
 }
 
 pub fn render_ansi256_fg_and_bg_keep_separate_resets_test() {
