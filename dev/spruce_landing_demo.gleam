@@ -16,7 +16,7 @@ fn mark(name: String) -> Nil {
   io.println("\u{0001}" <> name)
 }
 
-fn render_hero(context: spruce.Spruce) {
+fn render_hero(context: spruce.Spruce) -> Nil {
   box.print(context, "spruce")
   io.println(
     style.new()
@@ -32,7 +32,7 @@ fn render_hero(context: spruce.Spruce) {
   })
 }
 
-pub fn main() {
+pub fn main() -> Nil {
   let context = spruce.with_color_level(spruce.TrueColor)
 
   mark("hero")
