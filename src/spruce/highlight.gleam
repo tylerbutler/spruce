@@ -3,6 +3,7 @@
 //// Use `language` to resolve a canonical name or alias, `language_name` to
 //// inspect the result, and `languages` to discover all supported names.
 
+import gleam/bool
 import gleam/list
 import gleam/string
 import smalto
@@ -192,6 +193,7 @@ pub fn highlight(
   code code: String,
   name name: String,
 ) -> String {
+  use <- bool.guard(when: !spruce.supports_color(context), return: code)
   highlight_named_with(context, code:, name:, theme: adaptive_theme())
 }
 
@@ -202,6 +204,7 @@ pub fn highlight_named_with(
   name name: String,
   theme theme: Theme,
 ) -> String {
+  use <- bool.guard(when: !spruce.supports_color(context), return: code)
   case language(name) {
     Ok(language) -> highlight_with(context, code, language, theme)
     Error(Nil) -> code
@@ -215,6 +218,7 @@ pub fn highlight_with(
   language: Language,
   theme: Theme,
 ) -> String {
+  use <- bool.guard(when: !spruce.supports_color(context), return: code)
   smalto.to_tokens(code, language.grammar)
   |> list.map(render_token(context, _, theme))
   |> string.join("")

@@ -74,6 +74,38 @@ pub fn no_color_preserves_multiline_whitespace_test() {
   |> should.equal(code)
 }
 
+pub fn no_color_large_highlight_returns_source_test() {
+  let code = large_source()
+
+  highlight.highlight(spruce.no_color(), code: code, name: "gleam")
+  |> should.equal(code)
+}
+
+pub fn no_color_large_named_highlight_returns_source_test() {
+  let code = large_source()
+
+  highlight.highlight_named_with(
+    spruce.no_color(),
+    code: code,
+    name: "gleam",
+    theme: highlight.dark_theme(),
+  )
+  |> should.equal(code)
+}
+
+pub fn no_color_large_resolved_highlight_returns_source_test() {
+  let code = large_source()
+  let assert Ok(language) = highlight.language("gleam")
+
+  highlight.highlight_with(
+    spruce.no_color(),
+    code,
+    language,
+    highlight.light_theme(),
+  )
+  |> should.equal(code)
+}
+
 pub fn theme_constructors_work_with_language_test() {
   let code = "pub fn main() {}"
   let assert_theme = fn(theme) {
@@ -147,6 +179,10 @@ pub fn custom_theme_can_be_constructed_test() {
     theme:,
   )
   |> should.equal("pub fn main() {}")
+}
+
+fn large_source() -> String {
+  string.repeat("let name = \"héllo 🌲\" // comment\n\n  \t", 2000)
 }
 
 fn result_is_ok(result: Result(a, b)) -> Bool {
