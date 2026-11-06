@@ -4,3 +4,4 @@ workbench/build/
 *.local
 .vite
 *.tsbuildinfo
+.wrangler

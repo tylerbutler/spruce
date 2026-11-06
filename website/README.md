@@ -22,11 +22,37 @@ Source samples in `code-samples/` are rendered at build time with Expressive
 Code and Shiki's bundled Gleam grammar. `npm run generate:code` writes static
 HTML and CSS under `src/data/`; `npm run dev` and `npm run build` regenerate them automatically.
 
-## Netlify
+## Cloudflare Workers
 
-The root `netlify.toml` builds from `website/` and publishes `website/dist/`.
-Netlify installs npm dependencies, then `scripts/netlify-build.sh` provides
-Gleam 1.16.0 when needed and runs the normal `npm run build` command.
+Connect `tylerbutler/spruce` to a Worker in the Cloudflare dashboard with these
+Workers Builds settings:
+
+| Setting | Value |
+| --- | --- |
+| Worker name | `spruce-website` (must match `wrangler.jsonc`) |
+| Production branch | `main` |
+| Root directory | `website` |
+| Build command | `npm run build` |
+| Deploy command | `npm run deploy` |
+| Build variable | `NODE_VERSION=22.22.3` |
+
+Keep automatic dependency installation enabled. Cloudflare installs npm
+dependencies, then `scripts/build.sh` installs Gleam 1.16.0 when
+needed, generates code samples, compiles the workbench, and builds `dist/`.
+Cloudflare serves those files as Worker static assets; no Worker entry point
+or server-side rendering is needed. The default HTML handling keeps
+`/workbench/` as a separate page.
+
+Workers Builds does not include Erlang. `npm run build` uses the committed terminal
+snapshots. GitHub CI checks those
+snapshots against both Erlang and JavaScript output. Run `npm run generate:terminal`
+and commit the updated snapshots when terminal output changes.
+
+For a manual deployment from `website/`, run `npm run build`,
+`npx wrangler login`, and `npm run deploy`.
+After you verify the Cloudflare deployment, add the existing site domain under
+the Worker's **Settings > Domains & Routes** and disable Netlify deployments.
+Keep Netlify active until you confirm that the domain serves the Cloudflare site.
 
 ## Interactive workbench
 
@@ -52,4 +78,4 @@ checks that their output matches, and converts the ANSI output span-for-span
 into `src/data/terminalBlocks.ts`. It writes the file only when the output
 changes. Run it locally after output changes and commit the result.
 `npm run check:terminal` makes CI fail when the checked-in snapshot is stale.
-The root `just build` recipe and website deployment builds regenerate it.
+The root `just build` recipe regenerates it. Website builds use the committed file.
