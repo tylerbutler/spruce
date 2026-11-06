@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Netlify installs npm dependencies before this script runs. Its build image
-# does not include Gleam, which the website prebuild hook requires.
+# Workers Builds installs npm dependencies before this script runs.
+# Its build image does not include Gleam or Erlang.
 set -euo pipefail
 
 GLEAM_VERSION="${GLEAM_VERSION:-1.16.0}"
@@ -27,4 +27,8 @@ if ! command -v gleam >/dev/null 2>&1; then
 fi
 
 gleam --version
-npm run build
+npm run generate:code
+npm run build:gleam
+# CI checks the committed terminal snapshots on both targets.
+tsc -b
+vite build
