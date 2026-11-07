@@ -47,6 +47,12 @@ Workers Builds settings:
 | Deploy command | `npm run deploy` |
 | Build variable | `NODE_VERSION=22.22.3` |
 
+Local tools use the repository's `.mise.toml`. Do not commit a `.tool-versions`
+file: Workers Builds detects it at the repository root and attempts to install
+its tools before `npm run build` runs. The failed build stopped at this stage,
+so the build script's Gleam installer could not run. The root `.tool-versions`
+path is ignored to prevent a local file from being committed again.
+
 Keep automatic dependency installation enabled. Cloudflare installs npm
 dependencies, then `scripts/build.sh` installs Gleam 1.16.0 when
 needed, generates code samples, compiles the workbench, and builds `dist/`.

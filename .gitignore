@@ -22,6 +22,7 @@ Thumbs.db
 
 # Local settings
 .claude/settings.local.json
+/.tool-versions
 
 
 # APM dependencies
