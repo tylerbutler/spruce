@@ -16,6 +16,17 @@ npm run preview  # serve the built site
 The output is a static site in `dist/`, deployable to GitHub Pages or any static
 host. `base` is relative, so it works from a subpath.
 
+## Social previews
+
+The home and workbench pages share `public/og-image.png`, a 1200 x 630 social
+preview. Both pages include Open Graph and Twitter card metadata, with absolute
+image and canonical URLs for `https://spruce.tylerbutler.com`.
+
+To update the image, open `tools/social-preview.html` in a browser and capture
+the `article` element at 1200 x 630 pixels with a device scale factor of 1.
+Save the PNG as `public/og-image.png`. The source uses the site's logo, colors,
+and system fonts and needs no image-generation service.
+
 ## Syntax-highlighted code
 
 Source samples in `code-samples/` are rendered at build time with Expressive
