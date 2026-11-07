@@ -45,7 +45,11 @@ Workers Builds settings:
 | Root directory | `website` |
 | Build command | `npm run build` |
 | Deploy command | `npm run deploy` |
+| Preview command | `npx wrangler preview` |
 | Build variable | `NODE_VERSION=22.22.3` |
+
+The empty `previews` block in `wrangler.jsonc` enables branch previews.
+Static assets and compatibility settings stay at the top level.
 
 Local tools use the repository's `.mise.toml`. Do not commit a `.tool-versions`
 file: Workers Builds detects it at the repository root and attempts to install
