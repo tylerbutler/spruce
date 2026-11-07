@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>spruce social preview source</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      article {
+        width: 1200px;
+        height: 630px;
+        padding: 64px 72px;
+        position: relative;
+        overflow: hidden;
+        background: #0c100e;
+        color: #e7ede9;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      h1 { margin: 0; font-size: 96px; line-height: 1; letter-spacing: -0.02em; font-weight: 660; }
+      .description { margin: 22px 0 0; color: #95a59c; font-size: 28px; }
+      h2 { margin: 64px 0 0; font-size: 48px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 650; }
+      h2 span { color: #4cb782; }
+      img { position: absolute; right: 80px; top: 76px; width: 272px; height: auto; }
+      footer {
+        position: absolute;
+        bottom: 60px;
+        left: 72px;
+        right: 72px;
+        border-top: 1px solid rgba(231, 241, 235, 0.16);
+        padding-top: 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 23px;
+        color: #95a59c;
+      }
+      code { font-family: "SF Mono", Menlo, Consolas, monospace; color: #e7ede9; }
+      .prompt { color: #4cb782; }
+    </style>
+  </head>
+  <body>
+    <!-- Extends the site's Quiet Terminal Bench: existing logo, green-black
+         palette, and real install command. Keep the 1200 x 630 frame fixed. -->
+    <article aria-label="spruce social preview">
+      <h1>spruce</h1>
+      <p class="description">A terminal-UI kit for Gleam.</p>
+      <h2>One render path.<br /><span>Every terminal.</span></h2>
+      <img src="../public/spruce.png" alt="spruce tree and terminal logo" />
+      <footer>
+        <code><span class="prompt">$</span> gleam add spruce</code>
+        <span>spruce.tylerbutler.com</span>
+      </footer>
+    </article>
+  </body>
+</html>
