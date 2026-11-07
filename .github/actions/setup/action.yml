@@ -3,11 +3,11 @@ description: "Common setup steps for Gleam CI jobs"
 
 inputs:
   otp-version:
-    description: "Erlang/OTP version. When empty, .tool-versions is used."
+    description: "Erlang/OTP version. When either BEAM version is empty, CI defaults are used."
     required: false
     default: ""
   gleam-version:
-    description: "Gleam version. When empty, .tool-versions is used."
+    description: "Gleam version. When either BEAM version is empty, CI defaults are used."
     required: false
     default: ""
   node:
@@ -39,11 +39,12 @@ runs:
         gleam-version: ${{ inputs.gleam-version }}
         rebar3-version: "3"
 
-    - name: Setup BEAM (from .tool-versions)
+    - name: Setup BEAM (CI defaults)
       if: inputs.otp-version == '' || inputs.gleam-version == ''
       uses: erlef/setup-beam@fc68ffb90438ef2936bbb3251622353b3dcb2f93 # ratchet:erlef/setup-beam@v1
       with:
-        version-file: .tool-versions
+        otp-version: "27.2.1"
+        gleam-version: "1.16.0"
         version-type: strict
 
     - name: Setup Node.js

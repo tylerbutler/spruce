@@ -6,6 +6,17 @@
 - Erlang/OTP 26 or newer for the Erlang target
 - Node.js 20.19 or newer for the JavaScript target
 
+Use [mise](https://mise.jdx.dev/) to install the local tools from `.mise.toml`:
+
+```sh
+mise trust
+mise install
+```
+
+Activate mise in your shell, or use `mise exec -- just ci`. Local development
+uses Erlang/OTP 28. The shared CI setup keeps Erlang/OTP 27.2.1 and Gleam
+1.16.0 as defaults; the test matrix checks Erlang/OTP 26, 27, and 28.
+
 ## Common commands
 
 - `just build` — compile the package
