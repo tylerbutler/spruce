@@ -39,7 +39,8 @@ type SgrCategory {
   Foreground
   Background
   UnderlineColor
-  Intensity
+  Bold
+  Dim
   Italic
   Underline
   Blink
@@ -353,7 +354,8 @@ pub fn truncate(
 ///
 /// ANSI escape sequences do not count toward the width and are never split.
 /// Active SGR styles and OSC 8 hyperlinks are closed and reopened at output
-/// line boundaries.
+/// line boundaries. Bold and dim remain active together until SGR 22 or a full
+/// reset clears both.
 /// Words longer than `width` are hard-wrapped at visible column boundaries.
 /// Widths less than or equal to zero return the input unchanged.
 pub fn wrap(text: String, width: Int) -> String {
@@ -896,7 +898,7 @@ fn update_sgr_parameter(
   let code = parameter |> int.parse |> result.unwrap(-1)
   case code {
     0 -> []
-    22 -> remove_sgr(settings, Intensity)
+    22 -> settings |> remove_sgr(Bold) |> remove_sgr(Dim)
     23 -> remove_sgr(settings, Italic)
     24 -> remove_sgr(settings, Underline)
     25 -> remove_sgr(settings, Blink)
@@ -914,7 +916,8 @@ fn update_sgr_parameter(
 
 fn sgr_category(code: Int) -> SgrCategory {
   case code {
-    1 | 2 -> Intensity
+    1 -> Bold
+    2 -> Dim
     3 -> Italic
     4 | 21 -> Underline
     5 | 6 -> Blink
