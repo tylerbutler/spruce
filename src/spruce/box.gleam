@@ -170,6 +170,7 @@ pub fn width(box: Box, width: Int) -> Box {
 /// Constrain content to a line count.
 /// Short content is padded with blank lines using vertical alignment; tall
 /// content is truncated from the bottom after wrapping.
+/// A height of zero removes content rows but keeps width, padding, and borders.
 pub fn height(box: Box, height: Int) -> Box {
   Box(..box, height: Some(non_negative(height)))
 }
@@ -261,7 +262,7 @@ fn content_region(
   content: String,
   box: Box,
   title: String,
-) -> List(String) {
+) -> #(Int, List(String)) {
   let wrapped = case box.width {
     Some(width) if width > 0 -> align.wrap(content, width)
     Some(_) | None -> content
@@ -292,9 +293,11 @@ fn content_region(
       |> string.split("\n")
   }
 
-  list.map(placed, fn(line) {
-    style.render(context, color_style(box.foreground), line)
-  })
+  let lines =
+    list.map(placed, fn(line) {
+      style.render(context, color_style(box.foreground), line)
+    })
+  #(region_width, lines)
 }
 
 fn title_min_width(box: Box, title: String) -> Int {
@@ -319,11 +322,11 @@ fn background_style(box: Box) -> style.Style {
 }
 
 fn apply_padding(
-  lines: List(String),
+  region: #(Int, List(String)),
   context: Spruce,
   box: Box,
-) -> List(String) {
-  let content_width = find_max_width(lines)
+) -> #(Int, List(String)) {
+  let #(content_width, lines) = region
   let padded_width = content_width + box.padding_left + box.padding_right
   let blank = string.repeat(" ", padded_width)
   let body =
@@ -333,18 +336,21 @@ fn apply_padding(
       <> string.repeat(" ", box.padding_right)
     })
 
-  list.repeat(blank, box.padding_top)
-  |> list.append(body)
-  |> list.append(list.repeat(blank, box.padding_bottom))
-  |> list.map(fn(line) { style.render(context, background_style(box), line) })
+  let lines =
+    list.repeat(blank, box.padding_top)
+    |> list.append(body)
+    |> list.append(list.repeat(blank, box.padding_bottom))
+    |> list.map(fn(line) { style.render(context, background_style(box), line) })
+  #(padded_width, lines)
 }
 
 fn apply_border(
-  lines: List(String),
+  region: #(Int, List(String)),
   context: Spruce,
   box: Box,
   title: String,
 ) -> List(String) {
+  let #(inner_width, lines) = region
   use <- bool.guard(when: box.border == border.Hidden, return: lines)
 
   let sides =
@@ -355,7 +361,6 @@ fn apply_border(
       left: box.border_left,
     )
   let chars = border.chars(box.border)
-  let inner_width = find_max_width(lines)
   let paint_top = border_painter(context, box.border_top_color)
   let paint_right = border_painter(context, box.border_right_color)
   let paint_bottom = border_painter(context, box.border_bottom_color)

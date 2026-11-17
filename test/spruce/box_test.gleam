@@ -241,6 +241,84 @@ pub fn box_height_truncates_tall_content_test() {
   |> should.equal("a\nb")
 }
 
+pub fn box_zero_height_preserves_title_width_test() {
+  let options = box.new() |> box.title("Title") |> box.height(0)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╭─ Title ╮\n╰────────╯")
+}
+
+pub fn box_zero_height_preserves_explicit_width_test() {
+  let options = box.new() |> box.width(5) |> box.height(0)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╭───────╮\n╰───────╯")
+}
+
+pub fn box_zero_height_padding_uses_region_width_test() {
+  let options =
+    box.new()
+    |> box.title("Title")
+    |> box.height(0)
+    |> box.padding(top: 1, right: 2, bottom: 1, left: 1)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╭─ Title ╮\n│        │\n│        │\n╰────────╯")
+
+  box.render(spruce.no_color(), "x", options |> box.width(7))
+  |> should.equal("╭─ Title ──╮\n│          │\n│          │\n╰──────────╯")
+}
+
+pub fn box_zero_height_hidden_border_ignores_title_test() {
+  let options =
+    box.plain()
+    |> box.title("Long title")
+    |> box.width(3)
+    |> box.height(0)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("")
+
+  box.render(
+    spruce.no_color(),
+    "x",
+    options |> box.padding(top: 1, right: 1, bottom: 1, left: 1),
+  )
+  |> should.equal("     \n     ")
+}
+
+pub fn box_zero_height_hidden_top_ignores_title_test() {
+  let options =
+    box.plain()
+    |> box.border(border.Rounded)
+    |> box.title("Long title")
+    |> box.width(3)
+    |> box.height(0)
+    |> box.border_sides(top: False, right: True, bottom: True, left: True)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╰───╯")
+}
+
+pub fn box_zero_height_omits_hidden_side_corners_test() {
+  let options =
+    box.new()
+    |> box.title("Title")
+    |> box.height(0)
+    |> box.border_sides(top: True, right: False, bottom: True, left: True)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╭─ Title \n╰────────")
+
+  box.render(
+    spruce.no_color(),
+    "x",
+    options
+      |> box.border_sides(top: True, right: True, bottom: True, left: False),
+  )
+  |> should.equal("─ Title ╮\n────────╯")
+}
+
 pub fn bordered_box_title_widens_aligned_content_test() {
   let options =
     box.new()
