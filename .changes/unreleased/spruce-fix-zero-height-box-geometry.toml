@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Keep title width, explicit width, and padding when a box has zero content height."

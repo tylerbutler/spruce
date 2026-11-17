@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Render Markdown ordered lists that start at 1 with numbers instead of bullets, including nested lists and width-constrained output."

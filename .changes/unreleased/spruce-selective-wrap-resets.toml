@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Preserve unrelated outer styles in Markdown headings, quotes, and box backgrounds when `align.wrap` wraps recognized ANSI styles. Unknown SGR settings still require a full reset and can clear outer styles."

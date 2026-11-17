@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Count 60 additional wide BMP emoji, including ✅, ❌, ✨, and ⭐, as two columns in padding, wrapping, truncation, boxes, and tables."

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.2 - 2026-11-17
+
+### Fixed
+
+- Fix link previews for the website and workbench with a branded image and page-specific sharing metadata.
+- Count 60 additional wide BMP emoji, including ✅, ❌, ✨, and ⭐, as two columns in padding, wrapping, truncation, boxes, and tables.
+- Prevent overflow spaces from adding blank lines in `align.wrap`. Keep explicit blank lines, trailing newlines, and spacing that fits; limit space-only lines to the requested width.
+- Render Markdown ordered lists that start at 1 with numbers instead of bullets, including nested lists and width-constrained output.
+- Keep title width, explicit width, and padding when a box has zero content height.
+- Keep multiline box content styles on every line without leaking into alignment, padding, or borders.
+- Restore outer bold and dim attributes after nested styled spans, including inline code in Markdown headings and strong text.
+- Treat CRLF pairs as LF in multiline `align`, box, and table layout to prevent extra columns and misplaced borders. Standalone carriage returns and `align.wrap` input at zero or negative widths remain unchanged.
+- Preserve both bold and dim on continuation lines in `align.wrap`, including word wraps, hard wraps, and explicit line breaks.
+- Preserve unrelated outer styles in Markdown headings, quotes, and box backgrounds when `align.wrap` wraps recognized ANSI styles. Unknown SGR settings still require a full reset and can clear outer styles.
+
 ## v2.0.1 - 2026-10-16
 
 ### Fixed

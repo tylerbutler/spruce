@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Prevent overflow spaces from adding blank lines in `align.wrap`. Keep explicit blank lines, trailing newlines, and spacing that fits; limit space-only lines to the requested width."
