@@ -38,6 +38,44 @@ pub fn bullet_ordered_nested_tasklist_test() {
   should.be_true(string.contains(rendered, "3. third\n4. fourth"))
 }
 
+pub fn ordered_list_default_start_test() {
+  markdown.render(spruce.no_color(), "1. one\n2. two\n3. three")
+  |> should.equal("1. one\n2. two\n3. three")
+}
+
+pub fn nested_ordered_list_default_start_test() {
+  markdown.render(spruce.no_color(), "- parent\n  1. one\n  2. two")
+  |> should.equal("• parent\n  1. one\n  2. two")
+
+  markdown.render(spruce.no_color(), "1. parent\n   1. one\n   2. two")
+  |> should.equal("1. parent\n   1. one\n   2. two")
+}
+
+pub fn ordered_list_default_start_width_test() {
+  markdown.render_with(
+    spruce.no_color(),
+    "1. abc def ghi",
+    markdown.default_options() |> markdown.with_width(8),
+  )
+  |> should.equal("1. abc\n   def\n   ghi")
+
+  markdown.render_with(
+    spruce.no_color(),
+    "1. abc def",
+    markdown.default_options() |> markdown.with_width(3),
+  )
+  |> should.equal("abc\ndef")
+}
+
+pub fn ordered_list_explicit_start_marker_width_test() {
+  markdown.render_with(
+    spruce.no_color(),
+    "9. abc def\n10. ghi jkl",
+    markdown.default_options() |> markdown.with_width(8),
+  )
+  |> should.equal("9. abc\n   def\n10. ghi\n    jkl")
+}
+
 pub fn fenced_code_block_box_test() {
   let rendered = markdown.render(spruce.no_color(), "```gleam\nlet x = 1\n```")
 
