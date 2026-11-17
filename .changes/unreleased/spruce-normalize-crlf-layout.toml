@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "Normalize CRLF pairs before multiline sizing and rendering in align, box, and table. Preserve standalone CR characters, blank lines, and the unchanged-input behavior of align.wrap for non-positive widths."

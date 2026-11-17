@@ -13,6 +13,43 @@ pub fn simple_box_no_color_test() {
   |> should.equal("╭────╮\n│ hi │\n╰────╯")
 }
 
+pub fn simple_box_normalizes_crlf_before_sizing_test() {
+  box.simple(spruce.no_color(), "abc\r\nx")
+  |> should.equal("╭─────╮\n│ abc │\n│ x   │\n╰─────╯")
+}
+
+pub fn box_normalizes_mixed_line_endings_with_all_width_paths_test() {
+  list.each(
+    [box.new(), box.new() |> box.width(2), box.new() |> box.width(0)],
+    fn(options) {
+      box.render(spruce.no_color(), "abc\r\n\r\nx\ny\r\n", options)
+      |> should.equal(box.render(spruce.no_color(), "abc\n\nx\ny\n", options))
+    },
+  )
+}
+
+pub fn plain_box_preserves_blank_lines_and_standalone_carriage_return_test() {
+  box.render(spruce.no_color(), "\r\n\n", box.plain())
+  |> should.equal("\n\n")
+  box.render(spruce.no_color(), "a\rb\r\nx", box.plain())
+  |> should.equal("a\rb\nx  ")
+}
+
+pub fn box_preserves_carriage_return_before_crlf_with_all_width_paths_test() {
+  list.each(
+    [box.plain(), box.plain() |> box.width(2), box.plain() |> box.width(0)],
+    fn(options) {
+      box.render(spruce.no_color(), "a\r\r\nb\r\n", options)
+      |> should.equal("a\r\nb \n  ")
+    },
+  )
+}
+
+pub fn box_preserves_carriage_return_before_inserted_wrap_test() {
+  box.render(spruce.no_color(), "a\rb", box.plain() |> box.width(2))
+  |> should.equal("a\r\nb ")
+}
+
 pub fn simple_box_aligns_bmp_emoji_with_plain_text_test() {
   box.simple(spruce.no_color(), "✅ done\nplain ok")
   |> should.equal("╭──────────╮\n│ ✅ done  │\n│ plain ok │\n╰──────────╯")
@@ -433,6 +470,24 @@ pub fn box_multiline_styles_are_isolated_from_padding_and_borders_test() {
       |> assert_synthetic_close("\u{001b}[22m\u{001b}[39m", expected)
     })
   })
+}
+
+pub fn box_crlf_normalization_preserves_multiline_style_isolation_test() {
+  let context = spruce.with_color_level(spruce.Basic)
+  let opening = "\u{001b}[1;31m"
+  let reset = "\u{001b}[0m"
+
+  list.each(
+    [box.new(), box.new() |> box.width(0), box.new() |> box.width(2)],
+    fn(options) {
+      box.render(context, opening <> "abc\r\n\r\nx\r\n" <> reset, options)
+      |> should.equal(box.render(
+        context,
+        opening <> "abc\n\nx\n" <> reset,
+        options,
+      ))
+    },
+  )
 }
 
 pub fn box_height_truncation_closes_multiline_styles_test() {

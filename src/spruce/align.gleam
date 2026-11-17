@@ -1,6 +1,10 @@
 //// ANSI-aware text geometry: visual length, padding, wrapping, truncation,
 //// and multi-line block composition (`join_vertical`, `join_horizontal`,
 //// `place`).
+////
+//// Multiline layout treats CRLF pairs as LF line endings and preserves
+//// standalone CR characters, blank lines, and trailing newlines.
+//// `wrap` with a non-positive width returns the input unchanged.
 
 import gleam/bool
 import gleam/int
@@ -349,9 +353,15 @@ pub fn height(text: String) -> Int {
   |> list.length
 }
 
+fn split_lines(text: String) -> List(String) {
+  text
+  |> string.replace(each: "\r\n", with: "\n")
+  |> string.split("\n")
+}
+
 /// Return the widest visual line and the number of lines in `text`.
 pub fn size(text: String) -> #(Int, Int) {
-  let lines = string.split(text, "\n")
+  let lines = split_lines(text)
   let width =
     lines
     |> list.map(visual_length)
@@ -401,7 +411,7 @@ pub fn truncate(
 pub fn wrap(text: String, width: Int) -> String {
   use <- bool.guard(when: width <= 0, return: text)
   text
-  |> string.split("\n")
+  |> split_lines
   |> wrap_lines(width, TerminalState([], ""), [])
   |> string.join("\n")
 }
@@ -1051,21 +1061,38 @@ pub fn place(
   vertical v: Pos,
   content content: String,
 ) -> String {
-  let #(content_width, content_height) = size(content)
+  place_lines(
+    width: width,
+    height: height,
+    horizontal: h,
+    vertical: v,
+    lines: split_lines(content),
+  )
+  |> string.join("\n")
+}
+
+// Keep existing line boundaries so a trailing standalone CR is not normalized
+// again when placing wrapped box content.
+@internal
+pub fn place_lines(
+  width width: Int,
+  height height: Int,
+  horizontal h: Pos,
+  vertical v: Pos,
+  lines lines: List(String),
+) -> List(String) {
+  let content_width = max_visual_width(lines)
+  let content_height = list.length(lines)
   let region_width = int.max(width, content_width)
   let region_height = int.max(height, content_height)
-  let lines =
-    content
-    |> string.split("\n")
-    |> list.map(fn(line) { pad(line, region_width, h) })
+  let lines = list.map(lines, fn(line) { pad(line, region_width, h) })
 
   position_lines(lines, content_height, region_width, region_height, v)
-  |> string.join("\n")
 }
 
 fn block_info(block: String) -> Block {
   let #(width, block_height) = size(block)
-  Block(width: width, height: block_height, lines: string.split(block, "\n"))
+  Block(width: width, height: block_height, lines: split_lines(block))
 }
 
 fn normalize_block(block: Block, target_height: Int, pos: Pos) -> List(String) {
@@ -1117,7 +1144,7 @@ fn flatten_lines_loop(blocks: List(String), acc: List(String)) -> List(String) {
   case blocks {
     [] -> acc
     [block, ..rest] ->
-      flatten_lines_loop(rest, prepend_reversed(string.split(block, "\n"), acc))
+      flatten_lines_loop(rest, prepend_reversed(split_lines(block), acc))
   }
 }
 

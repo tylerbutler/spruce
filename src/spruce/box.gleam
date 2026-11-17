@@ -239,6 +239,8 @@ pub fn print(context: Spruce, content: String) -> Nil {
 }
 
 /// Render `content` with the given box.
+/// CRLF pairs are treated as LF line endings before sizing and rendering.
+/// Standalone CR characters and explicit blank lines are preserved.
 /// Styles that span newlines are closed and reopened on each content line,
 /// before alignment, padding, and borders are added.
 pub fn render(context: Spruce, content: String, box: Box) -> String {
@@ -285,14 +287,13 @@ fn content_region(
   let placed = case lines {
     [] -> []
     _ ->
-      align.place(
+      align.place_lines(
         width: region_width,
         height: region_height,
         horizontal: box.horizontal,
         vertical: box.vertical,
-        content: string.join(lines, "\n"),
+        lines: lines,
       )
-      |> string.split("\n")
   }
 
   let lines =
