@@ -1,3 +1,3 @@
 package = "spruce"
 kind = "Fixed"
-body = "Avoid automatic blank lines from overflow spaces in align.wrap. Preserve physical blank lines, trailing newlines, terminal controls, and spacing when no wrap is needed."
+body = "Prevent overflow spaces from adding blank lines in `align.wrap`. Keep explicit blank lines, trailing newlines, and spacing that fits; limit space-only lines to the requested width."
