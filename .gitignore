@@ -4,6 +4,9 @@
 /build
 erl_crash.dump
 
+# Unreviewed Birdie snapshots (accepted baselines are committed)
+/test/birdie_snapshots/*.new
+
 # Coverage
 /coverage
 *.lcov

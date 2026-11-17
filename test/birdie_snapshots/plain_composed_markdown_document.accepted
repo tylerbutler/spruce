@@ -1,0 +1,25 @@
+---
+version: 2.0.2
+title: plain composed markdown document
+file: ./test/spruce/composition_snapshot_test.gleam
+test_name: plain_markdown_document_test
+---
+#·Build·report
+
+A·ready·build·with·nested
+emphasis·inside·is·available.
+
+┃·Review·the·wrapped·output
+┃·before·release.··········
+
+1.·Run·the·tests·on·both
+···targets.
+2.·Review·the·snapshots.
+
+╭─·gleam·──────────────────────╮
+│······························│
+│let·ready·=·True··············│
+│······························│
+╰──────────────────────────────╯
+
+Done.

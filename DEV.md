@@ -27,6 +27,28 @@ uses Erlang/OTP 28. The shared CI setup keeps Erlang/OTP 27.2.1 and Gleam
 - `just ci` — run the full validation workflow
 - `npm run build --prefix website` — regenerate examples and build the website
 
+## Output snapshots
+
+Birdie snapshots in `test/birdie_snapshots/` cover a small set of composed
+Markdown documents, tables, boxes, and layouts. They supplement the exact-output
+and semantic tests; keep explicit assertions for widths, physical blank lines,
+Unicode, and ANSI state.
+
+Run `gleam test --target erlang` and `gleam test --target javascript`. Both
+targets use the same accepted snapshots, fixed widths, and explicit color levels.
+Tests fail for new or changed output; they do not accept it.
+
+Snapshots show ESC as `\x1b` and every space as `·`, including trailing spaces.
+Literal backslashes are doubled. Line breaks remain unchanged. The test-local
+`visible_output` helper preserves ANSI sequences rather than stripping them;
+Birdie accepts strings without a built-in output formatter.
+
+After an intentional output change, run `gleam run -m birdie` to review each
+new snapshot. Accept only the expected changes, then run both targets again.
+Commit the `.accepted` files with the tests. Do not edit baselines by hand or
+run `gleam run -m birdie accept` in CI. CI runs only the test commands and never
+accepts snapshots. Unreviewed `.new` files are ignored by Git.
+
 ## Release workflow
 
 1. Add a changelog fragment with `just change <kind> "<text>"`.
