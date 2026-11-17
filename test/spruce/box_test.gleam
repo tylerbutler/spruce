@@ -12,6 +12,11 @@ pub fn simple_box_no_color_test() {
   |> should.equal("╭────╮\n│ hi │\n╰────╯")
 }
 
+pub fn simple_box_aligns_bmp_emoji_with_plain_text_test() {
+  box.simple(spruce.no_color(), "✅ done\nplain ok")
+  |> should.equal("╭──────────╮\n│ ✅ done  │\n│ plain ok │\n╰──────────╯")
+}
+
 pub fn box_with_title_no_color_test() {
   box.render(spruce.no_color(), "hi", box.new() |> box.title("T"))
   |> string.starts_with("╭─ T ")

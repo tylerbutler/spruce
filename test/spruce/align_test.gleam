@@ -21,6 +21,66 @@ pub fn visual_length_counts_cjk_as_two_columns_test() {
   |> should.equal(4)
 }
 
+pub fn visual_length_counts_bmp_wide_emoji_as_two_columns_test() {
+  ["✅", "❌", "✨", "⭐", "⚡", "☕"]
+  |> list.each(fn(emoji) {
+    align.visual_length(emoji) |> should.equal(2)
+    align.visual_length(ansi.red(emoji)) |> should.equal(2)
+  })
+}
+
+pub fn visual_length_bmp_emoji_range_boundaries_test() {
+  let ranges = [
+    #(0x231a, 0x231b),
+    #(0x23e9, 0x23ec),
+    #(0x23f0, 0x23f0),
+    #(0x23f3, 0x23f3),
+    #(0x25fd, 0x25fe),
+    #(0x2614, 0x2615),
+    #(0x2648, 0x2653),
+    #(0x267f, 0x267f),
+    #(0x2693, 0x2693),
+    #(0x26a1, 0x26a1),
+    #(0x26aa, 0x26ab),
+    #(0x26bd, 0x26be),
+    #(0x26c4, 0x26c5),
+    #(0x26ce, 0x26ce),
+    #(0x26d4, 0x26d4),
+    #(0x26ea, 0x26ea),
+    #(0x26f2, 0x26f3),
+    #(0x26f5, 0x26f5),
+    #(0x26fa, 0x26fa),
+    #(0x26fd, 0x26fd),
+    #(0x2705, 0x2705),
+    #(0x270a, 0x270b),
+    #(0x2728, 0x2728),
+    #(0x274c, 0x274c),
+    #(0x274e, 0x274e),
+    #(0x2753, 0x2755),
+    #(0x2757, 0x2757),
+    #(0x2795, 0x2797),
+    #(0x27b0, 0x27b0),
+    #(0x27bf, 0x27bf),
+    #(0x2b1b, 0x2b1c),
+    #(0x2b50, 0x2b50),
+    #(0x2b55, 0x2b55),
+  ]
+
+  list.each(ranges, fn(range) {
+    let #(first, last) = range
+    list.each([first, last, first - 1, last + 1], fn(value) {
+      let assert Ok(codepoint) = string.utf_codepoint(value)
+      let expected = case value >= first && value <= last {
+        True -> 2
+        False -> 1
+      }
+      string.from_utf_codepoints([codepoint])
+      |> align.visual_length
+      |> should.equal(expected)
+    })
+  })
+}
+
 pub fn visual_length_counts_zero_width_graphemes_as_zero_test() {
   align.visual_length("e\u{0301}\u{200b}\u{0301}")
   |> should.equal(1)
@@ -78,6 +138,12 @@ pub fn pad_right_extends_to_width_test() {
 pub fn pad_right_uses_wide_character_width_test() {
   align.pad_right("日", 4)
   |> should.equal("日  ")
+}
+
+pub fn padding_uses_bmp_emoji_width_test() {
+  align.pad_right("✅", 4) |> should.equal("✅  ")
+  align.pad_left("❌", 4) |> should.equal("  ❌")
+  align.pad_center("⭐", 5) |> should.equal(" ⭐  ")
 }
 
 pub fn pad_right_uses_visual_length_test() {
@@ -146,6 +212,17 @@ pub fn truncate_width_zero_is_empty_test() {
 pub fn truncate_trims_wide_ellipsis_to_fit_test() {
   align.truncate("abcdef", width: 2, ellipsis: "...")
   |> should.equal("..")
+}
+
+pub fn truncate_uses_bmp_emoji_width_test() {
+  align.truncate("✅done", width: 3, ellipsis: "…")
+  |> should.equal("✅…")
+  align.truncate("✅done", width: 1, ellipsis: "")
+  |> should.equal("")
+  align.truncate("abcdef", width: 3, ellipsis: "⭐")
+  |> should.equal("a⭐")
+  align.truncate("abcdef", width: 1, ellipsis: "⭐")
+  |> should.equal("")
 }
 
 pub fn truncate_ansi_text_counts_visible_columns_test() {
@@ -240,6 +317,12 @@ pub fn wrap_hard_wraps_long_words_test() {
 pub fn wrap_keeps_wide_character_when_width_is_narrower_than_character_test() {
   align.wrap("日本", 1)
   |> should.equal("日\n本")
+}
+
+pub fn wrap_uses_bmp_emoji_width_test() {
+  align.wrap("✅ ok ⭐", 4) |> should.equal("✅\nok\n⭐")
+  align.wrap("✅❌✨⭐", 4) |> should.equal("✅❌\n✨⭐")
+  align.wrap("✅❌", 1) |> should.equal("✅\n❌")
 }
 
 pub fn wrap_closes_unclosed_sgr_before_inserted_newline_test() {
