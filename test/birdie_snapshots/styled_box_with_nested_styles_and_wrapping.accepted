@@ -1,0 +1,16 @@
+---
+version: 2.0.2
+title: styled box with nested styles and wrapping
+file: ./test/spruce/composition_snapshot_test.gleam
+test_name: styled_wrapped_box_test
+---
+·\x1b[36m╭─\x1b[39m·Review·\x1b[36m─────────╮\x1b[39m··
+·\x1b[36m│\x1b[39m\x1b[44m··················\x1b[49m\x1b[36m│\x1b[39m··
+·\x1b[36m│\x1b[39m\x1b[44m·\x1b[37mReview·\x1b[1mbold·\x1b[2mand\x1b[22m·\x1b[39m·\x1b[49m\x1b[36m│\x1b[39m··
+·\x1b[36m│\x1b[39m\x1b[44m·\x1b[37m\x1b[1m\x1b[2mdim\x1b[22m\x1b[1m\x1b[22m·text·before·\x1b[39m·\x1b[49m\x1b[36m│\x1b[39m··
+·\x1b[36m│\x1b[39m\x1b[44m·\x1b[37mrelease.········\x1b[39m·\x1b[49m\x1b[36m│\x1b[39m··
+·\x1b[36m│\x1b[39m\x1b[44m·\x1b[37m················\x1b[39m·\x1b[49m\x1b[36m│\x1b[39m··
+·\x1b[36m│\x1b[39m\x1b[44m·\x1b[37mDone.···········\x1b[39m·\x1b[49m\x1b[36m│\x1b[39m··
+·\x1b[36m│\x1b[39m\x1b[44m··················\x1b[49m\x1b[36m│\x1b[39m··
+·\x1b[36m╰──────────────────╯\x1b[39m··
+·······················

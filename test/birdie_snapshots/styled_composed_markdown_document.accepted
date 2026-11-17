@@ -1,0 +1,25 @@
+---
+version: 2.0.2
+title: styled composed markdown document
+file: ./test/spruce/composition_snapshot_test.gleam
+test_name: styled_markdown_document_test
+---
+\x1b[1m\x1b[37m#·Build·\x1b[3mreport\x1b[23m\x1b[39m\x1b[22m
+
+A·\x1b[1mready·build·with·nested·\x1b[3m\x1b[22m\x1b[23m
+\x1b[1m\x1b[3memphasis\x1b[23m·inside\x1b[22m·is·available.
+
+\x1b[37m┃\x1b[39m·\x1b[3mReview·\x1b[1mthe·wrapped·output\x1b[22m\x1b[23m
+\x1b[37m┃\x1b[39m·\x1b[3mbefore·release.\x1b[23m··········
+
+1.·Run·the·tests·on·both
+···targets.
+2.·Review·the·snapshots.
+
+\x1b[90m╭─\x1b[39m·gleam·\x1b[90m──────────────────────╮\x1b[39m
+\x1b[90m│\x1b[39m······························\x1b[90m│\x1b[39m
+\x1b[90m│\x1b[39m\x1b[1m\x1b[37mlet\x1b[39m\x1b[22m·ready·\x1b[37m=\x1b[39m·\x1b[96mTrue\x1b[39m··············\x1b[90m│\x1b[39m
+\x1b[90m│\x1b[39m······························\x1b[90m│\x1b[39m
+\x1b[90m╰──────────────────────────────╯\x1b[39m
+
+Done.

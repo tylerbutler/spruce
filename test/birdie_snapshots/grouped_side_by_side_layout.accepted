@@ -1,0 +1,18 @@
+---
+version: 2.0.2
+title: grouped side by side layout
+file: ./test/spruce/composition_snapshot_test.gleam
+test_name: grouped_layout_test
+---
+▸·Release
+················Build·report··············
+····┌────────┬───────┐····················
+····│·Target·│·State·│····················
+····├────────┼───────┤··╭─·Next·───────╮··
+····│·Erlang·│·ready·│··│·Review·both··│··
+····│·JS·····│·ready·│··│·targets.·····│··
+····└────────┴───────┘··╰──────────────╯··
+··········································
+
+··ℹ︎·info·Review·complete
+✔·success·Ready

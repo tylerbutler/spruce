@@ -1,0 +1,16 @@
+---
+version: 2.0.2
+title: styled wrapped table with multiline cells
+file: ./test/spruce/composition_snapshot_test.gleam
+test_name: styled_wrapped_table_test
+---
+··┌─────────┬───────────┐
+··│·\x1b[1mTarget\x1b[22m··│··\x1b[1mStatus\x1b[22m···│
+··├─────────┼───────────┤
+··│·\x1b[2mErlang\x1b[22m··│·\x1b[2m\x1b[1m\x1b[32mready·for\x1b[22m\x1b[2m\x1b[39m\x1b[22m·│
+··│·········│··\x1b[2m\x1b[1m\x1b[32mreview\x1b[39m\x1b[22m\x1b[2m\x1b[22m···│
+··├─────────┼───────────┤
+··│·\x1b[2mJavaScr\x1b[22m·│····\x1b[2mrun\x1b[22m····│
+··│·\x1b[2mipt\x1b[22m·····│·····\x1b[2m\x1b[22m······│
+··│·········│···\x1b[2magain\x1b[22m···│
+··└─────────┴───────────┘
