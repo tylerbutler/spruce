@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Treat CRLF pairs as LF in multiline `align`, box, and table layout to prevent extra columns and misplaced borders. Standalone carriage returns and `align.wrap` input at zero or negative widths remain unchanged."

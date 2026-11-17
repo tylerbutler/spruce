@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Keep multiline box content styles on every line without leaking into alignment, padding, or borders."
