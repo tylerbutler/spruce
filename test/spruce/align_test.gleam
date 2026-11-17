@@ -128,6 +128,61 @@ pub fn size_returns_widest_visual_line_and_height_test() {
   |> should.equal(#(4, 3))
 }
 
+pub fn size_and_height_accept_mixed_line_endings_test() {
+  let text = "abc\r\n\nx\n\r\n"
+
+  align.size(text)
+  |> should.equal(#(3, 5))
+  align.height(text)
+  |> should.equal(5)
+}
+
+pub fn multiline_layout_preserves_standalone_carriage_return_test() {
+  let text = "a\rb"
+
+  align.size(text)
+  |> should.equal(#(3, 1))
+  align.height(text)
+  |> should.equal(1)
+  align.visual_length(text)
+  |> should.equal(3)
+  align.wrap(text, 80)
+  |> should.equal(text)
+  align.join_vertical(align.Start, [text])
+  |> should.equal(text)
+  align.join_horizontal(align.Start, [text])
+  |> should.equal(text)
+  align.place(
+    width: 0,
+    height: 0,
+    horizontal: align.Start,
+    vertical: align.Start,
+    content: text,
+  )
+  |> should.equal(text)
+}
+
+pub fn multiline_layout_preserves_carriage_return_before_crlf_test() {
+  let text = "a\r\r\nb\r\n"
+
+  align.size(text)
+  |> should.equal(#(2, 3))
+  align.wrap(text, 80)
+  |> should.equal("a\r\nb\n")
+  align.join_vertical(align.Start, [text])
+  |> should.equal("a\r\nb \n  ")
+  align.join_horizontal(align.Start, [text])
+  |> should.equal("a\r\nb \n  ")
+  align.place(
+    width: 0,
+    height: 0,
+    horizontal: align.Start,
+    vertical: align.Start,
+    content: text,
+  )
+  |> should.equal("a\r\nb \n  ")
+}
+
 pub fn truncate_plain_text_with_ellipsis_test() {
   align.truncate("abcdef", width: 4, ellipsis: "…")
   |> should.equal("abc…")
@@ -220,6 +275,28 @@ pub fn truncate_osc_hyperlink_counts_only_visible_text_test() {
 pub fn wrap_words_test() {
   align.wrap("hello world from spruce", 11)
   |> should.equal("hello world\nfrom spruce")
+}
+
+pub fn wrap_normalizes_crlf_and_preserves_blank_lines_test() {
+  align.wrap("ab cd\r\n\r\nx\ny\r\n", 3)
+  |> should.equal("ab\ncd\n\nx\ny\n")
+}
+
+pub fn wrap_crlf_preserves_style_across_physical_lines_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[39m"
+
+  align.wrap(opening <> "ab\r\n\r\nc" <> reset <> "\r\n", 2)
+  |> should.equal(align.wrap(opening <> "ab\n\nc" <> reset <> "\n", 2))
+}
+
+pub fn wrap_non_positive_width_preserves_crlf_input_test() {
+  let text = "\u{001b}[31ma\r\n\r\nb\rc\n"
+
+  list.each([0, -1], fn(width) {
+    align.wrap(text, width)
+    |> should.equal(text)
+  })
 }
 
 pub fn wrap_preserves_spaces_when_no_wrap_is_needed_test() {
@@ -537,6 +614,16 @@ pub fn join_vertical_start_pads_each_line_to_widest_block_test() {
   |> should.equal("a  \nbb \nccc")
 }
 
+pub fn join_vertical_normalizes_crlf_before_padding_test() {
+  list.each([align.Start, align.Center, align.End], fn(position) {
+    align.join_vertical(position, ["abc\r\n\r\nx\n", "y\r\n"])
+    |> should.equal(align.join_vertical(position, ["abc\n\nx\n", "y\n"]))
+  })
+
+  align.join_vertical(align.Start, ["abc\r\n\r\nx\n", "y\r\n"])
+  |> should.equal("abc\n   \nx  \n   \ny  \n   ")
+}
+
 pub fn join_vertical_center_uses_visual_width_test() {
   let red = "\u{001b}[31mR\u{001b}[0m"
 
@@ -547,6 +634,16 @@ pub fn join_vertical_center_uses_visual_width_test() {
 pub fn join_horizontal_start_pads_lines_to_each_block_width_test() {
   align.join_horizontal(align.Start, ["a\nbbb", "x\ny"])
   |> should.equal("a  x\nbbby")
+}
+
+pub fn join_horizontal_normalizes_crlf_before_sizing_and_padding_test() {
+  list.each([align.Start, align.Center, align.End], fn(position) {
+    align.join_horizontal(position, ["abc\r\n\r\nx\n", "y\r\n"])
+    |> should.equal(align.join_horizontal(position, ["abc\n\nx\n", "y\n"]))
+  })
+
+  align.join_horizontal(align.Start, ["abc\r\n\r\nx\n", "y\r\n"])
+  |> should.equal("abcy\n    \nx   \n    ")
 }
 
 pub fn join_horizontal_end_places_shorter_blocks_at_bottom_test() {
@@ -579,6 +676,36 @@ pub fn place_preserves_content_larger_than_region_test() {
     content: "abcd\nef",
   )
   |> should.equal("abcd\n  ef")
+}
+
+pub fn place_normalizes_crlf_before_sizing_and_rendering_test() {
+  list.each([align.Start, align.Center, align.End], fn(horizontal) {
+    list.each([align.Start, align.Center, align.End], fn(vertical) {
+      align.place(
+        width: 5,
+        height: 7,
+        horizontal: horizontal,
+        vertical: vertical,
+        content: "abc\r\n\r\nx\ny\r\n",
+      )
+      |> should.equal(align.place(
+        width: 5,
+        height: 7,
+        horizontal: horizontal,
+        vertical: vertical,
+        content: "abc\n\nx\ny\n",
+      ))
+    })
+  })
+
+  align.place(
+    width: 0,
+    height: 0,
+    horizontal: align.Start,
+    vertical: align.Start,
+    content: "abc\r\n\r\nx\ny\r\n",
+  )
+  |> should.equal("abc\n   \nx  \ny  \n   ")
 }
 
 pub fn layout_handles_large_flattened_and_repeated_lines_test() {

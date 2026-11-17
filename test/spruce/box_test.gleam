@@ -1,3 +1,4 @@
+import gleam/list
 import gleam/string
 import gleeunit/should
 import spruce
@@ -10,6 +11,43 @@ pub fn simple_box_no_color_test() {
   spruce.no_color()
   |> box.simple("hi")
   |> should.equal("╭────╮\n│ hi │\n╰────╯")
+}
+
+pub fn simple_box_normalizes_crlf_before_sizing_test() {
+  box.simple(spruce.no_color(), "abc\r\nx")
+  |> should.equal("╭─────╮\n│ abc │\n│ x   │\n╰─────╯")
+}
+
+pub fn box_normalizes_mixed_line_endings_with_all_width_paths_test() {
+  list.each(
+    [box.new(), box.new() |> box.width(2), box.new() |> box.width(0)],
+    fn(options) {
+      box.render(spruce.no_color(), "abc\r\n\r\nx\ny\r\n", options)
+      |> should.equal(box.render(spruce.no_color(), "abc\n\nx\ny\n", options))
+    },
+  )
+}
+
+pub fn plain_box_preserves_blank_lines_and_standalone_carriage_return_test() {
+  box.render(spruce.no_color(), "\r\n\n", box.plain())
+  |> should.equal("\n\n")
+  box.render(spruce.no_color(), "a\rb\r\nx", box.plain())
+  |> should.equal("a\rb\nx  ")
+}
+
+pub fn box_preserves_carriage_return_before_crlf_with_all_width_paths_test() {
+  list.each(
+    [box.plain(), box.plain() |> box.width(2), box.plain() |> box.width(0)],
+    fn(options) {
+      box.render(spruce.no_color(), "a\r\r\nb\r\n", options)
+      |> should.equal("a\r\nb \n  ")
+    },
+  )
+}
+
+pub fn box_preserves_carriage_return_before_inserted_wrap_test() {
+  box.render(spruce.no_color(), "a\rb", box.plain() |> box.width(2))
+  |> should.equal("a\r\nb ")
 }
 
 pub fn box_with_title_no_color_test() {

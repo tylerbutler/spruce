@@ -1,6 +1,5 @@
 //// Bordered, ANSI-aware data table rendering.
 
-import gleam/bool
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -124,6 +123,8 @@ pub fn row_separators(table: Table, enabled: Bool) -> Table {
 }
 
 /// Render a table as a bordered grid.
+/// CRLF pairs in headers and body cells are treated as LF line endings.
+/// Standalone CR characters and explicit blank lines are preserved.
 pub fn render(context: Spruce, table: Table) -> String {
   let column_count = count_columns(table.headers, table.rows)
 
@@ -452,8 +453,10 @@ fn render_cell_lines(
 }
 
 fn wrap_cell(cell: String, width: Int) -> String {
-  use <- bool.guard(when: width <= 0, return: cell)
-  align.wrap(cell, width)
+  case width <= 0 {
+    True -> string.replace(cell, each: "\r\n", with: "\n")
+    False -> align.wrap(cell, width)
+  }
 }
 
 fn max_cell_height(cells: List(List(String)), minimum: Int) -> Int {

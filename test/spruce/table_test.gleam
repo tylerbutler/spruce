@@ -7,6 +7,83 @@ import spruce/border
 import spruce/style
 import spruce/table
 
+pub fn table_normalizes_crlf_before_sizing_test() {
+  table.new()
+  |> table.rows([["abc\r\nx", "c"]])
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(
+    "┌─────┬───┐\n" <> "│ abc │ c │\n" <> "│ x   │   │\n" <> "└─────┴───┘",
+  )
+}
+
+pub fn table_normalizes_headers_and_body_with_mixed_line_endings_test() {
+  list.each(
+    [
+      table.new(),
+      table.new() |> table.column_widths([2]),
+      table.new()
+        |> table.width(0),
+    ],
+    fn(options) {
+      options
+      |> table.headers(["abc\r\n\r\nx\n"])
+      |> table.rows([["def\r\n\nx\r\n"]])
+      |> table.render(spruce.no_color(), _)
+      |> should.equal(
+        options
+        |> table.headers(["abc\n\nx\n"])
+        |> table.rows([["def\n\nx\n"]])
+        |> table.render(spruce.no_color(), _),
+      )
+    },
+  )
+}
+
+pub fn table_preserves_crlf_blank_lines_in_zero_width_cells_test() {
+  table.new()
+  |> table.headers(["\r\n"])
+  |> table.rows([["\r\n\n"]])
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(
+    "┌──┐\n"
+    <> "│  │\n"
+    <> "│  │\n"
+    <> "├──┤\n"
+    <> "│  │\n"
+    <> "│  │\n"
+    <> "│  │\n"
+    <> "└──┘",
+  )
+}
+
+pub fn table_preserves_standalone_carriage_return_test() {
+  table.new()
+  |> table.headers(["a\rb"])
+  |> table.rows([["x\ry"]])
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(
+    "┌─────┐\n" <> "│ a\rb │\n" <> "├─────┤\n" <> "│ x\ry │\n" <> "└─────┘",
+  )
+}
+
+pub fn table_preserves_carriage_return_before_crlf_in_headers_and_body_test() {
+  table.new()
+  |> table.headers(["a\r\r\nb\r\n"])
+  |> table.rows([["x\r\r\ny\r\n"]])
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(
+    "┌────┐\n"
+    <> "│ a\r │\n"
+    <> "│ b  │\n"
+    <> "│    │\n"
+    <> "├────┤\n"
+    <> "│ x\r │\n"
+    <> "│ y  │\n"
+    <> "│    │\n"
+    <> "└────┘",
+  )
+}
+
 pub fn table_renders_headers_and_rows_no_color_test() {
   table.new()
   |> table.headers(["Name", "Lang"])
