@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "Preserve both bold and dim on continuation lines in align.wrap. SGR 22 clears both attributes without clearing other styles."

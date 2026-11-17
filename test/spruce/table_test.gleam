@@ -99,6 +99,21 @@ pub fn table_renders_headers_and_rows_no_color_test() {
   )
 }
 
+pub fn table_aligns_bmp_emoji_headers_and_cells_test() {
+  table.new()
+  |> table.headers(["✅", "State"])
+  |> table.rows([["❌", "ok"], ["x", "✨⭐"]])
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(
+    "┌────┬───────┐\n"
+    <> "│ ✅ │ State │\n"
+    <> "├────┼───────┤\n"
+    <> "│ ❌ │ ok    │\n"
+    <> "│ x  │ ✨⭐  │\n"
+    <> "└────┴───────┘",
+  )
+}
+
 pub fn table_pads_short_rows_and_uses_ansi_aware_widths_test() {
   let red_long =
     style.render(

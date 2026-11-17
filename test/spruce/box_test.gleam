@@ -50,6 +50,11 @@ pub fn box_preserves_carriage_return_before_inserted_wrap_test() {
   |> should.equal("a\r\nb ")
 }
 
+pub fn simple_box_aligns_bmp_emoji_with_plain_text_test() {
+  box.simple(spruce.no_color(), "✅ done\nplain ok")
+  |> should.equal("╭──────────╮\n│ ✅ done  │\n│ plain ok │\n╰──────────╯")
+}
+
 pub fn box_with_title_no_color_test() {
   box.render(spruce.no_color(), "hi", box.new() |> box.title("T"))
   |> string.starts_with("╭─ T ")
@@ -279,6 +284,84 @@ pub fn box_height_truncates_tall_content_test() {
   |> should.equal("a\nb")
 }
 
+pub fn box_zero_height_preserves_title_width_test() {
+  let options = box.new() |> box.title("Title") |> box.height(0)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╭─ Title ╮\n╰────────╯")
+}
+
+pub fn box_zero_height_preserves_explicit_width_test() {
+  let options = box.new() |> box.width(5) |> box.height(0)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╭───────╮\n╰───────╯")
+}
+
+pub fn box_zero_height_padding_uses_region_width_test() {
+  let options =
+    box.new()
+    |> box.title("Title")
+    |> box.height(0)
+    |> box.padding(top: 1, right: 2, bottom: 1, left: 1)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╭─ Title ╮\n│        │\n│        │\n╰────────╯")
+
+  box.render(spruce.no_color(), "x", options |> box.width(7))
+  |> should.equal("╭─ Title ──╮\n│          │\n│          │\n╰──────────╯")
+}
+
+pub fn box_zero_height_hidden_border_ignores_title_test() {
+  let options =
+    box.plain()
+    |> box.title("Long title")
+    |> box.width(3)
+    |> box.height(0)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("")
+
+  box.render(
+    spruce.no_color(),
+    "x",
+    options |> box.padding(top: 1, right: 1, bottom: 1, left: 1),
+  )
+  |> should.equal("     \n     ")
+}
+
+pub fn box_zero_height_hidden_top_ignores_title_test() {
+  let options =
+    box.plain()
+    |> box.border(border.Rounded)
+    |> box.title("Long title")
+    |> box.width(3)
+    |> box.height(0)
+    |> box.border_sides(top: False, right: True, bottom: True, left: True)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╰───╯")
+}
+
+pub fn box_zero_height_omits_hidden_side_corners_test() {
+  let options =
+    box.new()
+    |> box.title("Title")
+    |> box.height(0)
+    |> box.border_sides(top: True, right: False, bottom: True, left: True)
+
+  box.render(spruce.no_color(), "x", options)
+  |> should.equal("╭─ Title \n╰────────")
+
+  box.render(
+    spruce.no_color(),
+    "x",
+    options
+      |> box.border_sides(top: True, right: True, bottom: True, left: False),
+  )
+  |> should.equal("─ Title ╮\n────────╯")
+}
+
 pub fn bordered_box_title_widens_aligned_content_test() {
   let options =
     box.new()
@@ -357,4 +440,129 @@ pub fn plain_box_margin_adds_outer_space_after_indent_test() {
 
   box.render(spruce.no_color(), "hi", options)
   |> should.equal("      \n  hi  \n      ")
+}
+
+pub fn box_multiline_styles_are_isolated_from_padding_and_borders_test() {
+  let context = spruce.with_color_level(spruce.Basic)
+  let options = [
+    box.new(),
+    box.new() |> box.width(0),
+    box.new() |> box.width(3),
+  ]
+
+  list.each(["\u{001b}[1m", "\u{001b}[2m"], fn(intensity) {
+    let content = intensity <> "\u{001b}[31mone\ntwo\u{001b}[39m\u{001b}[22m"
+    let expected = fn(close: String) -> String {
+      "\u{001b}[36m╭─────╮\u{001b}[39m\n"
+      <> "\u{001b}[36m│\u{001b}[39m "
+      <> intensity
+      <> "\u{001b}[31mone"
+      <> close
+      <> " \u{001b}[36m│\u{001b}[39m\n"
+      <> "\u{001b}[36m│\u{001b}[39m "
+      <> intensity
+      <> "\u{001b}[31mtwo\u{001b}[39m\u{001b}[22m \u{001b}[36m│\u{001b}[39m\n"
+      <> "\u{001b}[36m╰─────╯\u{001b}[39m"
+    }
+
+    list.each(options, fn(options) {
+      box.render(context, content, options)
+      |> assert_synthetic_close("\u{001b}[22m\u{001b}[39m", expected)
+    })
+  })
+}
+
+pub fn box_crlf_normalization_preserves_multiline_style_isolation_test() {
+  let context = spruce.with_color_level(spruce.Basic)
+  let opening = "\u{001b}[1;31m"
+  let reset = "\u{001b}[0m"
+
+  list.each(
+    [box.new(), box.new() |> box.width(0), box.new() |> box.width(2)],
+    fn(options) {
+      box.render(context, opening <> "abc\r\n\r\nx\r\n" <> reset, options)
+      |> should.equal(box.render(
+        context,
+        opening <> "abc\n\nx\n" <> reset,
+        options,
+      ))
+    },
+  )
+}
+
+pub fn box_height_truncation_closes_multiline_styles_test() {
+  box.render(
+    spruce.with_color_level(spruce.Basic),
+    "\u{001b}[1m\u{001b}[31mone\ntwo\u{001b}[39m\u{001b}[22m",
+    box.plain() |> box.height(1),
+  )
+  |> assert_synthetic_close("\u{001b}[22m\u{001b}[39m", fn(close) {
+    "\u{001b}[1m\u{001b}[31mone" <> close
+  })
+}
+
+pub fn box_multiline_style_closes_before_alignment_spaces_test() {
+  box.render(
+    spruce.with_color_level(spruce.Basic),
+    "\u{001b}[31ma\nlong\u{001b}[39m",
+    box.plain() |> box.align(horizontal: align.Center, vertical: align.Start),
+  )
+  |> assert_synthetic_close("\u{001b}[39m", fn(close) {
+    " \u{001b}[31ma" <> close <> "  \n\u{001b}[31mlong\u{001b}[39m"
+  })
+}
+
+pub fn box_unconstrained_preserves_whitespace_and_blank_lines_test() {
+  let context = spruce.no_color()
+  let content =
+    style.render(context, style.new() |> style.bold, "\n  a  \n\n \n")
+  let expected = "     \n  a  \n     \n     \n     "
+
+  box.render(context, content, box.plain())
+  |> should.equal(expected)
+  box.render(context, content, box.plain() |> box.width(0))
+  |> should.equal(expected)
+  box.render(context, content, box.new() |> box.border(border.Hidden))
+  |> should.equal("       \n   a   \n       \n       \n       ")
+}
+
+pub fn plain_box_multiline_styles_preserve_blank_lines_and_spaces_test() {
+  box.render(
+    spruce.with_color_level(spruce.Basic),
+    "\u{001b}[31m a  \n\n b \n\u{001b}[39m",
+    box.plain(),
+  )
+  |> assert_synthetic_close("\u{001b}[39m", fn(close) {
+    "\u{001b}[31m a  "
+    <> close
+    <> "\n\u{001b}[31m"
+    <> close
+    <> "    \n\u{001b}[31m b "
+    <> close
+    <> " \n\u{001b}[31m\u{001b}[39m    "
+  })
+}
+
+pub fn box_zero_visual_width_still_isolates_styles_test() {
+  let context = spruce.with_color_level(spruce.Basic)
+  let content = "\u{001b}[31m\n\u{001b}[39m"
+  let expected = fn(close: String) -> String {
+    "\u{001b}[31m" <> close <> "\n\u{001b}[31m\u{001b}[39m"
+  }
+
+  box.render(context, content, box.plain())
+  |> assert_synthetic_close("\u{001b}[39m", expected)
+  box.render(context, content, box.plain() |> box.width(0))
+  |> assert_synthetic_close("\u{001b}[39m", expected)
+}
+
+fn assert_synthetic_close(
+  actual: String,
+  selective_close: String,
+  expected: fn(String) -> String,
+) -> Nil {
+  case actual == expected("\u{001b}[0m") {
+    True -> Nil
+    False -> should.equal(actual, expected(selective_close))
+  }
 }

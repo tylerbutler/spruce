@@ -17,6 +17,8 @@
 //// `[!WARNING]`, `[!CAUTION]`) and Astro/Starlight `:::type[Title]` container
 //// directives are rendered as colored callouts.
 ////
+//// Ordered lists preserve their starting number, which defaults to 1.
+////
 //// ## Known limitations
 ////
 //// These are GitHub/Markdown features that are *not* rendered. Most stem from
@@ -280,7 +282,14 @@ fn render_block(
     document.HtmlBlock(raw) -> render_html_block(context, raw, options)
     document.Newline -> ""
     document.OrderedList(pack, entries, start) ->
-      render_list(context, pack, entries, start, parsed, options)
+      render_list(
+        context,
+        pack,
+        entries,
+        Some(option.unwrap(start, 1)),
+        parsed,
+        options,
+      )
     document.Paragraph(_, inlines) ->
       render_paragraph(context, inlines, parsed, options)
     document.Table(header, rows) ->

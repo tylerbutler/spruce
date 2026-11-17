@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "Restore outer bold and dim attributes after nested styled spans, including inline code in Markdown headings and strong text."
