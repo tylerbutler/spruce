@@ -225,11 +225,114 @@ pub fn wrap_words_test() {
 pub fn wrap_preserves_spaces_when_no_wrap_is_needed_test() {
   align.wrap("  hello  world", 20)
   |> should.equal("  hello  world")
+
+  align.wrap("\u{001b}[31m  hi  \u{001b}[0m", 8)
+  |> should.equal("\u{001b}[31m  hi  \u{001b}[0m")
 }
 
 pub fn wrap_preserves_trailing_spaces_at_physical_line_end_test() {
   align.wrap("a  \n   ", 80)
   |> should.equal("a  \n   ")
+}
+
+pub fn wrap_drops_overflow_trailing_spaces_without_an_extra_line_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[0m"
+
+  align.wrap(opening <> "hello     ", 5)
+  |> should.equal(opening <> "hello" <> reset)
+}
+
+pub fn wrap_drops_space_only_prefix_before_a_word_that_needs_wrapping_test() {
+  [" ", "   ", "      "]
+  |> list.each(fn(prefix) {
+    align.wrap(prefix <> "abcdefghij", 5)
+    |> should.equal("abcde\nfghij")
+
+    align.wrap(prefix <> "abcde", 5)
+    |> should.equal("abcde")
+  })
+}
+
+pub fn wrap_keeps_controls_when_dropping_an_oversized_word_prefix_test() {
+  let opening = "\u{001b}[31m"
+  let cursor = "\u{001b}[2K"
+  let reset = "\u{001b}[0m"
+
+  align.wrap(" " <> opening <> " " <> cursor <> "abcdefghij", 5)
+  |> should.equal(
+    opening <> cursor <> "abcde" <> reset <> "\n" <> opening <> "fghij" <> reset,
+  )
+}
+
+pub fn wrap_overflow_spaces_still_separate_the_next_word_test() {
+  align.wrap("ab      c", 5)
+  |> should.equal("ab\nc")
+}
+
+pub fn wrap_preserves_physical_blank_lines_and_trailing_newlines_test() {
+  let opening = "\u{001b}[31m"
+  let reset = "\u{001b}[0m"
+
+  align.wrap(opening <> "hello     \n\n   \nworld\n", 5)
+  |> should.equal(
+    opening
+    <> "hello"
+    <> reset
+    <> "\n"
+    <> opening
+    <> reset
+    <> "\n"
+    <> opening
+    <> "   "
+    <> reset
+    <> "\n"
+    <> opening
+    <> "world"
+    <> reset
+    <> "\n"
+    <> opening
+    <> reset,
+  )
+
+  align.wrap("\n      \n\n", 5)
+  |> should.equal("\n      \n\n")
+}
+
+pub fn wrap_keeps_control_only_suffix_effects_and_state_test() {
+  let opening = "\u{001b}[31m"
+  let green = "\u{001b}[32m"
+  let reset = "\u{001b}[0m"
+  let cursor = "\u{001b}[2K"
+  let open = "\u{001b}]8;;https://example.com\u{001b}\\"
+  let close = "\u{001b}]8;;\u{001b}\\"
+
+  align.wrap(opening <> "hello     " <> reset <> cursor, 5)
+  |> should.equal(opening <> "hello" <> reset <> cursor)
+
+  align.wrap(open <> "hello     " <> close <> cursor, 5)
+  |> should.equal(open <> "hello" <> close <> cursor)
+
+  align.wrap(open <> "hello     \n\nx" <> close, 5)
+  |> should.equal(string.join(
+    [open <> "hello" <> close, open <> close, open <> "x" <> close],
+    "\n",
+  ))
+
+  align.wrap(opening <> "hello     " <> green <> "\n\nx", 5)
+  |> should.equal(
+    opening
+    <> "hello"
+    <> green
+    <> reset
+    <> "\n"
+    <> green
+    <> reset
+    <> "\n"
+    <> green
+    <> "x"
+    <> reset,
+  )
 }
 
 pub fn wrap_hard_wraps_long_words_test() {
