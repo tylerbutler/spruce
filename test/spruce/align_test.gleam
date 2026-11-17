@@ -21,6 +21,66 @@ pub fn visual_length_counts_cjk_as_two_columns_test() {
   |> should.equal(4)
 }
 
+pub fn visual_length_counts_bmp_wide_emoji_as_two_columns_test() {
+  ["✅", "❌", "✨", "⭐", "⚡", "☕"]
+  |> list.each(fn(emoji) {
+    align.visual_length(emoji) |> should.equal(2)
+    align.visual_length(ansi.red(emoji)) |> should.equal(2)
+  })
+}
+
+pub fn visual_length_bmp_emoji_range_boundaries_test() {
+  let ranges = [
+    #(0x231a, 0x231b),
+    #(0x23e9, 0x23ec),
+    #(0x23f0, 0x23f0),
+    #(0x23f3, 0x23f3),
+    #(0x25fd, 0x25fe),
+    #(0x2614, 0x2615),
+    #(0x2648, 0x2653),
+    #(0x267f, 0x267f),
+    #(0x2693, 0x2693),
+    #(0x26a1, 0x26a1),
+    #(0x26aa, 0x26ab),
+    #(0x26bd, 0x26be),
+    #(0x26c4, 0x26c5),
+    #(0x26ce, 0x26ce),
+    #(0x26d4, 0x26d4),
+    #(0x26ea, 0x26ea),
+    #(0x26f2, 0x26f3),
+    #(0x26f5, 0x26f5),
+    #(0x26fa, 0x26fa),
+    #(0x26fd, 0x26fd),
+    #(0x2705, 0x2705),
+    #(0x270a, 0x270b),
+    #(0x2728, 0x2728),
+    #(0x274c, 0x274c),
+    #(0x274e, 0x274e),
+    #(0x2753, 0x2755),
+    #(0x2757, 0x2757),
+    #(0x2795, 0x2797),
+    #(0x27b0, 0x27b0),
+    #(0x27bf, 0x27bf),
+    #(0x2b1b, 0x2b1c),
+    #(0x2b50, 0x2b50),
+    #(0x2b55, 0x2b55),
+  ]
+
+  list.each(ranges, fn(range) {
+    let #(first, last) = range
+    list.each([first, last, first - 1, last + 1], fn(value) {
+      let assert Ok(codepoint) = string.utf_codepoint(value)
+      let expected = case value >= first && value <= last {
+        True -> 2
+        False -> 1
+      }
+      string.from_utf_codepoints([codepoint])
+      |> align.visual_length
+      |> should.equal(expected)
+    })
+  })
+}
+
 pub fn visual_length_counts_zero_width_graphemes_as_zero_test() {
   align.visual_length("e\u{0301}\u{200b}\u{0301}")
   |> should.equal(1)
@@ -78,6 +138,12 @@ pub fn pad_right_extends_to_width_test() {
 pub fn pad_right_uses_wide_character_width_test() {
   align.pad_right("日", 4)
   |> should.equal("日  ")
+}
+
+pub fn padding_uses_bmp_emoji_width_test() {
+  align.pad_right("✅", 4) |> should.equal("✅  ")
+  align.pad_left("❌", 4) |> should.equal("  ❌")
+  align.pad_center("⭐", 5) |> should.equal(" ⭐  ")
 }
 
 pub fn pad_right_uses_visual_length_test() {
@@ -146,6 +212,17 @@ pub fn truncate_width_zero_is_empty_test() {
 pub fn truncate_trims_wide_ellipsis_to_fit_test() {
   align.truncate("abcdef", width: 2, ellipsis: "...")
   |> should.equal("..")
+}
+
+pub fn truncate_uses_bmp_emoji_width_test() {
+  align.truncate("✅done", width: 3, ellipsis: "…")
+  |> should.equal("✅…")
+  align.truncate("✅done", width: 1, ellipsis: "")
+  |> should.equal("")
+  align.truncate("abcdef", width: 3, ellipsis: "⭐")
+  |> should.equal("a⭐")
+  align.truncate("abcdef", width: 1, ellipsis: "⭐")
+  |> should.equal("")
 }
 
 pub fn truncate_ansi_text_counts_visible_columns_test() {
@@ -363,6 +440,12 @@ pub fn wrap_keeps_wide_character_when_width_is_narrower_than_character_test() {
   |> should.equal("日\n本")
 }
 
+pub fn wrap_uses_bmp_emoji_width_test() {
+  align.wrap("✅ ok ⭐", 4) |> should.equal("✅\nok\n⭐")
+  align.wrap("✅❌✨⭐", 4) |> should.equal("✅❌\n✨⭐")
+  align.wrap("✅❌", 1) |> should.equal("✅\n❌")
+}
+
 pub fn wrap_closes_unclosed_sgr_before_inserted_newline_test() {
   let opening = "\u{001b}[31m"
 
@@ -388,6 +471,80 @@ pub fn wrap_reopens_sgr_after_word_wrap_test() {
   |> should.equal(
     opening <> "abc" <> reset <> "\n" <> opening <> "def" <> reset,
   )
+}
+
+pub fn wrap_reopens_bold_and_dim_in_input_order_test() {
+  let bold = "\u{001b}[1m"
+  let dim = "\u{001b}[2m"
+  let reset = "\u{001b}[0m"
+
+  list.each([bold <> dim, dim <> bold], fn(opening) {
+    list.each(["abc def", "abcdef", "abc\ndef"], fn(text) {
+      let assert [first, second] =
+        align.wrap(opening <> text <> reset, 3) |> string.split("\n")
+      should.be_true(string.starts_with(first, opening <> "abc"))
+      second |> should.equal(opening <> "def" <> reset)
+    })
+  })
+}
+
+pub fn wrap_reopens_combined_bold_and_dim_parameters_test() {
+  let reset = "\u{001b}[0m"
+
+  list.each(
+    [
+      #("\u{001b}[1;2m", "\u{001b}[1m\u{001b}[2m"),
+      #("\u{001b}[2;1m", "\u{001b}[2m\u{001b}[1m"),
+    ],
+    fn(pair) {
+      let #(opening, reopening) = pair
+      list.each(["abc def", "abcdef", "abc\ndef"], fn(text) {
+        let assert [first, second] =
+          align.wrap(opening <> text <> reset, 3) |> string.split("\n")
+        should.be_true(string.starts_with(first, opening <> "abc"))
+        second |> should.equal(reopening <> "def" <> reset)
+      })
+    },
+  )
+}
+
+pub fn wrap_intensity_reset_clears_bold_and_dim_but_keeps_other_styles_test() {
+  let red = "\u{001b}[31m"
+  let italic = "\u{001b}[3m"
+  let reset = "\u{001b}[0m"
+
+  list.each(["1;2", "2;1"], fn(parameters) {
+    let opening = "\u{001b}[" <> parameters <> "m"
+    let assert [first, second] =
+      align.wrap(red <> opening <> italic <> "abc\u{001b}[22m\ndef" <> reset, 3)
+      |> string.split("\n")
+    should.be_true(string.starts_with(
+      first,
+      red <> opening <> italic <> "abc\u{001b}[22m",
+    ))
+    second |> should.equal(red <> italic <> "def" <> reset)
+  })
+}
+
+pub fn wrap_full_reset_clears_bold_and_dim_test() {
+  list.each(["\u{001b}[0m", "\u{001b}[m", "\u{001b}[22m"], fn(reset) {
+    align.wrap("\u{001b}[1;2mabc" <> reset <> "\ndef", 3)
+    |> should.equal("\u{001b}[1;2mabc" <> reset <> "\ndef")
+  })
+}
+
+pub fn wrap_can_enable_either_attribute_after_intensity_reset_test() {
+  list.each(["1", "2"], fn(parameter) {
+    let opening = "\u{001b}[" <> parameter <> "m"
+    let assert [first, second] =
+      align.wrap("\u{001b}[1;2;22;" <> parameter <> "mabc\ndef", 3)
+      |> string.split("\n")
+    should.be_true(string.starts_with(
+      first,
+      "\u{001b}[1;2;22;" <> parameter <> "mabc",
+    ))
+    should.be_true(string.starts_with(second, opening <> "def"))
+  })
 }
 
 pub fn wrap_word_boundary_preserves_reset_after_space_test() {

@@ -29,6 +29,67 @@ pub fn render_empty_style_is_plain_test() {
   |> should.equal("x")
 }
 
+pub fn render_bold_clears_inner_dim_test() {
+  let context = spruce.with_color_level(spruce.Basic)
+  let inner = style.render(context, style.new() |> style.dim, "inner")
+
+  style.render(
+    context,
+    style.new() |> style.bold,
+    "before " <> inner <> " after",
+  )
+  |> should.equal(
+    "\u{001b}[1mbefore \u{001b}[2minner\u{001b}[22m\u{001b}[1m after\u{001b}[22m",
+  )
+}
+
+pub fn render_dim_clears_inner_bold_test() {
+  let context = spruce.with_color_level(spruce.Basic)
+  let inner = style.render(context, style.new() |> style.bold, "inner")
+
+  style.render(
+    context,
+    style.new() |> style.dim,
+    "before " <> inner <> " after",
+  )
+  |> should.equal(
+    "\u{001b}[2mbefore \u{001b}[1minner\u{001b}[22m\u{001b}[2m after\u{001b}[22m",
+  )
+}
+
+pub fn render_bold_and_dim_restore_both_after_nested_spans_test() {
+  let outer = style.new() |> style.bold |> style.dim
+  list.each([spruce.Basic, spruce.Ansi256, spruce.TrueColor], fn(level) {
+    let context = spruce.with_color_level(level)
+    list.each(
+      [style.new() |> style.bold, style.new() |> style.dim, outer],
+      fn(inner_style) {
+        let inner = style.render(context, inner_style, "inner")
+        let rendered =
+          style.render(context, outer, "before " <> inner <> " after")
+
+        should.be_true(string.starts_with(
+          rendered,
+          "\u{001b}[2m\u{001b}[1mbefore ",
+        ))
+        should.be_true(string.ends_with(
+          rendered,
+          "inner\u{001b}[22m\u{001b}[2m\u{001b}[1m after\u{001b}[22m",
+        ))
+      },
+    )
+  })
+}
+
+pub fn render_nested_intensity_no_color_is_plain_test() {
+  let context = spruce.no_color()
+  let outer = style.new() |> style.bold |> style.dim
+  let inner = style.render(context, outer, "inner")
+
+  style.render(context, outer, "before " <> inner <> " after")
+  |> should.equal("before inner after")
+}
+
 pub fn render_no_color_strips_style_parity_attributes_test() {
   style.new()
   |> style.strikethrough

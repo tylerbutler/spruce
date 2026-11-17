@@ -173,6 +173,10 @@ pub fn inline(style: Style) -> Style {
 /// dropped (only the `inline` transform is applied). Colors the terminal cannot
 /// represent are downgraded to the nearest available color, and `Adaptive`
 /// colors are resolved against the context's background.
+///
+/// Bold and dim share the ANSI intensity reset (SGR 22). When a nested span
+/// closes with this reset, both attributes are cleared, then the outer style's
+/// bold and dim attributes are restored.
 pub fn render(context: Spruce, style: Style, text: String) -> String {
   let text = render_inline(text, style.inline)
 
@@ -185,8 +189,7 @@ pub fn render(context: Spruce, style: Style, text: String) -> String {
       text
       |> render_fg(fg, spruce.color_level(context))
       |> render_bg(bg, spruce.color_level(context))
-      |> render_bold(style.bold)
-      |> render_dim(style.dim)
+      |> render_intensity(style.bold, style.dim)
       |> render_italic(style.italic)
       |> render_underline(style.underline)
       |> render_strikethrough(style.strikethrough)
@@ -638,14 +641,16 @@ fn quantize_ansi256_cube_channel(value: Int) -> Int {
   }
 }
 
-fn render_bold(text: String, enabled: Bool) -> String {
-  use <- bool.guard(when: !enabled, return: text)
-  ansi.bold(text)
-}
-
-fn render_dim(text: String, enabled: Bool) -> String {
-  use <- bool.guard(when: !enabled, return: text)
-  ansi.dim(text)
+fn render_intensity(text: String, bold: Bool, dim: Bool) -> String {
+  let open = case bold, dim {
+    False, False -> ""
+    True, False -> "\u{001b}[1m"
+    False, True -> "\u{001b}[2m"
+    True, True -> "\u{001b}[2m\u{001b}[1m"
+  }
+  use <- bool.guard(when: open == "", return: text)
+  let close = "\u{001b}[22m"
+  open <> string.replace(text, close, close <> open) <> close
 }
 
 fn render_italic(text: String, enabled: Bool) -> String {

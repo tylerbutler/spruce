@@ -39,7 +39,8 @@ type SgrCategory {
   Foreground
   Background
   UnderlineColor
-  Intensity
+  Bold
+  Dim
   Italic
   Underline
   Blink
@@ -70,6 +71,9 @@ type Block {
 }
 
 /// The visual length of a string, excluding ANSI escape codes.
+///
+/// BMP emoji such as U+2705 count as two columns, using their Wide (W) property
+/// in [Unicode 16.0.0](https://www.unicode.org/Public/16.0.0/ucd/EastAsianWidth.txt).
 pub fn visual_length(text: String) -> Int {
   case string.contains(text, "\u{001b}") || !is_ascii(text) {
     True -> count_visible(string.to_graphemes(text), NormalText, 0)
@@ -251,6 +255,39 @@ fn is_zero_width(codepoint: Int) -> Bool {
 
 fn is_wide(codepoint: Int) -> Bool {
   in_range(codepoint, 0x1100, 0x115f)
+  || in_range(codepoint, 0x231a, 0x231b)
+  || in_range(codepoint, 0x23e9, 0x23ec)
+  || codepoint == 0x23f0
+  || codepoint == 0x23f3
+  || in_range(codepoint, 0x25fd, 0x25fe)
+  || in_range(codepoint, 0x2614, 0x2615)
+  || in_range(codepoint, 0x2648, 0x2653)
+  || codepoint == 0x267f
+  || codepoint == 0x2693
+  || codepoint == 0x26a1
+  || in_range(codepoint, 0x26aa, 0x26ab)
+  || in_range(codepoint, 0x26bd, 0x26be)
+  || in_range(codepoint, 0x26c4, 0x26c5)
+  || codepoint == 0x26ce
+  || codepoint == 0x26d4
+  || codepoint == 0x26ea
+  || in_range(codepoint, 0x26f2, 0x26f3)
+  || codepoint == 0x26f5
+  || codepoint == 0x26fa
+  || codepoint == 0x26fd
+  || codepoint == 0x2705
+  || in_range(codepoint, 0x270a, 0x270b)
+  || codepoint == 0x2728
+  || codepoint == 0x274c
+  || codepoint == 0x274e
+  || in_range(codepoint, 0x2753, 0x2755)
+  || codepoint == 0x2757
+  || in_range(codepoint, 0x2795, 0x2797)
+  || codepoint == 0x27b0
+  || codepoint == 0x27bf
+  || in_range(codepoint, 0x2b1b, 0x2b1c)
+  || codepoint == 0x2b50
+  || codepoint == 0x2b55
   || in_range(codepoint, 0x2e80, 0x303e)
   || in_range(codepoint, 0x3041, 0x33ff)
   || in_range(codepoint, 0x3400, 0x4dbf)
@@ -353,11 +390,13 @@ pub fn truncate(
 ///
 /// ANSI escape sequences do not count toward the width and are never split.
 /// Active SGR styles and OSC 8 hyperlinks are closed and reopened at output
-/// line boundaries.
+/// line boundaries. Bold and dim remain active together until SGR 22 or a full
+/// reset clears both.
 /// Words longer than `width` are hard-wrapped at visible column boundaries.
 /// Spaces that cause an automatic wrap are discarded without adding blank
 /// lines. Physical blank lines, trailing newlines, and spaces that fit are kept.
 /// A space-only physical line is limited to `width` without adding lines.
+/// A grapheme wider than `width` is kept intact on its own line.
 /// Widths less than or equal to zero return the input unchanged.
 pub fn wrap(text: String, width: Int) -> String {
   use <- bool.guard(when: width <= 0, return: text)
@@ -914,7 +953,7 @@ fn update_sgr_parameter(
   let code = parameter |> int.parse |> result.unwrap(-1)
   case code {
     0 -> []
-    22 -> remove_sgr(settings, Intensity)
+    22 -> settings |> remove_sgr(Bold) |> remove_sgr(Dim)
     23 -> remove_sgr(settings, Italic)
     24 -> remove_sgr(settings, Underline)
     25 -> remove_sgr(settings, Blink)
@@ -932,7 +971,8 @@ fn update_sgr_parameter(
 
 fn sgr_category(code: Int) -> SgrCategory {
   case code {
-    1 | 2 -> Intensity
+    1 -> Bold
+    2 -> Dim
     3 -> Italic
     4 | 21 -> Underline
     5 | 6 -> Blink
