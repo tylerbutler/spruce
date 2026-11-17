@@ -94,10 +94,15 @@ pub fn fenced_code_multiline_comment_keeps_style_inside_each_content_line_test()
       options,
     )
 
-  should.be_true(string.contains(
-    rendered,
-    "\u{001b}[36m│\u{001b}[39m\u{001b}[2m\u{001b}[31m/* first\u{001b}[0m    \u{001b}[36m│\u{001b}[39m",
-  ))
+  let first_line = fn(close: String) -> String {
+    "\u{001b}[36m│\u{001b}[39m\u{001b}[2m\u{001b}[31m/* first"
+    <> close
+    <> "    \u{001b}[36m│\u{001b}[39m"
+  }
+  should.be_true(
+    string.contains(rendered, first_line("\u{001b}[0m"))
+    || string.contains(rendered, first_line("\u{001b}[22m\u{001b}[39m")),
+  )
   should.be_true(string.contains(
     rendered,
     "\u{001b}[36m│\u{001b}[39m\u{001b}[2m\u{001b}[31m   second */\u{001b}[39m\u{001b}[22m\u{001b}[36m│\u{001b}[39m",

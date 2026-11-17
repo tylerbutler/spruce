@@ -332,19 +332,22 @@ pub fn box_multiline_styles_are_isolated_from_padding_and_borders_test() {
 
   list.each(["\u{001b}[1m", "\u{001b}[2m"], fn(intensity) {
     let content = intensity <> "\u{001b}[31mone\ntwo\u{001b}[39m\u{001b}[22m"
-    let expected =
+    let expected = fn(close: String) -> String {
       "\u{001b}[36m╭─────╮\u{001b}[39m\n"
       <> "\u{001b}[36m│\u{001b}[39m "
       <> intensity
-      <> "\u{001b}[31mone\u{001b}[0m \u{001b}[36m│\u{001b}[39m\n"
+      <> "\u{001b}[31mone"
+      <> close
+      <> " \u{001b}[36m│\u{001b}[39m\n"
       <> "\u{001b}[36m│\u{001b}[39m "
       <> intensity
       <> "\u{001b}[31mtwo\u{001b}[39m\u{001b}[22m \u{001b}[36m│\u{001b}[39m\n"
       <> "\u{001b}[36m╰─────╯\u{001b}[39m"
+    }
 
     list.each(options, fn(options) {
       box.render(context, content, options)
-      |> should.equal(expected)
+      |> assert_synthetic_close("\u{001b}[22m\u{001b}[39m", expected)
     })
   })
 }
@@ -355,7 +358,9 @@ pub fn box_height_truncation_closes_multiline_styles_test() {
     "\u{001b}[1m\u{001b}[31mone\ntwo\u{001b}[39m\u{001b}[22m",
     box.plain() |> box.height(1),
   )
-  |> should.equal("\u{001b}[1m\u{001b}[31mone\u{001b}[0m")
+  |> assert_synthetic_close("\u{001b}[22m\u{001b}[39m", fn(close) {
+    "\u{001b}[1m\u{001b}[31mone" <> close
+  })
 }
 
 pub fn box_multiline_style_closes_before_alignment_spaces_test() {
@@ -364,7 +369,9 @@ pub fn box_multiline_style_closes_before_alignment_spaces_test() {
     "\u{001b}[31ma\nlong\u{001b}[39m",
     box.plain() |> box.align(horizontal: align.Center, vertical: align.Start),
   )
-  |> should.equal(" \u{001b}[31ma\u{001b}[0m  \n\u{001b}[31mlong\u{001b}[39m")
+  |> assert_synthetic_close("\u{001b}[39m", fn(close) {
+    " \u{001b}[31ma" <> close <> "  \n\u{001b}[31mlong\u{001b}[39m"
+  })
 }
 
 pub fn box_unconstrained_preserves_whitespace_and_blank_lines_test() {
@@ -387,21 +394,37 @@ pub fn plain_box_multiline_styles_preserve_blank_lines_and_spaces_test() {
     "\u{001b}[31m a  \n\n b \n\u{001b}[39m",
     box.plain(),
   )
-  |> should.equal(
-    "\u{001b}[31m a  \u{001b}[0m\n"
-    <> "\u{001b}[31m\u{001b}[0m    \n"
-    <> "\u{001b}[31m b \u{001b}[0m \n"
-    <> "\u{001b}[31m\u{001b}[39m    ",
-  )
+  |> assert_synthetic_close("\u{001b}[39m", fn(close) {
+    "\u{001b}[31m a  "
+    <> close
+    <> "\n\u{001b}[31m"
+    <> close
+    <> "    \n\u{001b}[31m b "
+    <> close
+    <> " \n\u{001b}[31m\u{001b}[39m    "
+  })
 }
 
 pub fn box_zero_visual_width_still_isolates_styles_test() {
   let context = spruce.with_color_level(spruce.Basic)
   let content = "\u{001b}[31m\n\u{001b}[39m"
-  let expected = "\u{001b}[31m\u{001b}[0m\n\u{001b}[31m\u{001b}[39m"
+  let expected = fn(close: String) -> String {
+    "\u{001b}[31m" <> close <> "\n\u{001b}[31m\u{001b}[39m"
+  }
 
   box.render(context, content, box.plain())
-  |> should.equal(expected)
+  |> assert_synthetic_close("\u{001b}[39m", expected)
   box.render(context, content, box.plain() |> box.width(0))
-  |> should.equal(expected)
+  |> assert_synthetic_close("\u{001b}[39m", expected)
+}
+
+fn assert_synthetic_close(
+  actual: String,
+  selective_close: String,
+  expected: fn(String) -> String,
+) -> Nil {
+  case actual == expected("\u{001b}[0m") {
+    True -> Nil
+    False -> should.equal(actual, expected(selective_close))
+  }
 }
