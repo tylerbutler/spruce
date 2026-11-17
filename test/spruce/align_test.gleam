@@ -527,7 +527,100 @@ pub fn wrap_closes_unclosed_sgr_before_inserted_newline_test() {
   let opening = "\u{001b}[31m"
 
   align.wrap(opening <> "abcdef", 3)
-  |> should.equal(opening <> "abc\u{001b}[0m\n" <> opening <> "def\u{001b}[0m")
+  |> should.equal(
+    opening <> "abc\u{001b}[39m\n" <> opening <> "def\u{001b}[39m",
+  )
+}
+
+pub fn wrap_closes_only_active_sgr_categories_test() {
+  [
+    #("1", "22"),
+    #("2", "22"),
+    #("3", "23"),
+    #("4", "24"),
+    #("21", "24"),
+    #("5", "25"),
+    #("6", "25"),
+    #("7", "27"),
+    #("8", "28"),
+    #("9", "29"),
+    #("11", "10"),
+    #("19", "10"),
+    #("31", "39"),
+    #("97", "39"),
+    #("44", "49"),
+    #("107", "49"),
+    #("38;5;0", "39"),
+    #("38;2;0;0;0", "39"),
+    #("48;5;0", "49"),
+    #("48;2;0;0;0", "49"),
+    #("58;5;0", "59"),
+    #("58;2;0;0;0", "59"),
+  ]
+  |> list.each(fn(pair) {
+    let #(parameters, reset) = pair
+    let opening = "\u{001b}[" <> parameters <> "m"
+    let closing = "\u{001b}[" <> reset <> "m"
+    align.wrap(opening <> "ab", 1)
+    |> should.equal(
+      opening <> "a" <> closing <> "\n" <> opening <> "b" <> closing,
+    )
+  })
+}
+
+pub fn wrap_does_not_close_categories_already_reset_test() {
+  let opening = "\u{001b}[1;3;31m"
+  let reset = "\u{001b}[23;39m"
+  align.wrap(opening <> reset <> "ab", 1)
+  |> should.equal(opening <> reset <> "a\u{001b}[22m\n\u{001b}[1mb\u{001b}[22m")
+}
+
+pub fn wrap_closes_bold_and_dim_with_one_reset_test() {
+  let opening = "\u{001b}[1;2m"
+  align.wrap(opening <> "ab", 1)
+  |> should.equal(
+    opening <> "a\u{001b}[22m\n\u{001b}[1m\u{001b}[2mb\u{001b}[22m",
+  )
+}
+
+pub fn wrap_unknown_sgr_uses_full_reset_with_hyperlink_cleanup_test() {
+  let open = "\u{001b}]8;;https://example.com\u{0007}"
+  let close = "\u{001b}]8;;\u{001b}\\"
+  let styles = "\u{001b}[31m\u{001b}[53m"
+  align.wrap(styles <> open <> "ab", 1)
+  |> should.equal(
+    styles
+    <> open
+    <> "a"
+    <> close
+    <> "\u{001b}[0m\n"
+    <> styles
+    <> open
+    <> "b"
+    <> close
+    <> "\u{001b}[0m",
+  )
+}
+
+pub fn wrap_closes_hyperlink_before_selective_sgr_reset_test() {
+  let open = "\u{001b}]8;;https://example.com\u{001b}\\"
+  let close = "\u{001b}]8;;\u{001b}\\"
+  let styles = "\u{001b}[3m\u{001b}[31m"
+  let resets = "\u{001b}[23m\u{001b}[39m"
+  align.wrap(styles <> open <> "ab", 1)
+  |> should.equal(
+    styles
+    <> open
+    <> "a"
+    <> close
+    <> resets
+    <> "\n"
+    <> styles
+    <> open
+    <> "b"
+    <> close
+    <> resets,
+  )
 }
 
 pub fn wrap_reopens_sgr_after_hard_wrap_test() {
@@ -535,9 +628,7 @@ pub fn wrap_reopens_sgr_after_hard_wrap_test() {
   let reset = "\u{001b}[0m"
 
   align.wrap(opening <> "abcdef" <> reset, 3)
-  |> should.equal(
-    opening <> "abc" <> reset <> "\n" <> opening <> "def" <> reset,
-  )
+  |> should.equal(opening <> "abc\u{001b}[39m\n" <> opening <> "def" <> reset)
 }
 
 pub fn wrap_reopens_sgr_after_word_wrap_test() {
@@ -545,9 +636,7 @@ pub fn wrap_reopens_sgr_after_word_wrap_test() {
   let reset = "\u{001b}[0m"
 
   align.wrap(opening <> "abc def" <> reset, 3)
-  |> should.equal(
-    opening <> "abc" <> reset <> "\n" <> opening <> "def" <> reset,
-  )
+  |> should.equal(opening <> "abc\u{001b}[39m\n" <> opening <> "def" <> reset)
 }
 
 pub fn wrap_reopens_bold_and_dim_in_input_order_test() {
@@ -638,7 +727,7 @@ pub fn wrap_carries_sgr_across_physical_newline_test() {
 
   align.wrap(opening <> "abc\ndef" <> reset <> "\nplain", 80)
   |> should.equal(
-    opening <> "abc\u{001b}[0m\n" <> opening <> "def" <> reset <> "\nplain",
+    opening <> "abc\u{001b}[39m\n" <> opening <> "def" <> reset <> "\nplain",
   )
 }
 
@@ -659,9 +748,9 @@ pub fn wrap_carries_sgr_across_empty_physical_line_test() {
   align.wrap(opening <> "a\n\nb" <> reset, 80)
   |> should.equal(
     opening
-    <> "a\u{001b}[0m\n"
+    <> "a\u{001b}[39m\n"
     <> opening
-    <> "\u{001b}[0m\n"
+    <> "\u{001b}[39m\n"
     <> opening
     <> "b"
     <> reset,
@@ -675,9 +764,9 @@ pub fn wrap_carries_sgr_across_physical_and_inserted_wraps_test() {
   align.wrap(opening <> "abcd\nef" <> reset <> "\nplain", 2)
   |> should.equal(
     opening
-    <> "ab\u{001b}[0m\n"
+    <> "ab\u{001b}[39m\n"
     <> opening
-    <> "cd\u{001b}[0m\n"
+    <> "cd\u{001b}[39m\n"
     <> opening
     <> "ef"
     <> reset

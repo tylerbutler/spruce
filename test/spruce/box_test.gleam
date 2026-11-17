@@ -425,6 +425,23 @@ pub fn box_background_fills_padding_ring_test() {
   )
 }
 
+pub fn box_background_survives_wrapped_foreground_test() {
+  let context = spruce.with_color_level(spruce.Basic)
+  let content =
+    style.render(
+      context,
+      style.new() |> style.fg(style.Red),
+      "hello world again ok",
+    )
+  let options = box.new() |> box.width(12) |> box.background(style.Blue)
+  let rendered = box.render(context, content, options)
+  should.be_true(string.contains(
+    rendered,
+    "\u{001b}[44m \u{001b}[31mhello world\u{001b}[39m  \u{001b}[49m",
+  ))
+  should.be_false(string.contains(rendered, "\u{001b}[0m"))
+}
+
 pub fn box_border_color_applies_to_all_sides_test() {
   let context = spruce.with_color_level(spruce.Basic)
   let options =

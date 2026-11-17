@@ -13,6 +13,56 @@ pub fn heading_no_color_test() {
   |> should.equal("# Hello")
 }
 
+pub fn wrapped_heading_emphasis_preserves_outer_style_test() {
+  markdown.render_with(
+    spruce.with_color_level(spruce.Basic),
+    "# Heading with *emphasis that wraps across* lines here",
+    markdown.default_options() |> markdown.with_width(22),
+  )
+  |> should.equal(
+    "\u{001b}[1m\u{001b}[37m# Heading with \u{001b}[3m\u{001b}[23m\n"
+    <> "# \u{001b}[3memphasis that wraps\u{001b}[23m\n"
+    <> "# \u{001b}[3macross\u{001b}[23m lines here\u{001b}[39m\u{001b}[22m",
+  )
+}
+
+pub fn wrapped_quote_bold_preserves_outer_italic_test() {
+  let rendered =
+    markdown.render_with(
+      spruce.with_color_level(spruce.Basic),
+      "> quoted text with **bold that wraps across the** line and more text after it",
+      markdown.default_options() |> markdown.with_width(26),
+    )
+  let #(_, italic_text) =
+    rendered
+    |> string.split("\u{001b}[")
+    |> list.fold(#(False, []), fn(state, segment) {
+      let #(italic, text) = state
+      case string.split_once(segment, "m") {
+        Error(_) -> state
+        Ok(#(code, content)) -> {
+          let italic = case code {
+            "3" -> True
+            "0" | "23" -> False
+            _ -> italic
+          }
+          let content = string.trim(content)
+          case italic && content != "" && content != "┃" {
+            True -> #(italic, [content, ..text])
+            False -> #(italic, text)
+          }
+        }
+      }
+    })
+  italic_text
+  |> list.reverse
+  |> should.equal([
+    "quoted text with", "bold", "that wraps across the",
+    "line and more text after", "it",
+  ])
+  assert_max_width(rendered, 26)
+}
+
 pub fn heading_id_attribute_stripped_test() {
   markdown.render(spruce.no_color(), "## Title {#custom}")
   |> should.equal("## Title")

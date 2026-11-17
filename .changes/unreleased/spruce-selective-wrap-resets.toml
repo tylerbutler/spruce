@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "Preserve unrelated outer styles when wrapping recognized ANSI styles, including Markdown headings, quotes, and box backgrounds. Unknown SGR settings still require a full reset; truncation cleanup is unchanged."
