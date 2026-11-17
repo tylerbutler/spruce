@@ -19,12 +19,12 @@ jobs:
     if: ${{ needs.validate.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
       - name: Setup Gleam
-        uses: tylerbutler/actions/setup-gleam@1761c18aa4583d74916e1a53f2a106d1d70d72a8 # ratchet:tylerbutler/actions/setup-gleam@main
+        uses: tylerbutler/actions/setup-gleam@d7e1e50c375c5eb1a912a0849052ce8473881ecc # ratchet:tylerbutler/actions/setup-gleam@main
         with:
           erlang-version: "27.2"
           gleam-version: "1.16.0"
@@ -56,10 +56,10 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7.0.1
 
       - name: Setup mise tools
-        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # ratchet:jdx/mise-action@v2
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # ratchet:jdx/mise-action@v5
         env:
           # Avoid unauthenticated GitHub API rate limits when mise resolves the
           # licence_audit release and verifies its build attestations.
@@ -109,7 +109,7 @@ jobs:
             > "spruce-${VERSION}.sha256sum"
 
       - name: Attest SBOM
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # ratchet:actions/attest@v4
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # ratchet:actions/attest@v4
         with:
           subject-path: dist/spruce-${{ steps.version.outputs.version }}.tar.gz
           sbom-path: dist/spruce-${{ steps.version.outputs.version }}.cdx.json
@@ -118,7 +118,7 @@ jobs:
         # SLSA build provenance for every shipped artifact, including the
         # checksums file — verifying the checksums file's provenance lets
         # consumers verify the rest offline against it.
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # ratchet:actions/attest-build-provenance@v4
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # ratchet:actions/attest-build-provenance@v4
         with:
           subject-path: |
             dist/spruce-${{ steps.version.outputs.version }}.tar.gz
