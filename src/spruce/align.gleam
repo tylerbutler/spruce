@@ -58,6 +58,11 @@ type TerminalState {
   TerminalState(sgr: List(SgrSetting), hyperlink: String)
 }
 
+type SgrReset {
+  ResetAll
+  ResetActive
+}
+
 /// A position used for horizontal or vertical alignment.
 pub type Pos {
   Start
@@ -344,7 +349,7 @@ pub fn truncate(
     False -> {
       let #(cropped, state) =
         take_visible_with_state(text, width - ellipsis_width)
-      cropped <> close_terminal(state) <> ellipsis
+      cropped <> close_terminal(state, ResetAll) <> ellipsis
     }
   }
 }
@@ -353,7 +358,10 @@ pub fn truncate(
 ///
 /// ANSI escape sequences do not count toward the width and are never split.
 /// Active SGR styles and OSC 8 hyperlinks are closed and reopened at output
-/// line boundaries.
+/// line boundaries. Recognized SGR settings use category-specific resets, so
+/// unrelated styles applied around the wrapped output remain active.
+/// Unknown SGR settings require a full reset, which can cancel outer styles.
+/// Explicit resets in the input are preserved, including full resets.
 /// Words longer than `width` are hard-wrapped at visible column boundaries.
 /// Widths less than or equal to zero return the input unchanged.
 pub fn wrap(text: String, width: Int) -> String {
@@ -576,20 +584,47 @@ fn finish_line(
     True -> trim_trailing_spaces(line)
     False -> line
   }
-  line <> close_terminal(state)
+  line <> close_terminal(state, ResetActive)
 }
 
-fn close_terminal(state: TerminalState) -> String {
+fn close_terminal(state: TerminalState, reset: SgrReset) -> String {
   let TerminalState(sgr:, hyperlink:) = state
   let hyperlink_close = case hyperlink {
     "" -> ""
     _ -> "\u{001b}]8;;\u{001b}\\"
   }
-  let sgr_close = case sgr {
-    [] -> ""
-    _ -> "\u{001b}[0m"
+  let sgr_close = case sgr, reset {
+    [], _ -> ""
+    _, ResetAll -> "\u{001b}[0m"
+    _, ResetActive -> {
+      let resets = list.map(sgr, fn(setting) { sgr_reset(setting.category) })
+      case list.contains(resets, "0") {
+        True -> "\u{001b}[0m"
+        False ->
+          resets
+          |> list.map(fn(code) { "\u{001b}[" <> code <> "m" })
+          |> string.concat
+      }
+    }
   }
   hyperlink_close <> sgr_close
+}
+
+fn sgr_reset(category: SgrCategory) -> String {
+  case category {
+    Foreground -> "39"
+    Background -> "49"
+    UnderlineColor -> "59"
+    Intensity -> "22"
+    Italic -> "23"
+    Underline -> "24"
+    Blink -> "25"
+    Inverse -> "27"
+    Conceal -> "28"
+    Strike -> "29"
+    Font -> "10"
+    Other(_) -> "0"
+  }
 }
 
 fn reopen_terminal(state: TerminalState) -> String {

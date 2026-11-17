@@ -13,6 +13,41 @@ pub fn heading_no_color_test() {
   |> should.equal("# Hello")
 }
 
+pub fn wrapped_heading_emphasis_preserves_outer_style_test() {
+  markdown.render_with(
+    spruce.with_color_level(spruce.Basic),
+    "# Heading with *emphasis that wraps across* lines here",
+    markdown.default_options() |> markdown.with_width(22),
+  )
+  |> should.equal(
+    "\u{001b}[1m\u{001b}[37m# Heading with \u{001b}[3m\u{001b}[23m\n"
+    <> "# \u{001b}[3memphasis that wraps\u{001b}[23m\n"
+    <> "# \u{001b}[3macross\u{001b}[23m lines here\u{001b}[39m\u{001b}[22m",
+  )
+}
+
+pub fn wrapped_quote_bold_preserves_outer_italic_test() {
+  let rendered =
+    markdown.render_with(
+      spruce.with_color_level(spruce.Basic),
+      "> quoted text with **bold that wraps across the** line and more text after it",
+      markdown.default_options() |> markdown.with_width(26),
+    )
+  let prefix = "\u{001b}[37m┃\u{001b}[39m "
+  rendered
+  |> should.equal(
+    prefix
+    <> "\u{001b}[3mquoted text with \u{001b}[1mbold\u{001b}[22m   \n"
+    <> prefix
+    <> "\u{001b}[1mthat wraps across the\u{001b}[22m   \n"
+    <> prefix
+    <> "line and more text after\n"
+    <> prefix
+    <> "it\u{001b}[23m                      ",
+  )
+  assert_max_width(rendered, 26)
+}
+
 pub fn heading_id_attribute_stripped_test() {
   markdown.render(spruce.no_color(), "## Title {#custom}")
   |> should.equal("## Title")
