@@ -357,7 +357,7 @@ pub fn truncate(
 /// Words longer than `width` are hard-wrapped at visible column boundaries.
 /// Spaces that cause an automatic wrap are discarded without adding blank
 /// lines. Physical blank lines, trailing newlines, and spaces that fit are kept.
-/// A physical line containing only spaces is kept even if it exceeds `width`.
+/// A space-only physical line is limited to `width` without adding lines.
 /// Widths less than or equal to zero return the input unchanged.
 pub fn wrap(text: String, width: Int) -> String {
   use <- bool.guard(when: width <= 0, return: text)
@@ -415,12 +415,19 @@ fn wrap_pieces(
     [Spaces(tokens, spaces_width), ..rest] -> {
       case current_width == 0 || current_width + spaces_width <= width {
         True -> {
-          let #(current, state) = append_tokens(tokens, current, state)
+          let #(current, state) =
+            take_visible_loop(
+              tokens,
+              width - current_width,
+              True,
+              current,
+              state,
+            )
           wrap_pieces(
             rest,
             width,
             current,
-            current_width + spaces_width,
+            current_width + int.min(spaces_width, width),
             state,
             lines,
           )

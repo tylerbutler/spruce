@@ -237,10 +237,11 @@ pub fn wrap_preserves_trailing_spaces_at_physical_line_end_test() {
 
 pub fn wrap_drops_overflow_trailing_spaces_without_an_extra_line_test() {
   let opening = "\u{001b}[31m"
-  let reset = "\u{001b}[0m"
 
   align.wrap(opening <> "hello     ", 5)
-  |> should.equal(opening <> "hello" <> reset)
+  |> should_equal_with_foreground_close(fn(close) {
+    opening <> "hello" <> close
+  })
 }
 
 pub fn wrap_drops_space_only_prefix_before_a_word_that_needs_wrapping_test() {
@@ -257,12 +258,11 @@ pub fn wrap_drops_space_only_prefix_before_a_word_that_needs_wrapping_test() {
 pub fn wrap_keeps_controls_when_dropping_an_oversized_word_prefix_test() {
   let opening = "\u{001b}[31m"
   let cursor = "\u{001b}[2K"
-  let reset = "\u{001b}[0m"
 
   align.wrap(" " <> opening <> " " <> cursor <> "abcdefghij", 5)
-  |> should.equal(
-    opening <> cursor <> "abcde" <> reset <> "\n" <> opening <> "fghij" <> reset,
-  )
+  |> should_equal_with_foreground_close(fn(close) {
+    opening <> cursor <> "abcde" <> close <> "\n" <> opening <> "fghij" <> close
+  })
 }
 
 pub fn wrap_overflow_spaces_still_separate_the_next_word_test() {
@@ -272,31 +272,31 @@ pub fn wrap_overflow_spaces_still_separate_the_next_word_test() {
 
 pub fn wrap_preserves_physical_blank_lines_and_trailing_newlines_test() {
   let opening = "\u{001b}[31m"
-  let reset = "\u{001b}[0m"
 
   align.wrap(opening <> "hello     \n\n   \nworld\n", 5)
-  |> should.equal(
-    opening
-    <> "hello"
-    <> reset
-    <> "\n"
-    <> opening
-    <> reset
-    <> "\n"
-    <> opening
-    <> "   "
-    <> reset
-    <> "\n"
-    <> opening
-    <> "world"
-    <> reset
-    <> "\n"
-    <> opening
-    <> reset,
-  )
+  |> should_equal_with_foreground_close(fn(close) {
+    string.join(
+      [
+        opening <> "hello" <> close,
+        opening <> close,
+        opening <> "   " <> close,
+        opening <> "world" <> close,
+        opening <> close,
+      ],
+      "\n",
+    )
+  })
 
   align.wrap("\n      \n\n", 5)
-  |> should.equal("\n      \n\n")
+  |> should.equal("\n     \n\n")
+
+  align.wrap(opening <> "      \n\nx", 5)
+  |> should_equal_with_foreground_close(fn(close) {
+    string.join(
+      [opening <> "     " <> close, opening <> close, opening <> "x" <> close],
+      "\n",
+    )
+  })
 }
 
 pub fn wrap_keeps_control_only_suffix_effects_and_state_test() {
@@ -319,20 +319,38 @@ pub fn wrap_keeps_control_only_suffix_effects_and_state_test() {
     "\n",
   ))
 
+  align.wrap(open <> "      " <> close <> cursor <> green <> "\n\nx", 5)
+  |> should_equal_with_foreground_close(fn(synthetic_close) {
+    string.join(
+      [
+        open <> "     " <> close <> cursor <> green <> synthetic_close,
+        green <> synthetic_close,
+        green <> "x" <> synthetic_close,
+      ],
+      "\n",
+    )
+  })
+
   align.wrap(opening <> "hello     " <> green <> "\n\nx", 5)
-  |> should.equal(
-    opening
-    <> "hello"
-    <> green
-    <> reset
-    <> "\n"
-    <> green
-    <> reset
-    <> "\n"
-    <> green
-    <> "x"
-    <> reset,
-  )
+  |> should_equal_with_foreground_close(fn(close) {
+    string.join(
+      [
+        opening <> "hello" <> green <> close,
+        green <> close,
+        green <> "x" <> close,
+      ],
+      "\n",
+    )
+  })
+}
+
+fn should_equal_with_foreground_close(
+  actual: String,
+  expected: fn(String) -> String,
+) -> Nil {
+  // Both full and foreground-only synthetic resets close these foreground styles.
+  list.contains([expected("\u{001b}[0m"), expected("\u{001b}[39m")], actual)
+  |> should.be_true
 }
 
 pub fn wrap_hard_wraps_long_words_test() {
