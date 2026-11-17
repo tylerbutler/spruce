@@ -88,6 +88,44 @@ pub fn bullet_ordered_nested_tasklist_test() {
   should.be_true(string.contains(rendered, "3. third\n4. fourth"))
 }
 
+pub fn ordered_list_default_start_test() {
+  markdown.render(spruce.no_color(), "1. one\n2. two\n3. three")
+  |> should.equal("1. one\n2. two\n3. three")
+}
+
+pub fn nested_ordered_list_default_start_test() {
+  markdown.render(spruce.no_color(), "- parent\n  1. one\n  2. two")
+  |> should.equal("• parent\n  1. one\n  2. two")
+
+  markdown.render(spruce.no_color(), "1. parent\n   1. one\n   2. two")
+  |> should.equal("1. parent\n   1. one\n   2. two")
+}
+
+pub fn ordered_list_default_start_width_test() {
+  markdown.render_with(
+    spruce.no_color(),
+    "1. abc def ghi",
+    markdown.default_options() |> markdown.with_width(8),
+  )
+  |> should.equal("1. abc\n   def\n   ghi")
+
+  markdown.render_with(
+    spruce.no_color(),
+    "1. abc def",
+    markdown.default_options() |> markdown.with_width(3),
+  )
+  |> should.equal("abc\ndef")
+}
+
+pub fn ordered_list_explicit_start_marker_width_test() {
+  markdown.render_with(
+    spruce.no_color(),
+    "9. abc def\n10. ghi jkl",
+    markdown.default_options() |> markdown.with_width(8),
+  )
+  |> should.equal("9. abc\n   def\n10. ghi\n    jkl")
+}
+
 pub fn fenced_code_block_box_test() {
   let rendered = markdown.render(spruce.no_color(), "```gleam\nlet x = 1\n```")
 
@@ -123,6 +161,40 @@ pub fn fenced_code_block_highlight_color_applies_test() {
     "\u{001b}[1m\u{001b}[38;2;196;181;253mlet",
   ))
   should.be_true(string.contains(rendered, "x"))
+}
+
+pub fn fenced_code_multiline_comment_keeps_style_inside_each_content_line_test() {
+  let theme = markdown.dark_theme()
+  let theme =
+    markdown.Theme(
+      ..theme,
+      code: highlight.Theme(
+        ..theme.code,
+        comment: style.new() |> style.dim |> style.fg(style.Red),
+      ),
+      code_border: style.Cyan,
+    )
+  let options = markdown.default_options() |> markdown.with_theme(theme)
+  let rendered =
+    markdown.render_with(
+      spruce.with_color_level(spruce.Basic),
+      "```js\n/* first\n   second */\n```",
+      options,
+    )
+
+  let first_line = fn(close: String) -> String {
+    "\u{001b}[36m│\u{001b}[39m\u{001b}[2m\u{001b}[31m/* first"
+    <> close
+    <> "    \u{001b}[36m│\u{001b}[39m"
+  }
+  should.be_true(
+    string.contains(rendered, first_line("\u{001b}[0m"))
+    || string.contains(rendered, first_line("\u{001b}[22m\u{001b}[39m")),
+  )
+  should.be_true(string.contains(
+    rendered,
+    "\u{001b}[36m│\u{001b}[39m\u{001b}[2m\u{001b}[31m   second */\u{001b}[39m\u{001b}[22m\u{001b}[36m│\u{001b}[39m",
+  ))
 }
 
 pub fn fenced_code_block_unknown_language_stays_plain_test() {
@@ -416,6 +488,43 @@ pub fn heading_truecolor_is_styled_test() {
     markdown.render(spruce.with_color_level(spruce.TrueColor), "# Hello")
 
   should.be_true(string.contains(rendered, "\u{001b}"))
+}
+
+pub fn heading_restores_bold_after_dim_code_span_test() {
+  list.each(
+    [markdown.adaptive_theme(), markdown.dark_theme(), markdown.light_theme()],
+    fn(theme) {
+      markdown.render_with(
+        spruce.with_color_level(spruce.Basic),
+        "# Using `foo` here",
+        markdown.default_options() |> markdown.with_theme(theme),
+      )
+      |> string.contains("\u{001b}[22m\u{001b}[1m here\u{001b}[39m\u{001b}[22m")
+      |> should.be_true
+    },
+  )
+}
+
+pub fn strong_restores_bold_after_dim_code_span_test() {
+  list.each(
+    [markdown.adaptive_theme(), markdown.dark_theme(), markdown.light_theme()],
+    fn(theme) {
+      markdown.render_with(
+        spruce.with_color_level(spruce.Basic),
+        "**bold `code` after**",
+        markdown.default_options() |> markdown.with_theme(theme),
+      )
+      |> string.contains("\u{001b}[22m\u{001b}[1m after\u{001b}[22m")
+      |> should.be_true
+    },
+  )
+}
+
+pub fn nested_code_span_intensity_no_color_is_plain_test() {
+  markdown.render(spruce.no_color(), "# Using `foo` here")
+  |> should.equal("# Using `foo` here")
+  markdown.render(spruce.no_color(), "**bold `code` after**")
+  |> should.equal("bold `code` after")
 }
 
 pub fn render_with_options_wraps_and_themes_test() {

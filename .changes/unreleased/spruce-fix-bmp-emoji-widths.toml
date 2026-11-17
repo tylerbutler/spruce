@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Fixed"
+body = "Count wide BMP emoji such as ✅, ❌, ✨, and ⭐ as two columns so padding, wrapping, truncation, boxes, and tables align correctly."
