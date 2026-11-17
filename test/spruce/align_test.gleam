@@ -269,6 +269,80 @@ pub fn wrap_reopens_sgr_after_word_wrap_test() {
   )
 }
 
+pub fn wrap_reopens_bold_and_dim_in_input_order_test() {
+  let bold = "\u{001b}[1m"
+  let dim = "\u{001b}[2m"
+  let reset = "\u{001b}[0m"
+
+  list.each([bold <> dim, dim <> bold], fn(opening) {
+    list.each(["abc def", "abcdef", "abc\ndef"], fn(text) {
+      let assert [first, second] =
+        align.wrap(opening <> text <> reset, 3) |> string.split("\n")
+      should.be_true(string.starts_with(first, opening <> "abc"))
+      second |> should.equal(opening <> "def" <> reset)
+    })
+  })
+}
+
+pub fn wrap_reopens_combined_bold_and_dim_parameters_test() {
+  let reset = "\u{001b}[0m"
+
+  list.each(
+    [
+      #("\u{001b}[1;2m", "\u{001b}[1m\u{001b}[2m"),
+      #("\u{001b}[2;1m", "\u{001b}[2m\u{001b}[1m"),
+    ],
+    fn(pair) {
+      let #(opening, reopening) = pair
+      list.each(["abc def", "abcdef", "abc\ndef"], fn(text) {
+        let assert [first, second] =
+          align.wrap(opening <> text <> reset, 3) |> string.split("\n")
+        should.be_true(string.starts_with(first, opening <> "abc"))
+        second |> should.equal(reopening <> "def" <> reset)
+      })
+    },
+  )
+}
+
+pub fn wrap_intensity_reset_clears_bold_and_dim_but_keeps_other_styles_test() {
+  let red = "\u{001b}[31m"
+  let italic = "\u{001b}[3m"
+  let reset = "\u{001b}[0m"
+
+  list.each(["1;2", "2;1"], fn(parameters) {
+    let opening = "\u{001b}[" <> parameters <> "m"
+    let assert [first, second] =
+      align.wrap(red <> opening <> italic <> "abc\u{001b}[22m\ndef" <> reset, 3)
+      |> string.split("\n")
+    should.be_true(string.starts_with(
+      first,
+      red <> opening <> italic <> "abc\u{001b}[22m",
+    ))
+    second |> should.equal(red <> italic <> "def" <> reset)
+  })
+}
+
+pub fn wrap_full_reset_clears_bold_and_dim_test() {
+  list.each(["\u{001b}[0m", "\u{001b}[m", "\u{001b}[22m"], fn(reset) {
+    align.wrap("\u{001b}[1;2mabc" <> reset <> "\ndef", 3)
+    |> should.equal("\u{001b}[1;2mabc" <> reset <> "\ndef")
+  })
+}
+
+pub fn wrap_can_enable_either_attribute_after_intensity_reset_test() {
+  list.each(["1", "2"], fn(parameter) {
+    let opening = "\u{001b}[" <> parameter <> "m"
+    let assert [first, second] =
+      align.wrap("\u{001b}[1;2;22;" <> parameter <> "mabc\ndef", 3)
+      |> string.split("\n")
+    should.be_true(string.starts_with(
+      first,
+      "\u{001b}[1;2;22;" <> parameter <> "mabc",
+    ))
+    should.be_true(string.starts_with(second, opening <> "def"))
+  })
+}
+
 pub fn wrap_word_boundary_preserves_reset_after_space_test() {
   let opening = "\u{001b}[31m"
   let reset = "\u{001b}[0m"
