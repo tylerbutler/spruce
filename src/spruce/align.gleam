@@ -393,6 +393,9 @@ pub fn truncate(
 /// line boundaries. Bold and dim remain active together until SGR 22 or a full
 /// reset clears both.
 /// Words longer than `width` are hard-wrapped at visible column boundaries.
+/// Spaces that cause an automatic wrap are discarded without adding blank
+/// lines. Physical blank lines, trailing newlines, and spaces that fit are kept.
+/// A space-only physical line is limited to `width` without adding lines.
 /// A grapheme wider than `width` is kept intact on its own line.
 /// Widths less than or equal to zero return the input unchanged.
 pub fn wrap(text: String, width: Int) -> String {
@@ -449,9 +452,29 @@ fn wrap_pieces(
       }
 
     [Spaces(tokens, spaces_width), ..rest] -> {
-      case current_width + spaces_width <= width {
+      case current_width == 0 || current_width + spaces_width <= width {
         True -> {
-          let #(current, state) = append_tokens(tokens, current, state)
+          let #(current, state) =
+            take_visible_loop(
+              tokens,
+              width - current_width,
+              True,
+              current,
+              state,
+            )
+          wrap_pieces(
+            rest,
+            width,
+            current,
+            current_width + int.min(spaces_width, width),
+            state,
+            lines,
+          )
+        }
+
+        False -> {
+          let #(current, state) = append_controls(tokens, current, state)
+          // Defer the break so trailing spaces cannot create a continuation.
           wrap_pieces(
             rest,
             width,
@@ -461,25 +484,20 @@ fn wrap_pieces(
             lines,
           )
         }
-
-        False ->
-          case current_width {
-            0 -> {
-              let #(current, current_width, state, lines) =
-                wrap_long_piece(tokens, width, current, state, lines)
-              wrap_pieces(rest, width, current, current_width, state, lines)
-            }
-
-            _ -> {
-              let #(current, state) = append_controls(tokens, current, state)
-              let lines = [finish_line(current, state, True), ..lines]
-              wrap_pieces(rest, width, start_line(state), 0, state, lines)
-            }
-          }
       }
     }
 
     [Word(tokens, word_width), ..rest] -> {
+      let #(current, current_width) = case
+        word_width > 0
+        && current_width + word_width > width
+        && !list.any(current, fn(part) {
+          part != " " && !string.starts_with(part, "\u{001b}")
+        })
+      {
+        True -> #(list.filter(current, fn(part) { part != " " }), 0)
+        False -> #(current, current_width)
+      }
       case word_width > width {
         True ->
           case current_width {
@@ -496,7 +514,7 @@ fn wrap_pieces(
           }
 
         False ->
-          case current_width + word_width <= width {
+          case word_width == 0 || current_width + word_width <= width {
             True -> {
               let #(current, state) = append_tokens(tokens, current, state)
               wrap_pieces(
