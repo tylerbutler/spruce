@@ -75,6 +75,35 @@ pub fn fenced_code_block_highlight_color_applies_test() {
   should.be_true(string.contains(rendered, "x"))
 }
 
+pub fn fenced_code_multiline_comment_keeps_style_inside_each_content_line_test() {
+  let theme = markdown.dark_theme()
+  let theme =
+    markdown.Theme(
+      ..theme,
+      code: highlight.Theme(
+        ..theme.code,
+        comment: style.new() |> style.dim |> style.fg(style.Red),
+      ),
+      code_border: style.Cyan,
+    )
+  let options = markdown.default_options() |> markdown.with_theme(theme)
+  let rendered =
+    markdown.render_with(
+      spruce.with_color_level(spruce.Basic),
+      "```js\n/* first\n   second */\n```",
+      options,
+    )
+
+  should.be_true(string.contains(
+    rendered,
+    "\u{001b}[36m│\u{001b}[39m\u{001b}[2m\u{001b}[31m/* first\u{001b}[0m    \u{001b}[36m│\u{001b}[39m",
+  ))
+  should.be_true(string.contains(
+    rendered,
+    "\u{001b}[36m│\u{001b}[39m\u{001b}[2m\u{001b}[31m   second */\u{001b}[39m\u{001b}[22m\u{001b}[36m│\u{001b}[39m",
+  ))
+}
+
 pub fn fenced_code_block_unknown_language_stays_plain_test() {
   let rendered =
     markdown.render(spruce.no_color(), "```nonsense\nlet x = 1\n```")

@@ -238,6 +238,8 @@ pub fn print(context: Spruce, content: String) -> Nil {
 }
 
 /// Render `content` with the given box.
+/// Styles that span newlines are closed and reopened on each content line,
+/// before alignment, padding, and borders are added.
 pub fn render(context: Spruce, content: String, box: Box) -> String {
   let title = sanitize_title(box.title)
 
@@ -264,7 +266,7 @@ fn content_region(
 ) -> List(String) {
   let wrapped = case box.width {
     Some(width) if width > 0 -> align.wrap(content, width)
-    Some(_) | None -> content
+    Some(_) | None -> align.wrap(content, int.max(1, align.size(content).0))
   }
   let lines = string.split(wrapped, "\n")
   let lines = case box.height {

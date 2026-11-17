@@ -1,3 +1,4 @@
+import gleam/list
 import gleam/string
 import gleeunit/should
 import spruce
@@ -319,4 +320,88 @@ pub fn plain_box_margin_adds_outer_space_after_indent_test() {
 
   box.render(spruce.no_color(), "hi", options)
   |> should.equal("      \n  hi  \n      ")
+}
+
+pub fn box_multiline_styles_are_isolated_from_padding_and_borders_test() {
+  let context = spruce.with_color_level(spruce.Basic)
+  let options = [
+    box.new(),
+    box.new() |> box.width(0),
+    box.new() |> box.width(3),
+  ]
+
+  list.each(["\u{001b}[1m", "\u{001b}[2m"], fn(intensity) {
+    let content = intensity <> "\u{001b}[31mone\ntwo\u{001b}[39m\u{001b}[22m"
+    let expected =
+      "\u{001b}[36m╭─────╮\u{001b}[39m\n"
+      <> "\u{001b}[36m│\u{001b}[39m "
+      <> intensity
+      <> "\u{001b}[31mone\u{001b}[0m \u{001b}[36m│\u{001b}[39m\n"
+      <> "\u{001b}[36m│\u{001b}[39m "
+      <> intensity
+      <> "\u{001b}[31mtwo\u{001b}[39m\u{001b}[22m \u{001b}[36m│\u{001b}[39m\n"
+      <> "\u{001b}[36m╰─────╯\u{001b}[39m"
+
+    list.each(options, fn(options) {
+      box.render(context, content, options)
+      |> should.equal(expected)
+    })
+  })
+}
+
+pub fn box_height_truncation_closes_multiline_styles_test() {
+  box.render(
+    spruce.with_color_level(spruce.Basic),
+    "\u{001b}[1m\u{001b}[31mone\ntwo\u{001b}[39m\u{001b}[22m",
+    box.plain() |> box.height(1),
+  )
+  |> should.equal("\u{001b}[1m\u{001b}[31mone\u{001b}[0m")
+}
+
+pub fn box_multiline_style_closes_before_alignment_spaces_test() {
+  box.render(
+    spruce.with_color_level(spruce.Basic),
+    "\u{001b}[31ma\nlong\u{001b}[39m",
+    box.plain() |> box.align(horizontal: align.Center, vertical: align.Start),
+  )
+  |> should.equal(" \u{001b}[31ma\u{001b}[0m  \n\u{001b}[31mlong\u{001b}[39m")
+}
+
+pub fn box_unconstrained_preserves_whitespace_and_blank_lines_test() {
+  let context = spruce.no_color()
+  let content =
+    style.render(context, style.new() |> style.bold, "\n  a  \n\n \n")
+  let expected = "     \n  a  \n     \n     \n     "
+
+  box.render(context, content, box.plain())
+  |> should.equal(expected)
+  box.render(context, content, box.plain() |> box.width(0))
+  |> should.equal(expected)
+  box.render(context, content, box.new() |> box.border(border.Hidden))
+  |> should.equal("       \n   a   \n       \n       \n       ")
+}
+
+pub fn plain_box_multiline_styles_preserve_blank_lines_and_spaces_test() {
+  box.render(
+    spruce.with_color_level(spruce.Basic),
+    "\u{001b}[31m a  \n\n b \n\u{001b}[39m",
+    box.plain(),
+  )
+  |> should.equal(
+    "\u{001b}[31m a  \u{001b}[0m\n"
+    <> "\u{001b}[31m\u{001b}[0m    \n"
+    <> "\u{001b}[31m b \u{001b}[0m \n"
+    <> "\u{001b}[31m\u{001b}[39m    ",
+  )
+}
+
+pub fn box_zero_visual_width_still_isolates_styles_test() {
+  let context = spruce.with_color_level(spruce.Basic)
+  let content = "\u{001b}[31m\n\u{001b}[39m"
+  let expected = "\u{001b}[31m\u{001b}[0m\n\u{001b}[31m\u{001b}[39m"
+
+  box.render(context, content, box.plain())
+  |> should.equal(expected)
+  box.render(context, content, box.plain() |> box.width(0))
+  |> should.equal(expected)
 }
