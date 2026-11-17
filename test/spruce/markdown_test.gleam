@@ -406,6 +406,43 @@ pub fn heading_truecolor_is_styled_test() {
   should.be_true(string.contains(rendered, "\u{001b}"))
 }
 
+pub fn heading_restores_bold_after_dim_code_span_test() {
+  list.each(
+    [markdown.adaptive_theme(), markdown.dark_theme(), markdown.light_theme()],
+    fn(theme) {
+      markdown.render_with(
+        spruce.with_color_level(spruce.Basic),
+        "# Using `foo` here",
+        markdown.default_options() |> markdown.with_theme(theme),
+      )
+      |> string.contains("\u{001b}[22m\u{001b}[1m here\u{001b}[39m\u{001b}[22m")
+      |> should.be_true
+    },
+  )
+}
+
+pub fn strong_restores_bold_after_dim_code_span_test() {
+  list.each(
+    [markdown.adaptive_theme(), markdown.dark_theme(), markdown.light_theme()],
+    fn(theme) {
+      markdown.render_with(
+        spruce.with_color_level(spruce.Basic),
+        "**bold `code` after**",
+        markdown.default_options() |> markdown.with_theme(theme),
+      )
+      |> string.contains("\u{001b}[22m\u{001b}[1m after\u{001b}[22m")
+      |> should.be_true
+    },
+  )
+}
+
+pub fn nested_code_span_intensity_no_color_is_plain_test() {
+  markdown.render(spruce.no_color(), "# Using `foo` here")
+  |> should.equal("# Using `foo` here")
+  markdown.render(spruce.no_color(), "**bold `code` after**")
+  |> should.equal("bold `code` after")
+}
+
 pub fn render_with_options_wraps_and_themes_test() {
   let options =
     markdown.default_options()
