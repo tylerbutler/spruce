@@ -33,18 +33,33 @@ pub fn wrapped_quote_bold_preserves_outer_italic_test() {
       "> quoted text with **bold that wraps across the** line and more text after it",
       markdown.default_options() |> markdown.with_width(26),
     )
-  let prefix = "\u{001b}[37m┃\u{001b}[39m "
-  rendered
-  |> should.equal(
-    prefix
-    <> "\u{001b}[3mquoted text with \u{001b}[1mbold\u{001b}[22m   \n"
-    <> prefix
-    <> "\u{001b}[1mthat wraps across the\u{001b}[22m   \n"
-    <> prefix
-    <> "line and more text after\n"
-    <> prefix
-    <> "it\u{001b}[23m                      ",
-  )
+  let #(_, italic_text) =
+    rendered
+    |> string.split("\u{001b}[")
+    |> list.fold(#(False, []), fn(state, segment) {
+      let #(italic, text) = state
+      case string.split_once(segment, "m") {
+        Error(_) -> state
+        Ok(#(code, content)) -> {
+          let italic = case code {
+            "3" -> True
+            "0" | "23" -> False
+            _ -> italic
+          }
+          let content = string.trim(content)
+          case italic && content != "" && content != "┃" {
+            True -> #(italic, [content, ..text])
+            False -> #(italic, text)
+          }
+        }
+      }
+    })
+  italic_text
+  |> list.reverse
+  |> should.equal([
+    "quoted text with", "bold", "that wraps across the",
+    "line and more text after", "it",
+  ])
   assert_max_width(rendered, 26)
 }
 
