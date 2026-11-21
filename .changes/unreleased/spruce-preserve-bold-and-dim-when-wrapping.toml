@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Preserve both bold and dim on continuation lines in `align.wrap`, including word wraps, hard wraps, and explicit line breaks."

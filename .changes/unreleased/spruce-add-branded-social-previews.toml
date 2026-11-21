@@ -1,3 +1,0 @@
-package = "spruce"
-kind = "Fixed"
-body = "Fix link previews for the website and workbench with a branded image and page-specific sharing metadata."
