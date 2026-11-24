@@ -26,6 +26,14 @@ jobs:
       - name: Build documentation
         run: just docs
 
+      - name: Setup licence_audit
+        uses: tylerbutler/actions/setup-licence-audit@d7e1e50c375c5eb1a912a0849052ce8473881ecc # ratchet:tylerbutler/actions/setup-licence-audit@main
+        with:
+          version: v1.0.0-rc.3
+
+      - name: Audit licences and vulnerabilities
+        run: just audit
+
   website:
     runs-on: ubuntu-24.04
     name: Website

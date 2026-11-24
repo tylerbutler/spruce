@@ -23,9 +23,28 @@ uses Erlang/OTP 28. The shared CI setup keeps Erlang/OTP 27.2.1 and Gleam
 - `just test` — run the Erlang and JavaScript test suites
 - `just format` — format the source and test files
 - `just lint` — check formatting and run glinter
+- `just audit` — check root Gleam dependency licences and known vulnerabilities
 - `just docs` — build the Hex documentation
 - `just ci` — run the full validation workflow
 - `npm run build --prefix website` — regenerate examples and build the website
+
+## Dependency audits
+
+`just audit` runs `licence_audit check --checks=all` with the policy in `gleam.toml`.
+It checks the root lockfile, including production and development dependencies.
+It does not scan the browser workbench or npm dependencies.
+
+The command verifies licence declarations from the locked Hex archives against
+the checksums in `manifest.toml`. It requires network access to Hex and OSV.dev.
+Licence policy violations and high or critical advisories fail the check. Lower and unknown
+severities appear in the report but do not fail it. Missing or invalid package
+metadata and OSV request or advisory-detail failures also fail the check.
+Review findings before changing the policy or adding an exception.
+
+CI runs the audit once in the checks job. The shared installer uses the
+licence_audit 1.0.0-rc.3 escript with OTP 28; mise installs the same release as a
+self-contained executable. `just sbom` and `just dist` use that release for
+the existing CycloneDX SBOM artifacts.
 
 ## Output snapshots
 
@@ -61,6 +80,10 @@ accepts snapshots. Unreviewed `.new` files are ignored by Git.
 5. Merge the release PR to `main`.
 6. When the `release/pending` PR closes, Trellis creates the tag and GitHub release.
 7. The `Publish` workflow runs on tag push and publishes the package to Hex.
+
+After publication, the artifact job associates the dependency SBOM with the
+source archive and adds build provenance attestations for the archive, SBOM
+document, and checksums. It uploads these files to the existing GitHub release.
 
 Both release workflows use the release app token for Git authentication and
 GitHub API calls. Keep that token in the checkout step: GitHub does not start
