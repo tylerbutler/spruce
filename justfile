@@ -53,6 +53,10 @@ check:
 lint: format-check
     trellis run lint
 
+# Audit root Gleam dependency licences and known vulnerabilities
+audit:
+    licence_audit check --checks=all
+
 # === DOCUMENTATION ===
 
 # Build API documentation
@@ -117,6 +121,6 @@ clean:
 # === CI ===
 
 # Full validation workflow (no file mutation)
-ci: lint check build-strict test docs terminal-check
+ci: lint check build-strict test docs terminal-check audit
 
 alias pr := ci
