@@ -41,10 +41,11 @@ severities appear in the report but do not fail it. Missing or invalid package
 metadata and OSV request or advisory-detail failures also fail the check.
 Review findings before changing the policy or adding an exception.
 
-CI runs the audit once in the checks job. The shared installer uses the
-licence_audit 1.0.0-rc.3 escript with OTP 28; mise installs the same release as a
-self-contained executable. `just sbom` and `just dist` use that release for
-the existing CycloneDX SBOM artifacts.
+CI runs the audit once in the checks job. Both CI and local development use
+mise to install the self-contained licence_audit executable pinned in
+`.mise.toml`. CI installs only the audit tool and keeps its existing build
+toolchain. `just sbom` and `just dist` use the same pin for the existing
+CycloneDX SBOM artifacts.
 
 ## Output snapshots
 

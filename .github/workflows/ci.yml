@@ -26,13 +26,15 @@ jobs:
       - name: Build documentation
         run: just docs
 
-      - name: Setup licence_audit
-        uses: tylerbutler/actions/setup-licence-audit@d7e1e50c375c5eb1a912a0849052ce8473881ecc # ratchet:tylerbutler/actions/setup-licence-audit@main
+      - name: Setup audit tool from mise
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # ratchet:jdx/mise-action@v5
         with:
-          version: v1.0.0-rc.3
+          install_args: github:tylerbutler/licence_audit
+          add_shims_to_path: "false"
+          export_path: "false"
 
       - name: Audit licences and vulnerabilities
-        run: just audit
+        run: mise exec github:tylerbutler/licence_audit -- just audit
 
   website:
     runs-on: ubuntu-24.04
