@@ -97,25 +97,35 @@ type Block {
 /// the sum of the line widths; use `size` to get the widest line.
 pub fn visual_length(text: String) -> Int {
   let text = expand_tabs(text)
-  case is_printable_ascii(text) {
-    True -> string.length(text)
-    False -> count_visible(string.to_graphemes(text), NormalText, [], 0)
+  use <- bool.guard(
+    when: is_printable_ascii(text),
+    return: string.byte_size(text),
+  )
+  let options = width_options()
+  case string.contains(text, "\u{001b}") {
+    // Without escape codes, each line is one segment, so the text does not
+    // need to be split into graphemes.
+    False ->
+      text
+      |> string.split("\n")
+      |> list.fold(0, fn(count, line) { count + segment_width(line, options) })
+    True -> count_visible(string.to_graphemes(text), NormalText, [], 0, options)
   }
 }
 
-// Printable ASCII counts as one column without a `string_width` call. Other
-// visible graphemes are collected into a run and measured with one
-// `string_width` call, which is much faster than one call per grapheme. Escape
-// codes, line breaks, and ASCII end a run. Line breaks must end it because
-// `string_width` measures the widest line, not the sum of all lines.
+// Visible graphemes between escape codes and line breaks are collected into a
+// segment and measured with one call, which is much faster than one call per
+// grapheme. Line breaks must end a segment because `string_width` measures the
+// widest line, not the sum of all lines.
 fn count_visible(
   chars: List(String),
   state: EscapeState,
-  run: List(String),
+  segment: List(String),
   count: Int,
+  options: string_width.Options,
 ) -> Int {
   case chars {
-    [] -> count + run_width(run)
+    [] -> count + reversed_segment_width(segment, options)
     [char, ..rest] ->
       case state {
         NormalText ->
@@ -125,21 +135,19 @@ fn count_visible(
                 rest,
                 step_escape_state(NormalText, char),
                 [],
-                count + run_width(run),
+                count + reversed_segment_width(segment, options),
+                options,
               )
             "\n" | "\r\n" ->
-              count_visible(rest, NormalText, [], count + run_width(run))
+              count_visible(
+                rest,
+                NormalText,
+                [],
+                count + reversed_segment_width(segment, options),
+                options,
+              )
             _ ->
-              case is_printable_ascii(char) {
-                True ->
-                  count_visible(
-                    rest,
-                    NormalText,
-                    [],
-                    count + run_width(run) + 1,
-                  )
-                False -> count_visible(rest, NormalText, [char, ..run], count)
-              }
+              count_visible(rest, NormalText, [char, ..segment], count, options)
           }
         EscapeStart
         | EscapeIntermediate
@@ -148,17 +156,48 @@ fn count_visible(
         | OscEscapeAfterEsc
         | StEscape
         | StEscapeAfterEsc ->
-          count_visible(rest, step_escape_state(state, char), run, count)
+          count_visible(
+            rest,
+            step_escape_state(state, char),
+            segment,
+            count,
+            options,
+          )
       }
   }
 }
 
-// `run` holds graphemes in reverse order.
-fn run_width(run: List(String)) -> Int {
-  case run {
+fn reversed_segment_width(
+  segment: List(String),
+  options: string_width.Options,
+) -> Int {
+  case segment {
     [] -> 0
-    _ -> run |> list.reverse |> string.concat |> text_width
+    _ -> segment |> list.reverse |> string.concat |> segment_width(options)
   }
+}
+
+// Width of text with no escape codes, tabs, or line breaks. Printable ASCII
+// is one column per byte, the same value `string_width` gives, without the
+// call. `string.byte_size` is used because `string.length` counts graphemes,
+// which is slow on JavaScript.
+fn segment_width(text: String, options: string_width.Options) -> Int {
+  use <- bool.guard(
+    when: is_printable_ascii(text),
+    return: string.byte_size(text),
+  )
+  string_width.line_with(text, options)
+}
+
+fn grapheme_width(grapheme: String, options: string_width.Options) -> Int {
+  use <- bool.guard(when: is_printable_ascii(grapheme), return: 1)
+  string_width.line_with(grapheme, options)
+}
+
+// Build the options once per public call: `string_width.Options` is opaque, so
+// it cannot be a module constant.
+fn width_options() -> string_width.Options {
+  string_width.mode_2027_ext(string_width.new())
 }
 
 // Replace each tab with the spaces it takes up, using tab stops every 8 columns
@@ -167,18 +206,6 @@ fn run_width(run: List(String)) -> Int {
 fn expand_tabs(text: String) -> String {
   use <- bool.guard(when: !string.contains(text, "\t"), return: text)
   string_width.tabs_to_spaces(text)
-}
-
-// Width of one grapheme. Printable ASCII is one column, the same value
-// `string_width` gives, without the call.
-fn display_width(grapheme: String) -> Int {
-  use <- bool.guard(when: is_printable_ascii(grapheme), return: 1)
-  text_width(grapheme)
-}
-
-// Width of text with no escape codes, tabs, or line breaks.
-fn text_width(text: String) -> Int {
-  string_width.line_with(text, string_width.mode_2027_ext(string_width.new()))
 }
 
 fn is_printable_ascii(text: String) -> Bool {
@@ -780,7 +807,7 @@ fn push_piece(
 }
 
 fn tokenize(text: String) -> List(Token) {
-  tokenize_loop(string.to_graphemes(text), NormalText, [], [])
+  tokenize_loop(string.to_graphemes(text), NormalText, [], [], width_options())
 }
 
 fn tokenize_loop(
@@ -788,6 +815,7 @@ fn tokenize_loop(
   state: EscapeState,
   escape: List(String),
   tokens: List(Token),
+  options: string_width.Options,
 ) -> List(Token) {
   case chars {
     [] -> {
@@ -801,12 +829,19 @@ fn tokenize_loop(
       case state {
         NormalText ->
           case char {
-            "\u{001b}" -> tokenize_loop(rest, EscapeStart, [char], tokens)
+            "\u{001b}" ->
+              tokenize_loop(rest, EscapeStart, [char], tokens, options)
             _ ->
-              tokenize_loop(rest, NormalText, [], [
-                Visible(char, display_width(char), char == " "),
-                ..tokens
-              ])
+              tokenize_loop(
+                rest,
+                NormalText,
+                [],
+                [
+                  Visible(char, grapheme_width(char, options), char == " "),
+                  ..tokens
+                ],
+                options,
+              )
           }
         EscapeStart
         | EscapeIntermediate
@@ -819,11 +854,14 @@ fn tokenize_loop(
           let next_state = step_escape_state(state, char)
           case next_state {
             NormalText ->
-              tokenize_loop(rest, NormalText, [], [
-                Control(escape |> list.reverse |> chars_to_string),
-                ..tokens
-              ])
-            _ -> tokenize_loop(rest, next_state, escape, tokens)
+              tokenize_loop(
+                rest,
+                NormalText,
+                [],
+                [Control(escape |> list.reverse |> chars_to_string), ..tokens],
+                options,
+              )
+            _ -> tokenize_loop(rest, next_state, escape, tokens, options)
           }
         }
       }
