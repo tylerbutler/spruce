@@ -189,11 +189,6 @@ fn segment_width(text: String, options: string_width.Options) -> Int {
   string_width.line_with(text, options)
 }
 
-fn grapheme_width(grapheme: String, options: string_width.Options) -> Int {
-  use <- bool.guard(when: is_printable_ascii(grapheme), return: 1)
-  string_width.line_with(grapheme, options)
-}
-
 // Build the options once per public call: `string_width.Options` is opaque, so
 // it cannot be a module constant.
 fn width_options() -> string_width.Options {
@@ -806,21 +801,31 @@ fn push_piece(
   }
 }
 
+// Visible text is measured with `string_width.fold_raw`, one call for each
+// stretch of text between escape codes, not one call per grapheme. Escape
+// codes are parsed here, because this parser accepts more sequences than the
+// one in `string_width`.
 fn tokenize(text: String) -> List(Token) {
-  tokenize_loop(string.to_graphemes(text), NormalText, [], [], width_options())
+  let options = width_options()
+  case string.contains(text, "\u{001b}") {
+    False -> visible_tokens(text, [], options) |> list.reverse
+    True ->
+      tokenize_loop(string.to_graphemes(text), NormalText, [], [], [], options)
+  }
 }
 
 fn tokenize_loop(
   chars: List(String),
   state: EscapeState,
   escape: List(String),
+  visible: List(String),
   tokens: List(Token),
   options: string_width.Options,
 ) -> List(Token) {
   case chars {
     [] -> {
       let tokens = case escape {
-        [] -> tokens
+        [] -> reversed_visible_tokens(visible, tokens, options)
         _ -> [Control(escape |> list.reverse |> chars_to_string), ..tokens]
       }
       list.reverse(tokens)
@@ -830,16 +835,21 @@ fn tokenize_loop(
         NormalText ->
           case char {
             "\u{001b}" ->
-              tokenize_loop(rest, EscapeStart, [char], tokens, options)
+              tokenize_loop(
+                rest,
+                EscapeStart,
+                [char],
+                [],
+                reversed_visible_tokens(visible, tokens, options),
+                options,
+              )
             _ ->
               tokenize_loop(
                 rest,
                 NormalText,
                 [],
-                [
-                  Visible(char, grapheme_width(char, options), char == " "),
-                  ..tokens
-                ],
+                [char, ..visible],
+                tokens,
                 options,
               )
           }
@@ -858,13 +868,63 @@ fn tokenize_loop(
                 rest,
                 NormalText,
                 [],
+                [],
                 [Control(escape |> list.reverse |> chars_to_string), ..tokens],
                 options,
               )
-            _ -> tokenize_loop(rest, next_state, escape, tokens, options)
+            _ -> tokenize_loop(rest, next_state, escape, [], tokens, options)
           }
         }
       }
+    }
+  }
+}
+
+// `visible` holds graphemes in reverse order.
+fn reversed_visible_tokens(
+  visible: List(String),
+  tokens: List(Token),
+  options: string_width.Options,
+) -> List(Token) {
+  use <- bool.guard(when: visible == [], return: tokens)
+  case list.all(visible, is_printable_ascii) {
+    // The graphemes are already split, so do not join and split them again.
+    // Both lists are in reverse order, so they can be appended directly.
+    True ->
+      visible
+      |> list.map(fn(char) { Visible(char, 1, char == " ") })
+      |> list.append(tokens)
+    False ->
+      visible
+      |> list.reverse
+      |> string.concat
+      |> visible_tokens(tokens, options)
+  }
+}
+
+// Prepend one `Visible` token for each grapheme of `text`, which has no escape
+// codes. Printable ASCII is one column per character without a `string_width`
+// call.
+fn visible_tokens(
+  text: String,
+  tokens: List(Token),
+  options: string_width.Options,
+) -> List(Token) {
+  case is_printable_ascii(text) {
+    True ->
+      text
+      |> string.to_utf_codepoints
+      |> list.fold(tokens, fn(tokens, codepoint) {
+        let char = string.from_utf_codepoints([codepoint])
+        [Visible(char, 1, char == " "), ..tokens]
+      })
+    False -> {
+      use tokens, char, width <- string_width.fold_raw(
+        text,
+        options,
+        from: tokens,
+      )
+      [Visible(char, width, char == " "), ..tokens]
     }
   }
 }
