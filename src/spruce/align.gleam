@@ -85,9 +85,11 @@ type Block {
 /// Each grapheme cluster is measured with the
 /// [`string_width`](https://hexdocs.pm/string_width/) package in grapheme
 /// (extended mode 2027) mode, so wide characters and emoji count as two columns
-/// and control characters such as `\r` and `\n` count as zero. A tab counts as
-/// a full tab stop (8 columns) wherever it appears.
+/// and control characters such as `\r` and `\n` count as zero. A tab moves to
+/// the next tab stop (every 8 columns from the start of the line), the same as
+/// in a terminal.
 pub fn visual_length(text: String) -> Int {
+  let text = expand_tabs(text)
   case is_printable_ascii(text) {
     True -> string.length(text)
     False -> count_visible(string.to_graphemes(text), NormalText, 0)
@@ -119,6 +121,14 @@ fn count_visible(chars: List(String), state: EscapeState, count: Int) -> Int {
 
 // ASCII graphemes (control characters too) are one column, the same as the
 // ASCII fast path in `visual_length`.
+// Replace each tab with the spaces it takes up, using tab stops every 8 columns
+// from the start of each line. Layout functions call this first, so a tab
+// always takes the same columns that `visual_length` gives it.
+fn expand_tabs(text: String) -> String {
+  use <- bool.guard(when: !string.contains(text, "\t"), return: text)
+  string_width.tabs_to_spaces(text)
+}
+
 fn display_width(grapheme: String) -> Int {
   use <- bool.guard(when: is_printable_ascii(grapheme), return: 1)
   string_width.line_with(
@@ -228,6 +238,7 @@ fn in_range(value: Int, first: Int, last: Int) -> Bool {
 /// Pad `text` on the right with spaces until it reaches `width` visual columns.
 /// Text already at or beyond `width` is returned unchanged.
 pub fn pad_right(text: String, width: Int) -> String {
+  let text = expand_tabs(text)
   let padding = width - visual_length(text)
   case padding > 0 {
     True -> text <> string.repeat(" ", padding)
@@ -238,6 +249,7 @@ pub fn pad_right(text: String, width: Int) -> String {
 /// Pad `text` on the left with spaces until it reaches `width` visual columns.
 /// Text already at or beyond `width` is returned unchanged.
 pub fn pad_left(text: String, width: Int) -> String {
+  let text = expand_tabs(text)
   let padding = width - visual_length(text)
   case padding > 0 {
     True -> string.repeat(" ", padding) <> text
@@ -249,6 +261,7 @@ pub fn pad_left(text: String, width: Int) -> String {
 /// When an odd number of spaces is needed, the extra space is placed on the
 /// right. Text already at or beyond `width` is returned unchanged.
 pub fn pad_center(text: String, width: Int) -> String {
+  let text = expand_tabs(text)
   let padding = width - visual_length(text)
   case padding > 0 {
     True -> {
@@ -269,6 +282,7 @@ pub fn height(text: String) -> Int {
 
 fn split_lines(text: String) -> List(String) {
   text
+  |> expand_tabs
   |> string.replace(each: "\r\n", with: "\n")
   |> string.split("\n")
 }
@@ -297,6 +311,7 @@ pub fn truncate(
   ellipsis ellipsis: String,
 ) -> String {
   use <- bool.guard(when: width <= 0, return: "")
+  let text = expand_tabs(text)
   use <- bool.guard(when: visual_length(text) <= width, return: text)
   let ellipsis_width = visual_length(ellipsis)
 
@@ -1026,6 +1041,7 @@ pub fn place_lines(
   vertical v: Pos,
   lines lines: List(String),
 ) -> List(String) {
+  let lines = list.map(lines, expand_tabs)
   let content_width = max_visual_width(lines)
   let content_height = list.length(lines)
   let region_width = int.max(width, content_width)

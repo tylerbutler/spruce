@@ -98,6 +98,17 @@ pub fn visual_length_uses_string_width_for_control_characters_test() {
   |> should.equal(8)
 }
 
+pub fn layout_expands_tabs_to_tab_stops_test() {
+  align.visual_length("ab\tc")
+  |> should.equal(9)
+  align.pad_right("ab\tc", 10)
+  |> should.equal("ab      c ")
+  align.truncate("ab\tcdef", width: 6, ellipsis: "…")
+  |> should.equal("ab   …")
+  align.wrap("ab\tcd ef", 10)
+  |> should.equal("ab      cd\nef")
+}
+
 pub fn visual_length_counts_emoji_presentation_as_two_columns_test() {
   align.visual_length("☺️")
   |> should.equal(2)

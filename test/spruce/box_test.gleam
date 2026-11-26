@@ -588,3 +588,13 @@ fn assert_synthetic_close(
     False -> should.equal(actual, expected(selective_close))
   }
 }
+
+pub fn box_expands_tabs_to_tab_stops_test() {
+  box.render(spruce.no_color(), "a\tb\nlonger\tx", box.new())
+  |> should.equal(
+    "╭───────────╮\n"
+    <> "│ a       b │\n"
+    <> "│ longer  x │\n"
+    <> "╰───────────╯",
+  )
+}

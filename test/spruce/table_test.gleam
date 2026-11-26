@@ -420,3 +420,17 @@ pub fn table_hidden_border_exact_output_test() {
   |> table.render(spruce.no_color(), _)
   |> should.equal(" foo  bar \n x    yy  ")
 }
+
+pub fn table_expands_tabs_to_tab_stops_test() {
+  table.new()
+  |> table.headers(["k\tv"])
+  |> table.rows([["key\tvalue"]])
+  |> table.render(spruce.no_color(), _)
+  |> should.equal(
+    "┌───────────────┐\n"
+    <> "│ k       v     │\n"
+    <> "├───────────────┤\n"
+    <> "│ key     value │\n"
+    <> "└───────────────┘",
+  )
+}
