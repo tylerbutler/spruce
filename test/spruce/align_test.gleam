@@ -98,6 +98,13 @@ pub fn visual_length_uses_string_width_for_control_characters_test() {
   |> should.equal(8)
 }
 
+pub fn visual_length_sums_wide_text_across_lines_and_escapes_test() {
+  align.visual_length("中\n文")
+  |> should.equal(4)
+  align.visual_length("中\r\n\u{001b}[1m文\u{001b}[0m✅")
+  |> should.equal(6)
+}
+
 pub fn layout_expands_tabs_to_tab_stops_test() {
   align.visual_length("ab\tc")
   |> should.equal(9)

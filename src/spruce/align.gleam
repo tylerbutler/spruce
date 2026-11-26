@@ -3,7 +3,11 @@
 //// `place`).
 ////
 //// Multiline layout treats CRLF pairs as LF line endings and preserves
-//// standalone CR characters, blank lines, and trailing newlines.
+//// standalone CR characters, blank lines, and trailing newlines. A standalone
+//// CR counts as zero columns, but a terminal moves the cursor back to the
+//// start of the line when it prints one, so text after it can overwrite a box
+//// or table border. Remove standalone CR characters before layout if this
+//// matters.
 //// `wrap` with a non-positive width returns the input unchanged.
 
 import gleam/bool
@@ -88,24 +92,54 @@ type Block {
 /// and control characters such as `\r` and `\n` count as zero. A tab moves to
 /// the next tab stop (every 8 columns from the start of the line), the same as
 /// in a terminal.
+///
+/// Use this function for one line of text. For text with line breaks, it gives
+/// the sum of the line widths; use `size` to get the widest line.
 pub fn visual_length(text: String) -> Int {
   let text = expand_tabs(text)
   case is_printable_ascii(text) {
     True -> string.length(text)
-    False -> count_visible(string.to_graphemes(text), NormalText, 0)
+    False -> count_visible(string.to_graphemes(text), NormalText, [], 0)
   }
 }
 
-fn count_visible(chars: List(String), state: EscapeState, count: Int) -> Int {
+// Printable ASCII counts as one column without a `string_width` call. Other
+// visible graphemes are collected into a run and measured with one
+// `string_width` call, which is much faster than one call per grapheme. Escape
+// codes, line breaks, and ASCII end a run. Line breaks must end it because
+// `string_width` measures the widest line, not the sum of all lines.
+fn count_visible(
+  chars: List(String),
+  state: EscapeState,
+  run: List(String),
+  count: Int,
+) -> Int {
   case chars {
-    [] -> count
+    [] -> count + run_width(run)
     [char, ..rest] ->
       case state {
         NormalText ->
           case char {
             "\u{001b}" ->
-              count_visible(rest, step_escape_state(NormalText, char), count)
-            _ -> count_visible(rest, NormalText, count + display_width(char))
+              count_visible(
+                rest,
+                step_escape_state(NormalText, char),
+                [],
+                count + run_width(run),
+              )
+            "\n" | "\r\n" ->
+              count_visible(rest, NormalText, [], count + run_width(run))
+            _ ->
+              case is_printable_ascii(char) {
+                True ->
+                  count_visible(
+                    rest,
+                    NormalText,
+                    [],
+                    count + run_width(run) + 1,
+                  )
+                False -> count_visible(rest, NormalText, [char, ..run], count)
+              }
           }
         EscapeStart
         | EscapeIntermediate
@@ -114,13 +148,19 @@ fn count_visible(chars: List(String), state: EscapeState, count: Int) -> Int {
         | OscEscapeAfterEsc
         | StEscape
         | StEscapeAfterEsc ->
-          count_visible(rest, step_escape_state(state, char), count)
+          count_visible(rest, step_escape_state(state, char), run, count)
       }
   }
 }
 
-// ASCII graphemes (control characters too) are one column, the same as the
-// ASCII fast path in `visual_length`.
+// `run` holds graphemes in reverse order.
+fn run_width(run: List(String)) -> Int {
+  case run {
+    [] -> 0
+    _ -> run |> list.reverse |> string.concat |> text_width
+  }
+}
+
 // Replace each tab with the spaces it takes up, using tab stops every 8 columns
 // from the start of each line. Layout functions call this first, so a tab
 // always takes the same columns that `visual_length` gives it.
@@ -129,12 +169,16 @@ fn expand_tabs(text: String) -> String {
   string_width.tabs_to_spaces(text)
 }
 
+// Width of one grapheme. Printable ASCII is one column, the same value
+// `string_width` gives, without the call.
 fn display_width(grapheme: String) -> Int {
   use <- bool.guard(when: is_printable_ascii(grapheme), return: 1)
-  string_width.line_with(
-    grapheme,
-    string_width.mode_2027_ext(string_width.new()),
-  )
+  text_width(grapheme)
+}
+
+// Width of text with no escape codes, tabs, or line breaks.
+fn text_width(text: String) -> Int {
+  string_width.line_with(text, string_width.mode_2027_ext(string_width.new()))
 }
 
 fn is_printable_ascii(text: String) -> Bool {
