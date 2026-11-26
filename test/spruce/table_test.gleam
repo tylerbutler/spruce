@@ -62,7 +62,7 @@ pub fn table_preserves_standalone_carriage_return_test() {
   |> table.rows([["x\ry"]])
   |> table.render(spruce.no_color(), _)
   |> should.equal(
-    "┌─────┐\n" <> "│ a\rb │\n" <> "├─────┤\n" <> "│ x\ry │\n" <> "└─────┘",
+    "┌────┐\n" <> "│ a\rb │\n" <> "├────┤\n" <> "│ x\ry │\n" <> "└────┘",
   )
 }
 
@@ -72,15 +72,15 @@ pub fn table_preserves_carriage_return_before_crlf_in_headers_and_body_test() {
   |> table.rows([["x\r\r\ny\r\n"]])
   |> table.render(spruce.no_color(), _)
   |> should.equal(
-    "┌────┐\n"
+    "┌───┐\n"
     <> "│ a\r │\n"
-    <> "│ b  │\n"
-    <> "│    │\n"
-    <> "├────┤\n"
+    <> "│ b │\n"
+    <> "│   │\n"
+    <> "├───┤\n"
     <> "│ x\r │\n"
-    <> "│ y  │\n"
-    <> "│    │\n"
-    <> "└────┘",
+    <> "│ y │\n"
+    <> "│   │\n"
+    <> "└───┘",
   )
 }
 

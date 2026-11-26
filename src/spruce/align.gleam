@@ -84,11 +84,13 @@ type Block {
 ///
 /// Each grapheme cluster is measured with the
 /// [`string_width`](https://hexdocs.pm/string_width/) package in grapheme
-/// (extended mode 2027) mode, so wide characters and emoji count as two columns.
+/// (extended mode 2027) mode, so wide characters and emoji count as two columns
+/// and control characters such as `\r` and `\n` count as zero. A tab counts as
+/// a full tab stop (8 columns) wherever it appears.
 pub fn visual_length(text: String) -> Int {
-  case string.contains(text, "\u{001b}") || !is_ascii(text) {
-    True -> count_visible(string.to_graphemes(text), NormalText, 0)
-    False -> string.length(text)
+  case is_printable_ascii(text) {
+    True -> string.length(text)
+    False -> count_visible(string.to_graphemes(text), NormalText, 0)
   }
 }
 
@@ -118,17 +120,17 @@ fn count_visible(chars: List(String), state: EscapeState, count: Int) -> Int {
 // ASCII graphemes (control characters too) are one column, the same as the
 // ASCII fast path in `visual_length`.
 fn display_width(grapheme: String) -> Int {
-  use <- bool.guard(when: is_ascii(grapheme), return: 1)
+  use <- bool.guard(when: is_printable_ascii(grapheme), return: 1)
   string_width.line_with(
     grapheme,
     string_width.mode_2027_ext(string_width.new()),
   )
 }
 
-fn is_ascii(text: String) -> Bool {
+fn is_printable_ascii(text: String) -> Bool {
   string.to_utf_codepoints(text)
-  |> list.fold(True, fn(all_ascii, codepoint) {
-    all_ascii && string.utf_codepoint_to_int(codepoint) < 0x80
+  |> list.all(fn(codepoint) {
+    in_range(string.utf_codepoint_to_int(codepoint), 0x20, 0x7e)
   })
 }
 

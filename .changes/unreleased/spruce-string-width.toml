@@ -1,3 +1,3 @@
 package = "spruce"
 kind = "Changed"
-body = "Measure text width with the `string_width` package (Unicode 17.0 data, extended mode 2027). More wide characters, emoji, and zero-width marks now get the correct column count in padding, wrapping, truncation, boxes, and tables."
+body = "Measure text width with the `string_width` package (Unicode 17.0 data, extended mode 2027). More wide characters, emoji, and zero-width marks now get the correct column count in padding, wrapping, truncation, boxes, and tables. Control characters such as `\\r` now count as zero columns, and a tab counts as 8 columns."
