@@ -186,7 +186,11 @@ fn segment_width(text: String, options: string_width.Options) -> Int {
     when: is_printable_ascii(text),
     return: string.byte_size(text),
   )
-  string_width.line_with(text, options)
+  // `fold_raw` makes one grapheme pass over the whole segment. `line_with`
+  // splits the segment at ASCII runs and makes one pass per non-ASCII piece,
+  // which is slow on JavaScript.
+  use total, _, width <- string_width.fold_raw(text, options, from: 0)
+  total + width
 }
 
 // Build the options once per public call: `string_width.Options` is opaque, so
