@@ -26,6 +26,7 @@ packages = [
   { name = "simplifile", version = "2.7.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "A2727627B063E87351934C7F7F008F2D1FDB16F6DE0B8C79F9E46459CFC9C164" },
   { name = "smalto", version = "3.0.0", build_tools = ["gleam"], requirements = ["gleam_community_ansi", "gleam_stdlib", "houdini"], otp_app = "smalto", source = "hex", outer_checksum = "13EA8935A9E60A770E326FB850F5A5B3612A62E0A6C62C3F850AD04C842E3769" },
   { name = "splitter", version = "1.3.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "splitter", source = "hex", outer_checksum = "8F1485306E0D59168A39E12ED8844F9F616EC59C3C63AFCFDAE04DBD68690CBC" },
+  { name = "string_width", version = "3.4.3", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "string_width", source = "hex", outer_checksum = "EC2D012CC99CAE1395776BBDF1CD6E45CA4E08210F7AADD7C40D0E1222EFBE4A" },
   { name = "term_size", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "term_size", source = "hex", outer_checksum = "D00BD2BC8FB3EBB7E6AE076F3F1FF2AC9D5ED1805F004D0896C784D06C6645F1" },
   { name = "tom", version = "2.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gleam_time"], otp_app = "tom", source = "hex", outer_checksum = "DCF04CB7AB35D58CFC598C66EA2E1816D160759802C89B2BA6238780D59BC256" },
   { name = "trie_again", version = "1.1.4", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "trie_again", source = "hex", outer_checksum = "E3BD66B4E126EF567EA8C4944EAB216413392ADF6C16C36047AF79EE5EF13466" },
@@ -40,4 +41,5 @@ gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 glinter = { version = ">= 2.19.0 and < 3.0.0" }
 mork = { version = ">= 1.12.0 and < 2.0.0" }
 smalto = { version = ">= 3.0.0 and < 4.0.0" }
+string_width = { version = ">= 3.4.3 and < 4.0.0" }
 tty = { version = ">= 1.1.0 and < 2.0.0" }

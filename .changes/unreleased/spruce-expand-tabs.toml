@@ -1,0 +1,3 @@
+package = "spruce"
+kind = "Added"
+body = "Expand tabs to spaces at 8-column tab stops in `align` padding, wrapping, truncation, placement, and joins, and so in boxes and tables. `visual_length` and `size` measure a tab as the spaces it expands to."

@@ -91,6 +91,31 @@ pub fn visual_length_counts_flag_pair_as_two_columns_test() {
   |> should.equal(2)
 }
 
+pub fn visual_length_uses_string_width_for_control_characters_test() {
+  align.visual_length("a\rb\u{0007}c\u{007f}")
+  |> should.equal(3)
+  align.visual_length("\t")
+  |> should.equal(8)
+}
+
+pub fn visual_length_sums_wide_text_across_lines_and_escapes_test() {
+  align.visual_length("中\n文")
+  |> should.equal(4)
+  align.visual_length("中\r\n\u{001b}[1m文\u{001b}[0m✅")
+  |> should.equal(6)
+}
+
+pub fn layout_expands_tabs_to_tab_stops_test() {
+  align.visual_length("ab\tc")
+  |> should.equal(9)
+  align.pad_right("ab\tc", 10)
+  |> should.equal("ab      c ")
+  align.truncate("ab\tcdef", width: 6, ellipsis: "…")
+  |> should.equal("ab   …")
+  align.wrap("ab\tcd ef", 10)
+  |> should.equal("ab      cd\nef")
+}
+
 pub fn visual_length_counts_emoji_presentation_as_two_columns_test() {
   align.visual_length("☺️")
   |> should.equal(2)
@@ -207,11 +232,11 @@ pub fn multiline_layout_preserves_standalone_carriage_return_test() {
   let text = "a\rb"
 
   align.size(text)
-  |> should.equal(#(3, 1))
+  |> should.equal(#(2, 1))
   align.height(text)
   |> should.equal(1)
   align.visual_length(text)
-  |> should.equal(3)
+  |> should.equal(2)
   align.wrap(text, 80)
   |> should.equal(text)
   align.join_vertical(align.Start, [text])
@@ -232,13 +257,13 @@ pub fn multiline_layout_preserves_carriage_return_before_crlf_test() {
   let text = "a\r\r\nb\r\n"
 
   align.size(text)
-  |> should.equal(#(2, 3))
+  |> should.equal(#(1, 3))
   align.wrap(text, 80)
   |> should.equal("a\r\nb\n")
   align.join_vertical(align.Start, [text])
-  |> should.equal("a\r\nb \n  ")
+  |> should.equal("a\r\nb\n ")
   align.join_horizontal(align.Start, [text])
-  |> should.equal("a\r\nb \n  ")
+  |> should.equal("a\r\nb\n ")
   align.place(
     width: 0,
     height: 0,
@@ -246,7 +271,7 @@ pub fn multiline_layout_preserves_carriage_return_before_crlf_test() {
     vertical: align.Start,
     content: text,
   )
-  |> should.equal("a\r\nb \n  ")
+  |> should.equal("a\r\nb\n ")
 }
 
 pub fn truncate_plain_text_with_ellipsis_test() {

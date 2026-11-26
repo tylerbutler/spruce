@@ -32,22 +32,27 @@ pub fn plain_box_preserves_blank_lines_and_standalone_carriage_return_test() {
   box.render(spruce.no_color(), "\r\n\n", box.plain())
   |> should.equal("\n\n")
   box.render(spruce.no_color(), "a\rb\r\nx", box.plain())
-  |> should.equal("a\rb\nx  ")
+  |> should.equal("a\rb\nx ")
 }
 
 pub fn box_preserves_carriage_return_before_crlf_with_all_width_paths_test() {
   list.each(
-    [box.plain(), box.plain() |> box.width(2), box.plain() |> box.width(0)],
-    fn(options) {
+    [
+      #(box.plain(), "a\r\nb\n "),
+      #(box.plain() |> box.width(2), "a\r \nb \n  "),
+      #(box.plain() |> box.width(0), "a\r\nb\n "),
+    ],
+    fn(pair) {
+      let #(options, expected) = pair
       box.render(spruce.no_color(), "a\r\r\nb\r\n", options)
-      |> should.equal("a\r\nb \n  ")
+      |> should.equal(expected)
     },
   )
 }
 
 pub fn box_preserves_carriage_return_before_inserted_wrap_test() {
-  box.render(spruce.no_color(), "a\rb", box.plain() |> box.width(2))
-  |> should.equal("a\r\nb ")
+  box.render(spruce.no_color(), "ab\rc", box.plain() |> box.width(2))
+  |> should.equal("ab\r\nc ")
 }
 
 pub fn simple_box_aligns_bmp_emoji_with_plain_text_test() {
@@ -582,4 +587,14 @@ fn assert_synthetic_close(
     True -> Nil
     False -> should.equal(actual, expected(selective_close))
   }
+}
+
+pub fn box_expands_tabs_to_tab_stops_test() {
+  box.render(spruce.no_color(), "a\tb\nlonger\tx", box.new())
+  |> should.equal(
+    "╭───────────╮\n"
+    <> "│ a       b │\n"
+    <> "│ longer  x │\n"
+    <> "╰───────────╯",
+  )
 }

@@ -3,7 +3,11 @@
 //// `place`).
 ////
 //// Multiline layout treats CRLF pairs as LF line endings and preserves
-//// standalone CR characters, blank lines, and trailing newlines.
+//// standalone CR characters, blank lines, and trailing newlines. A standalone
+//// CR counts as zero columns, but a terminal moves the cursor back to the
+//// start of the line when it prints one, so text after it can overwrite a box
+//// or table border. Remove standalone CR characters before layout if this
+//// matters.
 //// `wrap` with a non-positive width returns the input unchanged.
 
 import gleam/bool
@@ -11,6 +15,7 @@ import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
+import string_width
 
 type Token {
   Visible(text: String, width: Int, space: Bool)
@@ -81,25 +86,68 @@ type Block {
 
 /// The visual length of a string, excluding ANSI escape codes.
 ///
-/// BMP emoji such as U+2705 count as two columns, using their Wide (W) property
-/// in [Unicode 16.0.0](https://www.unicode.org/Public/16.0.0/ucd/EastAsianWidth.txt).
+/// Each grapheme cluster is measured with the
+/// [`string_width`](https://hexdocs.pm/string_width/) package in grapheme
+/// (extended mode 2027) mode, so wide characters and emoji count as two columns
+/// and control characters such as `\r` and `\n` count as zero. A tab moves to
+/// the next tab stop (every 8 columns from the start of the line), the same as
+/// in a terminal.
+///
+/// Use this function for one line of text. For text with line breaks, it gives
+/// the sum of the line widths; use `size` to get the widest line.
 pub fn visual_length(text: String) -> Int {
-  case string.contains(text, "\u{001b}") || !is_ascii(text) {
-    True -> count_visible(string.to_graphemes(text), NormalText, 0)
-    False -> string.length(text)
+  let text = expand_tabs(text)
+  use <- bool.guard(
+    when: is_printable_ascii(text),
+    return: string.byte_size(text),
+  )
+  let options = width_options()
+  case string.contains(text, "\u{001b}") {
+    // Without escape codes, each line is one segment, so the text does not
+    // need to be split into graphemes.
+    False ->
+      text
+      |> string.split("\n")
+      |> list.fold(0, fn(count, line) { count + segment_width(line, options) })
+    True -> count_visible(string.to_graphemes(text), NormalText, [], 0, options)
   }
 }
 
-fn count_visible(chars: List(String), state: EscapeState, count: Int) -> Int {
+// Visible graphemes between escape codes and line breaks are collected into a
+// segment and measured with one call, which is much faster than one call per
+// grapheme. Line breaks must end a segment because `string_width` measures the
+// widest line, not the sum of all lines.
+fn count_visible(
+  chars: List(String),
+  state: EscapeState,
+  segment: List(String),
+  count: Int,
+  options: string_width.Options,
+) -> Int {
   case chars {
-    [] -> count
+    [] -> count + reversed_segment_width(segment, options)
     [char, ..rest] ->
       case state {
         NormalText ->
           case char {
             "\u{001b}" ->
-              count_visible(rest, step_escape_state(NormalText, char), count)
-            _ -> count_visible(rest, NormalText, count + display_width(char))
+              count_visible(
+                rest,
+                step_escape_state(NormalText, char),
+                [],
+                count + reversed_segment_width(segment, options),
+                options,
+              )
+            "\n" | "\r\n" ->
+              count_visible(
+                rest,
+                NormalText,
+                [],
+                count + reversed_segment_width(segment, options),
+                options,
+              )
+            _ ->
+              count_visible(rest, NormalText, [char, ..segment], count, options)
           }
         EscapeStart
         | EscapeIntermediate
@@ -108,61 +156,61 @@ fn count_visible(chars: List(String), state: EscapeState, count: Int) -> Int {
         | OscEscapeAfterEsc
         | StEscape
         | StEscapeAfterEsc ->
-          count_visible(rest, step_escape_state(state, char), count)
+          count_visible(
+            rest,
+            step_escape_state(state, char),
+            segment,
+            count,
+            options,
+          )
       }
   }
 }
 
-fn display_width(grapheme: String) -> Int {
-  let codepoints = string.to_utf_codepoints(grapheme)
-
-  case codepoints {
+fn reversed_segment_width(
+  segment: List(String),
+  options: string_width.Options,
+) -> Int {
+  case segment {
     [] -> 0
-    [codepoint, ..] -> {
-      let codepoint = string.utf_codepoint_to_int(codepoint)
-
-      case is_zero_width(codepoint) {
-        True -> 0
-        False ->
-          case
-            is_wide(codepoint)
-            || has_codepoint(codepoints, 0xfe0f)
-            || is_regional_indicator_pair(codepoints)
-          {
-            True -> 2
-            False -> 1
-          }
-      }
-    }
+    _ -> segment |> list.reverse |> string.concat |> segment_width(options)
   }
 }
 
-fn has_codepoint(codepoints: List(UtfCodepoint), wanted: Int) -> Bool {
-  case codepoints {
-    [] -> False
-    [codepoint, ..rest] ->
-      string.utf_codepoint_to_int(codepoint) == wanted
-      || has_codepoint(rest, wanted)
-  }
+// Width of text with no escape codes, tabs, or line breaks. Printable ASCII
+// is one column per byte, the same value `string_width` gives, without the
+// call. `string.byte_size` is used because `string.length` counts graphemes,
+// which is slow on JavaScript.
+fn segment_width(text: String, options: string_width.Options) -> Int {
+  use <- bool.guard(
+    when: is_printable_ascii(text),
+    return: string.byte_size(text),
+  )
+  // `fold_raw` makes one grapheme pass over the whole segment. `line_with`
+  // splits the segment at ASCII runs and makes one pass per non-ASCII piece,
+  // which is slow on JavaScript.
+  use total, _, width <- string_width.fold_raw(text, options, from: 0)
+  total + width
 }
 
-fn is_regional_indicator_pair(codepoints: List(UtfCodepoint)) -> Bool {
-  case codepoints {
-    [first, second] ->
-      is_regional_indicator(string.utf_codepoint_to_int(first))
-      && is_regional_indicator(string.utf_codepoint_to_int(second))
-    _ -> False
-  }
+// Build the options once per public call: `string_width.Options` is opaque, so
+// it cannot be a module constant.
+fn width_options() -> string_width.Options {
+  string_width.mode_2027_ext(string_width.new())
 }
 
-fn is_regional_indicator(codepoint: Int) -> Bool {
-  in_range(codepoint, 0x1f1e6, 0x1f1ff)
+// Replace each tab with the spaces it takes up, using tab stops every 8 columns
+// from the start of each line. Layout functions call this first, so a tab
+// always takes the same columns that `visual_length` gives it.
+fn expand_tabs(text: String) -> String {
+  use <- bool.guard(when: !string.contains(text, "\t"), return: text)
+  string_width.tabs_to_spaces(text)
 }
 
-fn is_ascii(text: String) -> Bool {
+fn is_printable_ascii(text: String) -> Bool {
   string.to_utf_codepoints(text)
-  |> list.fold(True, fn(all_ascii, codepoint) {
-    all_ascii && string.utf_codepoint_to_int(codepoint) < 0x80
+  |> list.all(fn(codepoint) {
+    in_range(string.utf_codepoint_to_int(codepoint), 0x20, 0x7e)
   })
 }
 
@@ -253,65 +301,6 @@ fn is_escape_final_byte(grapheme: String) -> Bool {
   }
 }
 
-fn is_zero_width(codepoint: Int) -> Bool {
-  in_range(codepoint, 0x0300, 0x036f)
-  || codepoint == 0x0489
-  || in_range(codepoint, 0x200b, 0x200f)
-  || codepoint == 0x200d
-  || in_range(codepoint, 0xfe00, 0xfe0f)
-  || codepoint == 0xfeff
-}
-
-fn is_wide(codepoint: Int) -> Bool {
-  in_range(codepoint, 0x1100, 0x115f)
-  || in_range(codepoint, 0x231a, 0x231b)
-  || in_range(codepoint, 0x23e9, 0x23ec)
-  || codepoint == 0x23f0
-  || codepoint == 0x23f3
-  || in_range(codepoint, 0x25fd, 0x25fe)
-  || in_range(codepoint, 0x2614, 0x2615)
-  || in_range(codepoint, 0x2648, 0x2653)
-  || codepoint == 0x267f
-  || codepoint == 0x2693
-  || codepoint == 0x26a1
-  || in_range(codepoint, 0x26aa, 0x26ab)
-  || in_range(codepoint, 0x26bd, 0x26be)
-  || in_range(codepoint, 0x26c4, 0x26c5)
-  || codepoint == 0x26ce
-  || codepoint == 0x26d4
-  || codepoint == 0x26ea
-  || in_range(codepoint, 0x26f2, 0x26f3)
-  || codepoint == 0x26f5
-  || codepoint == 0x26fa
-  || codepoint == 0x26fd
-  || codepoint == 0x2705
-  || in_range(codepoint, 0x270a, 0x270b)
-  || codepoint == 0x2728
-  || codepoint == 0x274c
-  || codepoint == 0x274e
-  || in_range(codepoint, 0x2753, 0x2755)
-  || codepoint == 0x2757
-  || in_range(codepoint, 0x2795, 0x2797)
-  || codepoint == 0x27b0
-  || codepoint == 0x27bf
-  || in_range(codepoint, 0x2b1b, 0x2b1c)
-  || codepoint == 0x2b50
-  || codepoint == 0x2b55
-  || in_range(codepoint, 0x2e80, 0x303e)
-  || in_range(codepoint, 0x3041, 0x33ff)
-  || in_range(codepoint, 0x3400, 0x4dbf)
-  || in_range(codepoint, 0x4e00, 0x9fff)
-  || in_range(codepoint, 0xa000, 0xa4cf)
-  || in_range(codepoint, 0xac00, 0xd7a3)
-  || in_range(codepoint, 0xf900, 0xfaff)
-  || in_range(codepoint, 0xfe10, 0xfe19)
-  || in_range(codepoint, 0xfe30, 0xfe6f)
-  || in_range(codepoint, 0xff00, 0xff60)
-  || in_range(codepoint, 0xffe0, 0xffe6)
-  || in_range(codepoint, 0x1f300, 0x1faff)
-  || in_range(codepoint, 0x20000, 0x3fffd)
-}
-
 fn in_range(value: Int, first: Int, last: Int) -> Bool {
   value >= first && value <= last
 }
@@ -319,6 +308,7 @@ fn in_range(value: Int, first: Int, last: Int) -> Bool {
 /// Pad `text` on the right with spaces until it reaches `width` visual columns.
 /// Text already at or beyond `width` is returned unchanged.
 pub fn pad_right(text: String, width: Int) -> String {
+  let text = expand_tabs(text)
   let padding = width - visual_length(text)
   case padding > 0 {
     True -> text <> string.repeat(" ", padding)
@@ -329,6 +319,7 @@ pub fn pad_right(text: String, width: Int) -> String {
 /// Pad `text` on the left with spaces until it reaches `width` visual columns.
 /// Text already at or beyond `width` is returned unchanged.
 pub fn pad_left(text: String, width: Int) -> String {
+  let text = expand_tabs(text)
   let padding = width - visual_length(text)
   case padding > 0 {
     True -> string.repeat(" ", padding) <> text
@@ -340,6 +331,7 @@ pub fn pad_left(text: String, width: Int) -> String {
 /// When an odd number of spaces is needed, the extra space is placed on the
 /// right. Text already at or beyond `width` is returned unchanged.
 pub fn pad_center(text: String, width: Int) -> String {
+  let text = expand_tabs(text)
   let padding = width - visual_length(text)
   case padding > 0 {
     True -> {
@@ -360,6 +352,7 @@ pub fn height(text: String) -> Int {
 
 fn split_lines(text: String) -> List(String) {
   text
+  |> expand_tabs
   |> string.replace(each: "\r\n", with: "\n")
   |> string.split("\n")
 }
@@ -388,6 +381,7 @@ pub fn truncate(
   ellipsis ellipsis: String,
 ) -> String {
   use <- bool.guard(when: width <= 0, return: "")
+  let text = expand_tabs(text)
   use <- bool.guard(when: visual_length(text) <= width, return: text)
   let ellipsis_width = visual_length(ellipsis)
 
@@ -811,20 +805,31 @@ fn push_piece(
   }
 }
 
+// Visible text is measured with `string_width.fold_raw`, one call for each
+// stretch of text between escape codes, not one call per grapheme. Escape
+// codes are parsed here, because this parser accepts more sequences than the
+// one in `string_width`.
 fn tokenize(text: String) -> List(Token) {
-  tokenize_loop(string.to_graphemes(text), NormalText, [], [])
+  let options = width_options()
+  case string.contains(text, "\u{001b}") {
+    False -> visible_tokens(text, [], options) |> list.reverse
+    True ->
+      tokenize_loop(string.to_graphemes(text), NormalText, [], [], [], options)
+  }
 }
 
 fn tokenize_loop(
   chars: List(String),
   state: EscapeState,
   escape: List(String),
+  visible: List(String),
   tokens: List(Token),
+  options: string_width.Options,
 ) -> List(Token) {
   case chars {
     [] -> {
       let tokens = case escape {
-        [] -> tokens
+        [] -> reversed_visible_tokens(visible, tokens, options)
         _ -> [Control(escape |> list.reverse |> chars_to_string), ..tokens]
       }
       list.reverse(tokens)
@@ -833,12 +838,24 @@ fn tokenize_loop(
       case state {
         NormalText ->
           case char {
-            "\u{001b}" -> tokenize_loop(rest, EscapeStart, [char], tokens)
+            "\u{001b}" ->
+              tokenize_loop(
+                rest,
+                EscapeStart,
+                [char],
+                [],
+                reversed_visible_tokens(visible, tokens, options),
+                options,
+              )
             _ ->
-              tokenize_loop(rest, NormalText, [], [
-                Visible(char, display_width(char), char == " "),
-                ..tokens
-              ])
+              tokenize_loop(
+                rest,
+                NormalText,
+                [],
+                [char, ..visible],
+                tokens,
+                options,
+              )
           }
         EscapeStart
         | EscapeIntermediate
@@ -851,14 +868,67 @@ fn tokenize_loop(
           let next_state = step_escape_state(state, char)
           case next_state {
             NormalText ->
-              tokenize_loop(rest, NormalText, [], [
-                Control(escape |> list.reverse |> chars_to_string),
-                ..tokens
-              ])
-            _ -> tokenize_loop(rest, next_state, escape, tokens)
+              tokenize_loop(
+                rest,
+                NormalText,
+                [],
+                [],
+                [Control(escape |> list.reverse |> chars_to_string), ..tokens],
+                options,
+              )
+            _ -> tokenize_loop(rest, next_state, escape, [], tokens, options)
           }
         }
       }
+    }
+  }
+}
+
+// `visible` holds graphemes in reverse order.
+fn reversed_visible_tokens(
+  visible: List(String),
+  tokens: List(Token),
+  options: string_width.Options,
+) -> List(Token) {
+  use <- bool.guard(when: visible == [], return: tokens)
+  case list.all(visible, is_printable_ascii) {
+    // The graphemes are already split, so do not join and split them again.
+    // Both lists are in reverse order, so they can be appended directly.
+    True ->
+      visible
+      |> list.map(fn(char) { Visible(char, 1, char == " ") })
+      |> list.append(tokens)
+    False ->
+      visible
+      |> list.reverse
+      |> string.concat
+      |> visible_tokens(tokens, options)
+  }
+}
+
+// Prepend one `Visible` token for each grapheme of `text`, which has no escape
+// codes. Printable ASCII is one column per character without a `string_width`
+// call.
+fn visible_tokens(
+  text: String,
+  tokens: List(Token),
+  options: string_width.Options,
+) -> List(Token) {
+  case is_printable_ascii(text) {
+    True ->
+      text
+      |> string.to_utf_codepoints
+      |> list.fold(tokens, fn(tokens, codepoint) {
+        let char = string.from_utf_codepoints([codepoint])
+        [Visible(char, 1, char == " "), ..tokens]
+      })
+    False -> {
+      use tokens, char, width <- string_width.fold_raw(
+        text,
+        options,
+        from: tokens,
+      )
+      [Visible(char, width, char == " "), ..tokens]
     }
   }
 }
@@ -1117,6 +1187,7 @@ pub fn place_lines(
   vertical v: Pos,
   lines lines: List(String),
 ) -> List(String) {
+  let lines = list.map(lines, expand_tabs)
   let content_width = max_visual_width(lines)
   let content_height = list.length(lines)
   let region_width = int.max(width, content_width)
