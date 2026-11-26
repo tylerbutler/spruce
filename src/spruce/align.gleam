@@ -11,6 +11,7 @@ import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
+import string_width
 
 type Token {
   Visible(text: String, width: Int, space: Bool)
@@ -81,8 +82,9 @@ type Block {
 
 /// The visual length of a string, excluding ANSI escape codes.
 ///
-/// BMP emoji such as U+2705 count as two columns, using their Wide (W) property
-/// in [Unicode 16.0.0](https://www.unicode.org/Public/16.0.0/ucd/EastAsianWidth.txt).
+/// Each grapheme cluster is measured with the
+/// [`string_width`](https://hexdocs.pm/string_width/) package in grapheme
+/// (extended mode 2027) mode, so wide characters and emoji count as two columns.
 pub fn visual_length(text: String) -> Int {
   case string.contains(text, "\u{001b}") || !is_ascii(text) {
     True -> count_visible(string.to_graphemes(text), NormalText, 0)
@@ -113,50 +115,14 @@ fn count_visible(chars: List(String), state: EscapeState, count: Int) -> Int {
   }
 }
 
+// ASCII graphemes (control characters too) are one column, the same as the
+// ASCII fast path in `visual_length`.
 fn display_width(grapheme: String) -> Int {
-  let codepoints = string.to_utf_codepoints(grapheme)
-
-  case codepoints {
-    [] -> 0
-    [codepoint, ..] -> {
-      let codepoint = string.utf_codepoint_to_int(codepoint)
-
-      case is_zero_width(codepoint) {
-        True -> 0
-        False ->
-          case
-            is_wide(codepoint)
-            || has_codepoint(codepoints, 0xfe0f)
-            || is_regional_indicator_pair(codepoints)
-          {
-            True -> 2
-            False -> 1
-          }
-      }
-    }
-  }
-}
-
-fn has_codepoint(codepoints: List(UtfCodepoint), wanted: Int) -> Bool {
-  case codepoints {
-    [] -> False
-    [codepoint, ..rest] ->
-      string.utf_codepoint_to_int(codepoint) == wanted
-      || has_codepoint(rest, wanted)
-  }
-}
-
-fn is_regional_indicator_pair(codepoints: List(UtfCodepoint)) -> Bool {
-  case codepoints {
-    [first, second] ->
-      is_regional_indicator(string.utf_codepoint_to_int(first))
-      && is_regional_indicator(string.utf_codepoint_to_int(second))
-    _ -> False
-  }
-}
-
-fn is_regional_indicator(codepoint: Int) -> Bool {
-  in_range(codepoint, 0x1f1e6, 0x1f1ff)
+  use <- bool.guard(when: is_ascii(grapheme), return: 1)
+  string_width.line_with(
+    grapheme,
+    string_width.mode_2027_ext(string_width.new()),
+  )
 }
 
 fn is_ascii(text: String) -> Bool {
@@ -251,65 +217,6 @@ fn is_escape_final_byte(grapheme: String) -> Bool {
     [codepoint, ..] ->
       in_range(string.utf_codepoint_to_int(codepoint), 0x30, 0x7e)
   }
-}
-
-fn is_zero_width(codepoint: Int) -> Bool {
-  in_range(codepoint, 0x0300, 0x036f)
-  || codepoint == 0x0489
-  || in_range(codepoint, 0x200b, 0x200f)
-  || codepoint == 0x200d
-  || in_range(codepoint, 0xfe00, 0xfe0f)
-  || codepoint == 0xfeff
-}
-
-fn is_wide(codepoint: Int) -> Bool {
-  in_range(codepoint, 0x1100, 0x115f)
-  || in_range(codepoint, 0x231a, 0x231b)
-  || in_range(codepoint, 0x23e9, 0x23ec)
-  || codepoint == 0x23f0
-  || codepoint == 0x23f3
-  || in_range(codepoint, 0x25fd, 0x25fe)
-  || in_range(codepoint, 0x2614, 0x2615)
-  || in_range(codepoint, 0x2648, 0x2653)
-  || codepoint == 0x267f
-  || codepoint == 0x2693
-  || codepoint == 0x26a1
-  || in_range(codepoint, 0x26aa, 0x26ab)
-  || in_range(codepoint, 0x26bd, 0x26be)
-  || in_range(codepoint, 0x26c4, 0x26c5)
-  || codepoint == 0x26ce
-  || codepoint == 0x26d4
-  || codepoint == 0x26ea
-  || in_range(codepoint, 0x26f2, 0x26f3)
-  || codepoint == 0x26f5
-  || codepoint == 0x26fa
-  || codepoint == 0x26fd
-  || codepoint == 0x2705
-  || in_range(codepoint, 0x270a, 0x270b)
-  || codepoint == 0x2728
-  || codepoint == 0x274c
-  || codepoint == 0x274e
-  || in_range(codepoint, 0x2753, 0x2755)
-  || codepoint == 0x2757
-  || in_range(codepoint, 0x2795, 0x2797)
-  || codepoint == 0x27b0
-  || codepoint == 0x27bf
-  || in_range(codepoint, 0x2b1b, 0x2b1c)
-  || codepoint == 0x2b50
-  || codepoint == 0x2b55
-  || in_range(codepoint, 0x2e80, 0x303e)
-  || in_range(codepoint, 0x3041, 0x33ff)
-  || in_range(codepoint, 0x3400, 0x4dbf)
-  || in_range(codepoint, 0x4e00, 0x9fff)
-  || in_range(codepoint, 0xa000, 0xa4cf)
-  || in_range(codepoint, 0xac00, 0xd7a3)
-  || in_range(codepoint, 0xf900, 0xfaff)
-  || in_range(codepoint, 0xfe10, 0xfe19)
-  || in_range(codepoint, 0xfe30, 0xfe6f)
-  || in_range(codepoint, 0xff00, 0xff60)
-  || in_range(codepoint, 0xffe0, 0xffe6)
-  || in_range(codepoint, 0x1f300, 0x1faff)
-  || in_range(codepoint, 0x20000, 0x3fffd)
 }
 
 fn in_range(value: Int, first: Int, last: Int) -> Bool {
